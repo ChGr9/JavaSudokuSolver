@@ -12,11 +12,9 @@ import lombok.Setter;
 
 import java.util.*;
 
-public class Cell extends StackPane {
+public class Cell extends StackPane implements ICell {
 
     public static final int SIZE = 40;
-    public static final int EMPTY = 0;
-    public static final Set<Integer> DIGITS = Set.of(1, 2, 3, 4, 5, 6, 7, 8, 9);
     @Setter
     @Getter
     private int x;
@@ -28,10 +26,12 @@ public class Cell extends StackPane {
     @Getter
     private int value;
     private final Text valueText = new Text();
+    private boolean hasChanged = false;
 
     public void setValue(int value) {
         this.value = value;
         clearCandidates();
+        hasChanged = true;
     }
 
     public Cell(int x, int y) {
@@ -82,6 +82,7 @@ public class Cell extends StackPane {
                 valueText.setFill(Color.BLACK);
                 setValue(value);
             }
+            hasChanged = true;
             reRender(true);
         } catch (NumberFormatException ignored) {
         }
@@ -91,15 +92,12 @@ public class Cell extends StackPane {
         setValue(EMPTY);
     }
 
-    public boolean isEmpty() {
-        return this.value == EMPTY;
-    }
-
     public void addCandidate(int candidate) {
         if(this.value != EMPTY)
             return;
         if (candidate > 0 && candidate < 10) {
             candidates.add(candidate);
+            hasChanged = true;
         }
     }
 
@@ -109,11 +107,12 @@ public class Cell extends StackPane {
 
     public boolean removeCandidate(int candidate) {
         if (candidate > 0 && candidate < 10 && value == EMPTY) {
-            return candidates.remove(candidate);
+            if(candidates.remove(candidate)) {
+                hasChanged = true;
+                return true;
+            }
         }
-        else {
-            return false;
-        }
+        return false;
     }
 
     public void removeCandidates(Collection<Integer> candidates) {
@@ -128,6 +127,7 @@ public class Cell extends StackPane {
 
     public void clearCandidates() {
         candidates.clear();
+        hasChanged = true;
     }
 
     public Set<Integer> getCandidates() {
@@ -141,6 +141,9 @@ public class Cell extends StackPane {
     }
 
     public void reRender(boolean fromUser) {
+        if(!hasChanged)
+            return;
+        hasChanged = false;
         if(value != EMPTY){
             if(fromUser)
                 valueText.setFill(Color.BLACK);

@@ -6,9 +6,8 @@ import javafx.scene.layout.Pane;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class Sudoku extends Pane {
+public class Sudoku extends Pane implements ISudoku {
 
-    public static final int SUDOKU_SIZE = 9;
     private final Cell[][] cells = new Cell[SUDOKU_SIZE][SUDOKU_SIZE];
     private static final int SIZE = Cell.SIZE * SUDOKU_SIZE;
 
@@ -114,8 +113,7 @@ public class Sudoku extends Pane {
         return square;
     }
 
-    public Set<Integer> getSquareValue(int squareNumber)
-    {
+    public Set<Integer> getSquareValue(int squareNumber) {
         //col and row are the coordinates of the top left most cell in the square that x,y is located
         int col = squareNumber * 3 % 9;
         int row = squareNumber / 3 * 3;
@@ -163,11 +161,15 @@ public class Sudoku extends Pane {
         }
     }
 
-    public Set<Cell> getEmptyCells() {
+    public Set<ICell> getEmptyCells() {
         return Arrays.stream(cells).flatMap(Arrays::stream).filter(cell -> cell.getValue() == Cell.EMPTY).collect(Collectors.toSet());
     }
 
-    public void reRenderCandidates() {
-        getEmptyCells().forEach(Cell::reRender);
+    public void reRender() {
+        for(int i=0; i<SUDOKU_SIZE; i++){
+            for(int j=0; j<SUDOKU_SIZE; j++){
+                cells[i][j].reRender();
+            }
+        }
     }
 }
