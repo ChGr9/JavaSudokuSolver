@@ -4,11 +4,11 @@ import com.chgr.sudoku.models.Cell;
 import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
 import com.chgr.sudoku.models.Pos;
+import org.apache.commons.lang3.StringUtils;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class SudokuWithoutUI implements ISudoku {
 
@@ -144,5 +144,13 @@ public class SudokuWithoutUI implements ISudoku {
         for (int i = 0; i < 3; i++)
             System.arraycopy(cells[col + i], row, square, i * 3, 3);
         return square;
+    }
+
+    public List<List<Integer>> toIntList() {
+        return IntStream.range(0, SUDOKU_SIZE)
+                .mapToObj(i -> Arrays.stream(cells)
+                        .map(row -> row[i].getValue())
+                        .collect(Collectors.toList()))
+                .collect(Collectors.toList());
     }
 }

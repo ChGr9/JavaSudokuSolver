@@ -1,5 +1,6 @@
 package com.chgr.sudoku.models;
 
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.Pane;
 
@@ -166,10 +167,12 @@ public class Sudoku extends Pane implements ISudoku {
     }
 
     public void reRender() {
-        for(int i=0; i<SUDOKU_SIZE; i++){
-            for(int j=0; j<SUDOKU_SIZE; j++){
-                cells[i][j].reRender();
+        Platform.runLater(() ->{
+            for (int i = 0; i < SUDOKU_SIZE; i++) {
+                for (int j = 0; j < SUDOKU_SIZE; j++) {
+                    cells[i][j].reRender();
+                }
             }
-        }
+        });
     }
 }

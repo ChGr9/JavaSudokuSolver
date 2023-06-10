@@ -1,6 +1,7 @@
 package com.chgr.sudoku;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -14,6 +15,7 @@ public class SudokuSolverApplication extends Application {
         Scene scene = new Scene(fxmlLoader.load());
         stage.setTitle("Sudoku Solver");
         stage.setScene(scene);
+        stage.setOnCloseRequest(event -> Platform.exit());
         stage.show();
     }
 
