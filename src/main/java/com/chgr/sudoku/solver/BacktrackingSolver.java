@@ -1,7 +1,8 @@
 package com.chgr.sudoku.solver;
 
-import com.chgr.sudoku.models.*;
-import javafx.application.Platform;
+import com.chgr.sudoku.models.ICell;
+import com.chgr.sudoku.models.ISudoku;
+import com.chgr.sudoku.models.Pos;
 import javafx.concurrent.Task;
 
 import java.util.Comparator;
@@ -29,7 +30,7 @@ public class BacktrackingSolver extends Task<Boolean> {
     }
 
     private boolean scan() {
-        Platform.runLater(sudoku::reRender);
+        sudoku.reRender();
         ICell cell = sudoku.getEmptyCells().stream().min(Comparator.comparingInt(c -> c.getCandidates().size())).orElse(null);
 
         // if no empty cell
