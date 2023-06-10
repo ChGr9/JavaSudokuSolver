@@ -14,7 +14,7 @@ import java.util.*;
 
 public class Cell extends StackPane implements ICell {
 
-    public static final int SIZE = 40;
+    public static final int SIZE = 80;
     @Setter
     @Getter
     private int x;
@@ -37,7 +37,7 @@ public class Cell extends StackPane implements ICell {
     public Cell(int x, int y) {
         super();
 
-        this.valueText.setFont(Font.font(this.valueText.getFont().getFamily(), FontWeight.BOLD, 16));
+        this.valueText.setFont(Font.font(this.valueText.getFont().getFamily(), FontWeight.BOLD, SIZE/2.5f));
         this.setPrefSize(SIZE, SIZE);
         this.setLayoutX(x * SIZE);
         this.setLayoutY(y * SIZE);
@@ -53,7 +53,7 @@ public class Cell extends StackPane implements ICell {
             for (int j = 0; j < 3; j++) {
                 this.candidatesText[i][j] = new Text();
                 // Make the candidate numbers small
-                this.candidatesText[i][j].setFont(new Font(this.candidatesText[i][j].getFont().getFamily(), 10));
+                this.candidatesText[i][j].setFont(new Font(this.candidatesText[i][j].getFont().getFamily(), SIZE/4f));
                 candidateGrid.add(this.candidatesText[i][j], j, i);
             }
         }
