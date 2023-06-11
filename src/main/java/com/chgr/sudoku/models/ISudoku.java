@@ -24,4 +24,12 @@ public interface ISudoku {
     Set<Pos> removeAffectedCandidates(int x, int y, int num);
 
     Set<Integer> generateCandidates(int x, int y);
+
+    ICell[] getAllCells();
+
+    ICell[] getRow(int y);
+
+    ICell[] getColumn(int x);
+
+    ICell[] getSquare(int squareNumber);
 }

@@ -128,12 +128,30 @@ public class SudokuWithoutUI implements ISudoku {
         return candidates;
     }
 
+    @Override
+    public CellWithoutUI[] getAllCells() {
+        return Arrays.stream(cells).flatMap(Arrays::stream).toArray(CellWithoutUI[]::new);
+    }
+
+    @Override
     public CellWithoutUI[] getColumn(int x){
         return cells[x];
     }
 
+    @Override
     public CellWithoutUI[] getRow(int y){
         return Arrays.stream(cells).map(row -> row[y]).toArray(CellWithoutUI[]::new);
+    }
+
+    @Override
+    public CellWithoutUI[] getSquare(int squareNumber){
+        //col and row are the coordinates of the top left most cell in the square that x,y is located
+        int col = squareNumber * 3 % 9;
+        int row = squareNumber / 3 * 3;
+        CellWithoutUI[] square = new CellWithoutUI[SUDOKU_SIZE];
+        for (int i = 0; i < 3; i++)
+            System.arraycopy(cells[col + i], row, square, i * 3, 3);
+        return square;
     }
 
     public CellWithoutUI[] getSquare(int x, int y){
