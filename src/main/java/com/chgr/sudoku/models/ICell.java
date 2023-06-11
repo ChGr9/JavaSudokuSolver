@@ -7,11 +7,13 @@ public interface ICell {
     int EMPTY = 0;
     Set<Integer> DIGITS = Set.of(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
-    Collection<Integer> getCandidates();
+    Set<Integer> getCandidates();
 
     int getX();
 
     int getY();
+
+    int getValue();
 
     void clearCandidates();
 
@@ -22,4 +24,6 @@ public interface ICell {
     void addCandidate(int num);
 
     void addCandidates(Collection<Integer> candidates);
+
+    boolean removeCandidate(int candidate);
 }

@@ -25,7 +25,7 @@ public class CellWithoutUI implements ICell {
     }
 
     @Override
-    public Collection<Integer> getCandidates() {
+    public Set<Integer> getCandidates() {
         if(this.value != EMPTY)
             return Set.of();
         return Set.copyOf(candidates);
@@ -61,6 +61,7 @@ public class CellWithoutUI implements ICell {
         candidates.forEach(this::addCandidate);
     }
 
+    @Override
     public boolean removeCandidate(int candidate) {
         if (candidate > 0 && candidate < 10 && value == EMPTY) {
             return candidates.remove(candidate);
