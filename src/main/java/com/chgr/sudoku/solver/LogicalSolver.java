@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class LogicalSolver {
 
@@ -31,7 +30,8 @@ public class LogicalSolver {
             LogicalSolver::hiddenPair,
             LogicalSolver::hiddenTriple,
             LogicalSolver::nakedQuad,
-            LogicalSolver::hiddenQuad
+            LogicalSolver::hiddenQuad,
+            LogicalSolver::pointingTuple
     );
 
     public static boolean solve(Sudoku sudoku){
@@ -284,5 +284,82 @@ public class LogicalSolver {
             }
         }
         return false;
+    }
+
+    public static boolean pointingTuple(ISudoku sudoku) {
+        final int SQUARE_SIZE = 3;
+
+        for (int squareIndex = 0; squareIndex < ISudoku.SUDOKU_SIZE; squareIndex++) {
+            ICell[] square = sudoku.getSquare(squareIndex);
+            List<Set<Integer>> squareRowCandidates = new ArrayList<>();
+            List<Set<Integer>> squareColumnCandidates = new ArrayList<>();
+
+            for (int rowIndex = 0; rowIndex < SQUARE_SIZE; rowIndex++) {
+                squareRowCandidates.add(getCandidateSetByY(square, rowIndex));
+                squareColumnCandidates.add(getCandidateSetByX(square, rowIndex));
+            }
+
+            if (processCandidates(sudoku, square, squareRowCandidates, true)
+                    || processCandidates(sudoku, square, squareColumnCandidates, false)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static Set<Integer> getCandidateSetByY(ICell[] square, int finalRowIndex) {
+        return Arrays.stream(square)
+                .filter(cell -> cell.getY() % 3 == finalRowIndex)
+                .flatMap(cell -> cell.getCandidates().stream())
+                .collect(Collectors.toSet());
+    }
+
+    private static Set<Integer> getCandidateSetByX(ICell[] square, int finalRowIndex) {
+        return Arrays.stream(square)
+                .filter(cell -> cell.getX() % 3 == finalRowIndex)
+                .flatMap(cell -> cell.getCandidates().stream())
+                .collect(Collectors.toSet());
+    }
+
+    private static boolean processCandidates(ISudoku sudoku, ICell[] square, List<Set<Integer>> squareCandidates, boolean isXAxis) {
+        for (int candidateIndex = 0; candidateIndex < squareCandidates.size(); candidateIndex++) {
+            Set<Integer> currentCandidateSet = squareCandidates.get(candidateIndex);
+            Set<Integer> distinctCandidates = getDistinctCandidates(currentCandidateSet, squareCandidates);
+
+            if (!distinctCandidates.isEmpty() && removeCandidatesFromCells(sudoku, square, distinctCandidates, isXAxis, candidateIndex)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean removeCandidatesFromCells(ISudoku sudoku, ICell[] square, Set<Integer> distinctCandidates, boolean isXAxis, int offset) {
+        boolean changed = false;
+
+        ICell[] cells = isXAxis ? sudoku.getRow(square[0].getY() + offset) : sudoku.getColumn(square[0].getX() + offset);
+        int startAxis = isXAxis ? square[0].getX() : square[0].getY();
+        int endAxis = isXAxis ? square[8].getX() : square[8].getY();
+
+        for (ICell cell : cells) {
+            int axis = isXAxis ? cell.getX() : cell.getY();
+            if (axis < startAxis || axis > endAxis) {
+                for (int candidate : distinctCandidates) {
+                    changed |= cell.removeCandidate(candidate);
+                }
+            }
+        }
+
+        return changed;
+    }
+
+
+    private static Set<Integer> getDistinctCandidates(Set<Integer> currentCandidateSet, List<Set<Integer>> squareCandidates) {
+        return currentCandidateSet.stream()
+                .filter(candidate -> squareCandidates.stream()
+                        .filter(set -> set != currentCandidateSet)
+                        .noneMatch(set -> set.contains(candidate)))
+                .collect(Collectors.toSet());
     }
 }
