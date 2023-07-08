@@ -221,4 +221,60 @@ class LogicalSolverTest {
         }
         assertChecksMatch(sudoku, technique.checks);
     }
+
+    @Test
+    void nakedQuad() throws IOException {
+        URL url = LogicalSolverTest.class.getResource("/techniques/nakedQuad.yml");
+        assertNotNull(url);
+
+        TechniqueEntity technique = mapper.readValue(url, TechniqueEntity.class);
+        assertNotNull(technique);
+        assertNotNull(technique.grid);
+
+        for(int i = 0; i<9; i++){
+            List<Integer> row = technique.grid.get(i);
+            assertNotNull(row);
+            for(int j = 0; j<9; j++){
+                Integer value = row.get(j);
+                assertNotNull(value);
+                sudoku.getCell(j, i).setValue(value);
+            }
+        }
+
+        sudoku.loadCandidates();
+
+        for(int i=0; i < technique.repetitions; i++) {
+            boolean result = LogicalSolver.nakedQuad(sudoku);
+            assertTrue(result);
+        }
+        assertChecksMatch(sudoku, technique.checks);
+    }
+
+    @Test
+    void hiddenQuad() throws IOException {
+        URL url = LogicalSolverTest.class.getResource("/techniques/hiddenQuad.yml");
+        assertNotNull(url);
+
+        TechniqueEntity technique = mapper.readValue(url, TechniqueEntity.class);
+        assertNotNull(technique);
+        assertNotNull(technique.grid);
+
+        for(int i = 0; i<9; i++){
+            List<Integer> row = technique.grid.get(i);
+            assertNotNull(row);
+            for(int j = 0; j<9; j++){
+                Integer value = row.get(j);
+                assertNotNull(value);
+                sudoku.getCell(j, i).setValue(value);
+            }
+        }
+
+        sudoku.loadCandidates();
+
+        for(int i=0; i < technique.repetitions; i++) {
+            boolean result = LogicalSolver.hiddenQuad(sudoku);
+            assertTrue(result);
+        }
+        assertChecksMatch(sudoku, technique.checks);
+    }
 }

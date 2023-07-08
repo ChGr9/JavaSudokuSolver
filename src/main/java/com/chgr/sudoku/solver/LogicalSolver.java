@@ -29,7 +29,9 @@ public class LogicalSolver {
             LogicalSolver::nakedPair,
             LogicalSolver::nakedTriple,
             LogicalSolver::hiddenPair,
-            LogicalSolver::hiddenTriple
+            LogicalSolver::hiddenTriple,
+            LogicalSolver::nakedQuad,
+            LogicalSolver::hiddenQuad
     );
 
     public static boolean solve(Sudoku sudoku){
@@ -83,6 +85,20 @@ public class LogicalSolver {
             if(checkNakedTuple(sudoku.getColumn(i), 3))
                 return true;
             if(checkNakedTuple(sudoku.getSquare(i), 3))
+                return true;
+        }
+        return false;
+    }
+
+    //https://www.sudokuwiki.org/Naked_Candidates#NP
+    //Section: Naked Quads
+    public static Boolean nakedQuad(ISudoku sudoku) {
+        for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
+            if(checkNakedTuple(sudoku.getRow(i), 4))
+                return true;
+            if(checkNakedTuple(sudoku.getColumn(i), 4))
+                return true;
+            if(checkNakedTuple(sudoku.getSquare(i), 4))
                 return true;
         }
         return false;
@@ -204,6 +220,20 @@ public class LogicalSolver {
             if(checkHiddenTuple(sudoku.getColumn(i), 3))
                 return true;
             if(checkHiddenTuple(sudoku.getSquare(i), 3))
+                return true;
+        }
+        return false;
+    }
+
+    //https://www.sudokuwiki.org/Hidden_Candidates#HQ
+    //Section: Hidden Quads
+    public static Boolean hiddenQuad(ISudoku sudoku) {
+        for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
+            if(checkHiddenTuple(sudoku.getRow(i), 4))
+                return true;
+            if(checkHiddenTuple(sudoku.getColumn(i), 4))
+                return true;
+            if(checkHiddenTuple(sudoku.getSquare(i), 4))
                 return true;
         }
         return false;
