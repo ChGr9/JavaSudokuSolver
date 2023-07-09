@@ -6,6 +6,7 @@ import com.chgr.sudoku.models.Sudoku;
 import com.chgr.sudoku.solver.techniques.HiddenTechnique;
 import com.chgr.sudoku.solver.techniques.IntersectionTechnique;
 import com.chgr.sudoku.solver.techniques.NakedTechnique;
+import com.chgr.sudoku.solver.techniques.WingTechnique;
 
 import java.util.List;
 import java.util.function.Function;
@@ -32,7 +33,8 @@ public class LogicalSolver {
             NakedTechnique::nakedQuad,
             HiddenTechnique::hiddenQuad,
             IntersectionTechnique::pointingTuple,
-            IntersectionTechnique::boxLineReduction
+            IntersectionTechnique::boxLineReduction,
+            WingTechnique::xWing
     );
 
     public static boolean solve(Sudoku sudoku){

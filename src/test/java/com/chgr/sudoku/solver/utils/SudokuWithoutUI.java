@@ -4,9 +4,11 @@ import com.chgr.sudoku.models.Cell;
 import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
 import com.chgr.sudoku.models.Pos;
-import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
