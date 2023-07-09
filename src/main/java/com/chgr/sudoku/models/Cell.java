@@ -115,8 +115,10 @@ public class Cell extends StackPane implements ICell {
         return false;
     }
 
-    public void removeCandidates(Collection<Integer> candidates) {
-        candidates.forEach(this::removeCandidate);
+    public boolean removeCandidates(Collection<Integer> candidates) {
+        return candidates.stream()
+                .map(this::removeCandidate)
+                .reduce(false, (a, b) -> a || b);
     }
 
     public boolean hasCandidate(int candidate) {

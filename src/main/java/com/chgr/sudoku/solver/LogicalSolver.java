@@ -31,7 +31,8 @@ public class LogicalSolver {
             LogicalSolver::hiddenTriple,
             LogicalSolver::nakedQuad,
             LogicalSolver::hiddenQuad,
-            LogicalSolver::pointingTuple
+            LogicalSolver::pointingTuple,
+            LogicalSolver::boxLineReduction
     );
 
     public static boolean solve(Sudoku sudoku){
@@ -286,6 +287,8 @@ public class LogicalSolver {
         return false;
     }
 
+    //https://www.sudokuwiki.org/Intersection_Removal#IR
+    //Section: Pointing Pairs, Pointing Triples
     public static boolean pointingTuple(ISudoku sudoku) {
         final int SQUARE_SIZE = 3;
 
@@ -322,12 +325,12 @@ public class LogicalSolver {
                 .collect(Collectors.toSet());
     }
 
-    private static boolean processCandidates(ISudoku sudoku, ICell[] square, List<Set<Integer>> squareCandidates, boolean isXAxis) {
+    private static boolean processCandidates(ISudoku sudoku, ICell[] square, List<Set<Integer>> squareCandidates, boolean isRow) {
         for (int candidateIndex = 0; candidateIndex < squareCandidates.size(); candidateIndex++) {
             Set<Integer> currentCandidateSet = squareCandidates.get(candidateIndex);
             Set<Integer> distinctCandidates = getDistinctCandidates(currentCandidateSet, squareCandidates);
 
-            if (!distinctCandidates.isEmpty() && removeCandidatesFromCells(sudoku, square, distinctCandidates, isXAxis, candidateIndex)) {
+            if (!distinctCandidates.isEmpty() && removeCandidatesFromCells(sudoku, square, distinctCandidates, isRow, candidateIndex)) {
                 return true;
             }
         }
@@ -335,15 +338,15 @@ public class LogicalSolver {
         return false;
     }
 
-    private static boolean removeCandidatesFromCells(ISudoku sudoku, ICell[] square, Set<Integer> distinctCandidates, boolean isXAxis, int offset) {
+    private static boolean removeCandidatesFromCells(ISudoku sudoku, ICell[] square, Set<Integer> distinctCandidates, boolean isRow, int offset) {
         boolean changed = false;
 
-        ICell[] cells = isXAxis ? sudoku.getRow(square[0].getY() + offset) : sudoku.getColumn(square[0].getX() + offset);
-        int startAxis = isXAxis ? square[0].getX() : square[0].getY();
-        int endAxis = isXAxis ? square[8].getX() : square[8].getY();
+        ICell[] cells = isRow ? sudoku.getRow(square[0].getY() + offset) : sudoku.getColumn(square[0].getX() + offset);
+        int startAxis = isRow ? square[0].getX() : square[0].getY();
+        int endAxis = isRow ? square[8].getX() : square[8].getY();
 
         for (ICell cell : cells) {
-            int axis = isXAxis ? cell.getX() : cell.getY();
+            int axis = isRow ? cell.getX() : cell.getY();
             if (axis < startAxis || axis > endAxis) {
                 for (int candidate : distinctCandidates) {
                     changed |= cell.removeCandidate(candidate);
@@ -355,11 +358,55 @@ public class LogicalSolver {
     }
 
 
-    private static Set<Integer> getDistinctCandidates(Set<Integer> currentCandidateSet, List<Set<Integer>> squareCandidates) {
+    private static Set<Integer> getDistinctCandidates(Set<Integer> currentCandidateSet, List<Set<Integer>> groupCandidates) {
         return currentCandidateSet.stream()
-                .filter(candidate -> squareCandidates.stream()
+                .filter(candidate -> groupCandidates.stream()
                         .filter(set -> set != currentCandidateSet)
                         .noneMatch(set -> set.contains(candidate)))
                 .collect(Collectors.toSet());
+    }
+
+    //https://www.sudokuwiki.org/Intersection_Removal#IR
+    //Section: Box Line Reduction
+    public static boolean boxLineReduction(ISudoku sudoku) {
+        for (int i = 0; i < Sudoku.SUDOKU_SIZE; i++) {
+            if (checkBoxLineReduction(sudoku, sudoku.getRow(i), true))
+                return true;
+            if (checkBoxLineReduction(sudoku, sudoku.getColumn(i), false))
+                return true;
+        }
+        return false;
+    }
+
+    private static boolean checkBoxLineReduction(ISudoku sudoku, ICell[] group, boolean isRow) {
+        List<Set<Integer>> groupSectionCandidates = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            int finalI = i;
+            groupSectionCandidates.add(IntStream.range(0, 3).mapToObj(index -> group[index + finalI * 3])
+                    .flatMap(cell -> cell.getCandidates().stream())
+                    .collect(Collectors.toSet()));
+        }
+        for (int i = 0; i < 3; i++) {
+            Set<Integer> currentCandidateSet = groupSectionCandidates.get(i);
+            Set<Integer> distinctCandidates = getDistinctCandidates(currentCandidateSet, groupSectionCandidates);
+            if (!distinctCandidates.isEmpty() && removeCandidatesFromSquare(sudoku, group, distinctCandidates, isRow, i))
+                return true;
+        }
+        return false;
+    }
+
+    private static boolean removeCandidatesFromSquare(ISudoku sudoku, ICell[] group, Set<Integer> distinctCandidates, boolean isRow, int i) {
+        boolean changed = false;
+        ICell cell = group[i * 3];
+        int index = cell.getY() / 3 * 3 + cell.getX() / 3;
+        ICell[] cells = sudoku.getSquare(index);
+        int limit = isRow ? cell.getY() : cell.getX();
+        for (ICell cell1 : cells) {
+            int axis = isRow ? cell1.getY() : cell1.getX();
+            if (axis != limit && cell1.removeCandidates(distinctCandidates)) {
+                changed = true;
+            }
+        }
+        return changed;
     }
 }
