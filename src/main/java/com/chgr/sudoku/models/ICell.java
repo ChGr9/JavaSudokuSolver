@@ -26,4 +26,6 @@ public interface ICell {
     void addCandidates(Collection<Integer> candidates);
 
     boolean removeCandidate(int candidate);
+
+    boolean removeCandidates(Collection<Integer> candidates);
 }

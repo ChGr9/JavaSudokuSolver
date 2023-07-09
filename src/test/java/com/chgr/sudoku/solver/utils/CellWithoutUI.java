@@ -68,4 +68,11 @@ public class CellWithoutUI implements ICell {
         }
         return false;
     }
+
+    @Override
+    public boolean removeCandidates(Collection<Integer> candidates) {
+        return candidates.stream()
+                .map(this::removeCandidate)
+                .reduce(false, (a, b) -> a || b);
+    }
 }

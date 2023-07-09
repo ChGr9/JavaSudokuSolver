@@ -306,4 +306,33 @@ class LogicalSolverTest {
         }
         assertChecksMatch(sudoku, technique.checks);
     }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    void boxLineReduction(int fileNumber) throws IOException {
+        URL url = LogicalSolverTest.class.getResource(String.format("/techniques/boxLineReduction%d.yml", fileNumber));
+        assertNotNull(url);
+
+        TechniqueEntity technique = mapper.readValue(url, TechniqueEntity.class);
+        assertNotNull(technique);
+        assertNotNull(technique.grid);
+
+        for(int i = 0; i<9; i++){
+            List<Integer> row = technique.grid.get(i);
+            assertNotNull(row);
+            for(int j = 0; j<9; j++){
+                Integer value = row.get(j);
+                assertNotNull(value);
+                sudoku.getCell(j, i).setValue(value);
+            }
+        }
+
+        sudoku.loadCandidates();
+
+        for(int i=0; i < technique.repetitions; i++) {
+            boolean result = LogicalSolver.boxLineReduction(sudoku);
+            assertTrue(result);
+        }
+        assertChecksMatch(sudoku, technique.checks);
+    }
 }
