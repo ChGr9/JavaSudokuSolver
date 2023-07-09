@@ -19,6 +19,8 @@ public interface ISudoku {
 
     Set<Integer> getColumnValue(int x);
 
+    Set<Integer> getSquareValue(int squareNumber);
+
     Set<Integer> getSquareValue(int x, int y);
 
     Set<Pos> removeAffectedCandidates(int x, int y, int num);
