@@ -64,7 +64,7 @@ class BacktrackingSolverTest {
             }
         }
 
-        solver.solve();
+        assertTrue(solver.solve());
         assertEquals(sudokuMap.solved, sudoku.toIntList());
     }
 }

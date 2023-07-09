@@ -2,7 +2,6 @@ package com.chgr.sudoku.solver;
 
 import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
-import com.chgr.sudoku.models.Sudoku;
 import com.chgr.sudoku.solver.techniques.HiddenTechnique;
 import com.chgr.sudoku.solver.techniques.IntersectionTechnique;
 import com.chgr.sudoku.solver.techniques.NakedTechnique;
@@ -13,7 +12,7 @@ import java.util.function.Function;
 
 public class LogicalSolver {
 
-    private static boolean isSolved(Sudoku sudoku) {
+    private static boolean isSolved(ISudoku sudoku) {
         for (int i = 0; i < ISudoku.SUDOKU_SIZE; i++) {
             if (!sudoku.getRowValue(i).containsAll(ICell.DIGITS) ||
                     !sudoku.getColumnValue(i).containsAll(ICell.DIGITS) ||
@@ -23,7 +22,7 @@ public class LogicalSolver {
         return true;
     }
 
-    private static final List<Function<Sudoku, Boolean>> techniques = List.of(
+    private static final List<Function<ISudoku, Boolean>> techniques = List.of(
             NakedTechnique::nakedSingle,
             HiddenTechnique::hiddenSingle,
             NakedTechnique::nakedPair,
@@ -37,11 +36,12 @@ public class LogicalSolver {
             WingTechnique::xWing
     );
 
-    public static boolean solve(Sudoku sudoku){
+    public static boolean solve(ISudoku sudoku){
+        sudoku.loadCandidates();
         boolean changed = true;
         while(changed){
             changed = false;
-            for(Function<Sudoku, Boolean> technique : techniques){
+            for(Function<ISudoku, Boolean> technique : techniques){
                 if(technique.apply(sudoku)){
                     changed = true;
                 }

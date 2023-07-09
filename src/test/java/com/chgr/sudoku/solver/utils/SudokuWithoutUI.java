@@ -92,7 +92,8 @@ public class SudokuWithoutUI implements ISudoku {
         return square;
     }
 
-    private Set<Integer> getSquareValue(int squareNumber) {
+    @Override
+    public Set<Integer> getSquareValue(int squareNumber) {
         //col and row are the coordinates of the top left most cell in the square that x,y is located
         int col = squareNumber * 3 % 9;
         int row = squareNumber / 3 * 3;
