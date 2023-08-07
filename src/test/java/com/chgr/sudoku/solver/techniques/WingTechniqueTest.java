@@ -4,9 +4,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.net.URL;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WingTechniqueTest extends BaseTechniqueTest {
 
@@ -20,17 +20,7 @@ class WingTechniqueTest extends BaseTechniqueTest {
         assertNotNull(technique);
         assertNotNull(technique.grid);
 
-        for(int i = 0; i<9; i++){
-            List<Integer> row = technique.grid.get(i);
-            assertNotNull(row);
-            for(int j = 0; j<9; j++){
-                Integer value = row.get(j);
-                assertNotNull(value);
-                sudoku.getCell(j, i).setValue(value);
-            }
-        }
-
-        sudoku.loadCandidates();
+        loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
             boolean result = WingTechnique.xWing(sudoku);

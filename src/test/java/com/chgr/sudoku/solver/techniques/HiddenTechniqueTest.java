@@ -6,7 +6,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,17 +22,7 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
         assertNotNull(technique);
         assertNotNull(technique.grid);
 
-        for(int i = 0; i<9; i++){
-            List<Integer> row = technique.grid.get(i);
-            assertNotNull(row);
-            for(int j = 0; j<9; j++){
-                Integer value = row.get(j);
-                assertNotNull(value);
-                sudoku.getCell(j, i).setValue(value);
-            }
-        }
-
-        sudoku.loadCandidates();
+        loadSudoku(technique);
 
         boolean result = HiddenTechnique.hiddenSingle(sudoku);
 
@@ -51,17 +40,7 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
         assertNotNull(technique);
         assertNotNull(technique.grid);
 
-        for(int i = 0; i<9; i++){
-            List<Integer> row = technique.grid.get(i);
-            assertNotNull(row);
-            for(int j = 0; j<9; j++){
-                Integer value = row.get(j);
-                assertNotNull(value);
-                sudoku.getCell(j, i).setValue(value);
-            }
-        }
-
-        sudoku.loadCandidates();
+        loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
             boolean result = HiddenTechnique.hiddenPair(sudoku);
@@ -79,17 +58,7 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
         assertNotNull(technique);
         assertNotNull(technique.grid);
 
-        for(int i = 0; i<9; i++){
-            List<Integer> row = technique.grid.get(i);
-            assertNotNull(row);
-            for(int j = 0; j<9; j++){
-                Integer value = row.get(j);
-                assertNotNull(value);
-                sudoku.getCell(j, i).setValue(value);
-            }
-        }
-
-        sudoku.loadCandidates();
+        loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
             boolean result = HiddenTechnique.hiddenTriple(sudoku);
@@ -107,17 +76,7 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
         assertNotNull(technique);
         assertNotNull(technique.grid);
 
-        for(int i = 0; i<9; i++){
-            List<Integer> row = technique.grid.get(i);
-            assertNotNull(row);
-            for(int j = 0; j<9; j++){
-                Integer value = row.get(j);
-                assertNotNull(value);
-                sudoku.getCell(j, i).setValue(value);
-            }
-        }
-
-        sudoku.loadCandidates();
+        loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
             boolean result = HiddenTechnique.hiddenQuad(sudoku);

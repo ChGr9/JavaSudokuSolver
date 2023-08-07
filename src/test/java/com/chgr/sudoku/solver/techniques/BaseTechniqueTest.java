@@ -1,5 +1,6 @@
 package com.chgr.sudoku.solver.techniques;
 
+import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.solver.utils.SudokuWithoutUI;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -12,15 +13,19 @@ import java.util.Set;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public abstract class BaseTechniqueTest {
 
     protected record Check(int x, int y, Integer value, Set<Integer> candidates) {
     }
+    protected record CandidatePos(int x, int y, Set<Integer> candidates) {
+    }
     @Setter
     protected static class TechniqueEntity{
         public List<List<Integer>> grid;
         public List<Check> checks;
+        public List<CandidatePos> override;
         public Integer repetitions = 1;
     }
 
@@ -45,5 +50,26 @@ public abstract class BaseTechniqueTest {
             if(check.value != null)
                 assertEquals(check.value, sudoku.getCell(check.x, check.y).getValue());
         }
+    }
+
+    protected void loadSudoku(TechniqueEntity technique) {
+        for (int i = 0; i < 9; i++) {
+            List<Integer> row = technique.grid.get(i);
+            assertNotNull(row);
+            for (int j = 0; j < 9; j++) {
+                Integer value = row.get(j);
+                assertNotNull(value);
+                sudoku.getCell(j, i).setValue(value);
+            }
+        }
+
+        sudoku.loadCandidates();
+
+        if (technique.override != null)
+            for (CandidatePos candidatePos : technique.override) {
+                ICell cell = sudoku.getCell(candidatePos.x(), candidatePos.y());
+                cell.clearCandidates();
+                cell.addCandidates(candidatePos.candidates());
+            }
     }
 }
