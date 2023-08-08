@@ -34,4 +34,6 @@ public interface ISudoku {
     ICell[] getColumn(int x);
 
     ICell[] getSquare(int squareNumber);
+
+    ICell[] getSquare(int x, int y);
 }
