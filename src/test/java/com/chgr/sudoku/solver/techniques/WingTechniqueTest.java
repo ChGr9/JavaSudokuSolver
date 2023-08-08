@@ -1,5 +1,6 @@
 package com.chgr.sudoku.solver.techniques;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -24,6 +25,24 @@ class WingTechniqueTest extends BaseTechniqueTest {
 
         for(int i=0; i < technique.repetitions; i++) {
             boolean result = WingTechnique.xWing(sudoku);
+            assertTrue(result);
+        }
+        assertChecksMatch(sudoku, technique.checks);
+    }
+
+    @Test
+    void yWing() throws Exception {
+        URL url = WingTechniqueTest.class.getResource("/techniques/yWing.yml");
+        assertNotNull(url);
+
+        TechniqueEntity technique = mapper.readValue(url, TechniqueEntity.class);
+        assertNotNull(technique);
+        assertNotNull(technique.grid);
+
+        loadSudoku(technique);
+
+        for(int i=0; i < technique.repetitions; i++) {
+            boolean result = WingTechnique.yWing(sudoku);
             assertTrue(result);
         }
         assertChecksMatch(sudoku, technique.checks);

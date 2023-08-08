@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 public class ChainTechnique {
 
+    // https://www.sudokuwiki.org/Singles_Chains
     // Simple Coloring or Single Chains
     public static boolean simpleColoring(ISudoku sudoku) {
         for (int num = 1; num <= ISudoku.SUDOKU_SIZE; num++) {
