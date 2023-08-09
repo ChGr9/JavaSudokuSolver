@@ -2,7 +2,7 @@ package com.chgr.sudoku.solver.techniques;
 
 import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
-import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.CombinatoricsUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -17,10 +17,20 @@ public class WingTechnique {
     //https://www.sudokuwiki.org/X_Wing_Strategy
     //Section: X-Wing
     public static boolean xWing(ISudoku sudoku) {
-        return checkXWing(sudoku, true) || checkXWing(sudoku, false);
+        return checkFinStructure(sudoku, 2);
     }
 
-    private static boolean checkXWing(ISudoku sudoku, boolean isRow) {
+    //https://www.sudokuwiki.org/Sword_Fish_Strategy
+    //Section: Swordfish
+    public static boolean swordfish(ISudoku sudoku) {
+        return checkFinStructure(sudoku, 3);
+    }
+
+    private static boolean checkFinStructure(ISudoku sudoku, int combSize) {
+        return checkFin(sudoku, true, combSize) || checkFin(sudoku, false, combSize);
+    }
+
+    private static boolean checkFin(ISudoku sudoku, boolean isRow, int combSize) {
         Map<Integer, List<PossibleWing>> map = new HashMap<>();
 
         for (int i = 0; i < ISudoku.SUDOKU_SIZE; i++) {
@@ -32,7 +42,7 @@ public class WingTechnique {
                 List<ICell> cellsContainingCandidate = group.stream()
                         .filter(cell -> cell.getCandidates().contains(finalJ))
                         .toList();
-                if (cellsContainingCandidate.size() == 2) {
+                if (cellsContainingCandidate.size() >= 2 && cellsContainingCandidate.size() <= combSize) {
                     PossibleWing possibleWing = new PossibleWing();
                     possibleWing.rowOrColIndex = i;
                     possibleWing.cellIndices = cellsContainingCandidate.stream()
@@ -45,29 +55,29 @@ public class WingTechnique {
 
         for (Map.Entry<Integer, List<PossibleWing>> entry : map.entrySet()) {
             List<PossibleWing> possibleWings = entry.getValue();
-            if (possibleWings.size() >= 2) {
-                for (int i = 0; i < possibleWings.size() - 1; i++) {
-                    for (int j = i + 1; j < possibleWings.size(); j++) {
-                        PossibleWing possibleWing1 = possibleWings.get(i);
-                        PossibleWing possibleWing2 = possibleWings.get(j);
-                        if (CollectionUtils.isEqualCollection(possibleWing1.cellIndices, possibleWing2.cellIndices)) {
-                            ICell[] group1 = isRow ? sudoku.getColumn(possibleWing1.cellIndices.get(0)) : sudoku.getRow(possibleWing1.cellIndices.get(0));
-                            ICell[] group2 = isRow ? sudoku.getColumn(possibleWing1.cellIndices.get(1)) : sudoku.getRow(possibleWing1.cellIndices.get(1));
-                            boolean changed = false;
-                            for (ICell cell : group1) {
+
+            if (possibleWings.size() >= combSize) {
+                List<List<PossibleWing>> combinations = generateCombinations(possibleWings, combSize);
+
+                for (List<PossibleWing> combination : combinations) {
+                    Set<Integer> groupIndices = new HashSet<>();
+                    for (PossibleWing wing : combination) {
+                        groupIndices.addAll(wing.cellIndices);
+                    }
+
+                    if (groupIndices.size() == combSize) {
+                        boolean changed = false;
+                        for (Integer groupIndex : groupIndices) {
+                            ICell[] group = isRow ? sudoku.getColumn(groupIndex) : sudoku.getRow(groupIndex);
+                            for (ICell cell : group) {
                                 int index = isRow ? cell.getY() : cell.getX();
-                                if (possibleWing1.rowOrColIndex != index && possibleWing2.rowOrColIndex != index) {
+                                if (combination.stream().noneMatch(wing -> wing.rowOrColIndex == index)) {
                                     changed |= cell.removeCandidate(entry.getKey());
                                 }
                             }
-                            for (ICell cell : group2) {
-                                int index = isRow ? cell.getY() : cell.getX();
-                                if (possibleWing1.rowOrColIndex != index && possibleWing2.rowOrColIndex != index) {
-                                    changed |= cell.removeCandidate(entry.getKey());
-                                }
-                            }
-                            if (changed)
-                                return true;
+                        }
+                        if (changed) {
+                            return true;
                         }
                     }
                 }
@@ -75,6 +85,19 @@ public class WingTechnique {
         }
         return false;
     }
+
+    private static List<List<PossibleWing>> generateCombinations(List<PossibleWing> wings, int combSize) {
+        List<List<PossibleWing>> allCombinations = new ArrayList<>();
+
+        Iterator<int[]> iterator = CombinatoricsUtils.combinationsIterator(wings.size(), combSize);
+        while (iterator.hasNext()) {
+            int[] combinationIndices = iterator.next();
+            allCombinations.add(Arrays.stream(combinationIndices).mapToObj(wings::get).toList());
+        }
+
+        return allCombinations;
+    }
+
 
     //https://www.sudokuwiki.org/Y_Wing_Strategy
     //Section: Y-Wing
