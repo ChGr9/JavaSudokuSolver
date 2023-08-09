@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class ChainTechniqueTest extends BaseTechniqueTest{
 
     @ParameterizedTest
-    @ValueSource(ints = {2})
+    @ValueSource(ints = {1, 2})
     void simpleColoring(int fileNumber) throws IOException {
         URL url = HiddenTechniqueTest.class.getResource(String.format("/techniques/simpleColoring%d.yml", fileNumber));
         assertNotNull(url);
