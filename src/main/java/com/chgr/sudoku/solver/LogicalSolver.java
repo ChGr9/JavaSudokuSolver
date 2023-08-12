@@ -2,17 +2,21 @@ package com.chgr.sudoku.solver;
 
 import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
-import com.chgr.sudoku.solver.techniques.HiddenTechnique;
-import com.chgr.sudoku.solver.techniques.IntersectionTechnique;
-import com.chgr.sudoku.solver.techniques.NakedTechnique;
-import com.chgr.sudoku.solver.techniques.WingTechnique;
+import com.chgr.sudoku.solver.techniques.*;
+import javafx.concurrent.Task;
 
 import java.util.List;
 import java.util.function.Function;
 
-public class LogicalSolver {
+public class LogicalSolver extends Task<Boolean> {
 
-    private static boolean isSolved(ISudoku sudoku) {
+    private final ISudoku sudoku;
+
+    public LogicalSolver(ISudoku sudoku) {
+        this.sudoku = sudoku;
+    }
+
+    private boolean isSolved() {
         for (int i = 0; i < ISudoku.SUDOKU_SIZE; i++) {
             if (!sudoku.getRowValue(i).containsAll(ICell.DIGITS) ||
                     !sudoku.getColumnValue(i).containsAll(ICell.DIGITS) ||
@@ -33,10 +37,13 @@ public class LogicalSolver {
             HiddenTechnique::hiddenQuad,
             IntersectionTechnique::pointingTuple,
             IntersectionTechnique::boxLineReduction,
-            WingTechnique::xWing
+            WingTechnique::xWing,
+            ChainTechnique::simpleColoring,
+            WingTechnique::yWing,
+            WingTechnique::swordfish
     );
 
-    public static boolean solve(ISudoku sudoku){
+    public boolean solve(){
         sudoku.loadCandidates();
         boolean changed = true;
         while(changed){
@@ -47,6 +54,11 @@ public class LogicalSolver {
                 }
             }
         }
-        return isSolved(sudoku);
+        return isSolved();
+    }
+
+    @Override
+    protected Boolean call() {
+        return solve();
     }
 }
