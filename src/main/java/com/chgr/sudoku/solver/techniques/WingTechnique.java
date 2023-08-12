@@ -102,32 +102,32 @@ public class WingTechnique {
     //https://www.sudokuwiki.org/Y_Wing_Strategy
     //Section: Y-Wing
     public static boolean yWing(ISudoku sudoku) {
-        for (ICell pivot : sudoku.getEmptyCells()) {
+        Map<ICell, Set<ICell>> peerMap = new HashMap<>();
 
-            // Find pivot cells with exactly two candidates
+        for (ICell cell : sudoku.getEmptyCells()) {
+            peerMap.put(cell, getPeers(sudoku, cell.getY(), cell.getX()));
+        }
+
+        for (ICell pivot : sudoku.getEmptyCells()) {
             if (pivot.getCandidates().size() == 2) {
                 List<Integer> pivotCandidates = pivot.getCandidates().stream().toList();
                 Integer A = pivotCandidates.get(0);
                 Integer B = pivotCandidates.get(1);
 
-                // Collect cells that are peers to the pivot and have only two candidates
-                List<ICell> possibleWings = getPeers(sudoku, pivot.getY(), pivot.getX()).stream()
+                List<ICell> possibleWings = peerMap.get(pivot).stream()
                         .filter(cell -> cell.getCandidates().size() == 2)
                         .toList();
 
                 for (ICell wing1 : possibleWings) {
                     if (wing1.getCandidates().contains(A) && !wing1.getCandidates().contains(B)) {
-                        // wing1 is AC type. Search for a BC wing.
-                        for (ICell wing2 : possibleWings) {
-                            if (!wing1.equals(wing2) && !isPeer(wing1.getX(), wing1.getY(), wing2.getX(), wing2.getY())
-                                    && wing2.getCandidates().contains(B) && !wing2.getCandidates().contains(A)) {
-                                Integer C = wing1.getCandidates().stream().filter(candidate -> !candidate.equals(A)).findFirst().orElse(null);
-                                if (C != null && wing2.getCandidates().contains(C)) {
-                                    // Identify common peers of wing1 and wing2
-                                    Set<ICell> commonPeers = new LinkedHashSet<>(getPeers(sudoku, wing1.getY(), wing1.getX()));
-                                    commonPeers.retainAll(getPeers(sudoku, wing2.getY(), wing2.getX()));
+                        Integer C = wing1.getCandidates().stream().filter(candidate -> !candidate.equals(A)).findFirst().orElse(null);
+                        if (C != null) {
+                            for (ICell wing2 : possibleWings) {
+                                if (!wing1.equals(wing2) && !isPeer(wing1.getX(), wing1.getY(), wing2.getX(), wing2.getY())
+                                        && wing2.getCandidates().contains(B) && wing2.getCandidates().contains(C)) {
+                                    Set<ICell> commonPeers = new HashSet<>(peerMap.get(wing1));
+                                    commonPeers.retainAll(peerMap.get(wing2));
 
-                                    // Remove candidate C from common peers
                                     boolean changed = false;
                                     for (ICell peer : commonPeers) {
                                         if (peer != pivot) {
@@ -137,6 +137,53 @@ public class WingTechnique {
                                     if (changed)
                                         return true;
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+
+    //https://www.sudokuwiki.org/XYZ_Wing
+    //Section: XYZ-Wing
+    public static boolean xyzWing(ISudoku sudoku){
+        Map<ICell, Set<ICell>> peerMap = new HashMap<>();
+
+        for (ICell cell : sudoku.getEmptyCells()) {
+            peerMap.put(cell, getPeers(sudoku, cell.getY(), cell.getX()));
+        }
+
+        for (ICell pivot : sudoku.getEmptyCells()) {
+            if (pivot.getCandidates().size() == 3) {
+                List<ICell> possibleWings = peerMap.get(pivot).stream()
+                        .filter(cell -> cell.getCandidates().size() == 2)
+                        .filter(wing -> pivot.getCandidates().containsAll(wing.getCandidates()))
+                        .toList();
+
+                for (int i = 0; i < possibleWings.size(); i++) {
+                    for (int j = i + 1; j < possibleWings.size(); j++) {
+                        ICell wing1 = possibleWings.get(i);
+                        ICell wing2 = possibleWings.get(j);
+                        if (!isPeer(wing1.getX(), wing1.getY(), wing2.getX(), wing2.getY())) {
+                            Set<Integer> allCommonCandidates = new HashSet<>(pivot.getCandidates());
+                            allCommonCandidates.retainAll(wing1.getCandidates());
+                            allCommonCandidates.retainAll(wing2.getCandidates());
+
+                            if (allCommonCandidates.size() == 1) {
+                                Set<ICell> commonPeers = new HashSet<>(peerMap.get(pivot));
+                                commonPeers.retainAll(peerMap.get(wing1));
+                                commonPeers.retainAll(peerMap.get(wing2));
+
+                                Integer candidateToRemove = allCommonCandidates.iterator().next();
+                                boolean changed = false;
+                                for (ICell peer : commonPeers) {
+                                    changed |= peer.removeCandidate(candidateToRemove);
+                                }
+                                if (changed)
+                                    return true;
                             }
                         }
                     }
