@@ -40,7 +40,8 @@ public class LogicalSolver extends Task<Boolean> {
             WingTechnique::xWing,
             ChainTechnique::simpleColoring,
             WingTechnique::yWing,
-            WingTechnique::swordfish
+            WingTechnique::swordfish,
+            WingTechnique::xyzWing
     );
 
     public boolean solve(){
@@ -51,6 +52,7 @@ public class LogicalSolver extends Task<Boolean> {
             for(Function<ISudoku, Boolean> technique : techniques){
                 if(technique.apply(sudoku)){
                     changed = true;
+                    break;
                 }
             }
         }
