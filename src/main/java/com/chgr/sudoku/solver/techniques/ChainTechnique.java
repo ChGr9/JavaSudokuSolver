@@ -239,6 +239,69 @@ public class ChainTechnique {
         }
     }
 
+    // https://www.sudokuwiki.org/XY_Chains
+    // XY-Chains
+    // This technique is not tested cause of complexity of test
+    // XY chains can be a bit tricky and one may cause another to be created or destroyed
+    public static boolean xyChain(ISudoku sudoku) {
+        for(ICell cell : sudoku.getEmptyCells().stream().filter(c -> c.getCandidates().size() == 2).toList()){
+            for (int candidate: cell.getCandidates()){
+                int otherCandidate = cell.getCandidates().stream()
+                        .filter(c -> c != candidate)
+                        .findFirst().orElseThrow( () -> new IllegalStateException("Expected other candidate not found"));
+                List<ICell> chain = new ArrayList<>();
+                chain.add(cell);
+                if(findXYChain(sudoku, cell, candidate, otherCandidate, chain)){
+                    // Chain found
+                    // Check for contradictions and make deductions
+                    if(handleChain(sudoku, chain, otherCandidate)){
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean handleChain(ISudoku sudoku, List<ICell> chain, int otherCandidate) {
+        ICell start = chain.get(0);
+        ICell end = chain.get(chain.size()-1);
+        Set<ICell> commonPeers = getPeers(sudoku, start);
+        commonPeers.retainAll(getPeers(sudoku, end));
+        commonPeers = commonPeers.stream().filter(c -> c.getCandidates().contains(otherCandidate)).collect(Collectors.toSet());
+        if(commonPeers.size() > 0){
+            for(ICell commonPeer : commonPeers){
+                commonPeer.removeCandidate(otherCandidate);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean findXYChain(ISudoku sudoku, ICell cell, int currentCandidate, int otherCandidate, List<ICell> chain) {
+        if(cell.getCandidates().contains(otherCandidate) && chain.size() > 1)
+            return true;
+        int finalCurrentCandidate = currentCandidate;
+        List<ICell> peers = getPeers(sudoku, cell).stream()
+                .filter(c -> c.getCandidates().contains(finalCurrentCandidate) && c.getCandidates().size() == 2)
+                .toList();
+        for(ICell peer : peers){
+            if(chain.contains(peer))
+                continue;
+            currentCandidate = peer.getCandidates().stream()
+                    .filter(c -> c != finalCurrentCandidate)
+                    .findFirst().orElseThrow( () -> new IllegalStateException("Expected other candidate not found"));
+            chain.add(peer);
+            if(findXYChain(sudoku, peer, currentCandidate, otherCandidate, chain)){
+                return true;
+            }
+            chain.remove(chain.size()-1);
+        }
+        return false;
+    }
+
+    // Helper function to determine if a cell is connected to any cell in a chain
+
     private static List<ICell> findCommon(ISudoku sudoku, ICell start, ICell end) {
         List<ICell> common = new ArrayList<>();
         if(start.getY() == end.getY())
@@ -253,8 +316,6 @@ public class ChainTechnique {
         common.remove(end);
         return common;
     }
-
-    // Helper function to determine if a cell is connected to any cell in a chain
 
     private static Set<ICell> findLinks(ISudoku sudoku, ICell cell, int num) {
         Set<ICell> links = new HashSet<>();
