@@ -50,6 +50,7 @@ public class LogicalSolver extends Task<Boolean> {
         sudoku.loadCandidates();
         boolean changed = true;
         while(changed){
+            sudoku.reRender();
             changed = false;
             for(Function<ISudoku, Boolean> technique : techniques){
                 if(technique.apply(sudoku)){
