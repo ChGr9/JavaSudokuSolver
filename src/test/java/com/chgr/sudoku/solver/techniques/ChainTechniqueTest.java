@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ChainTechniqueTest extends BaseTechniqueTest{
-
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
     void simpleColoring(int fileNumber) throws IOException {
@@ -26,6 +25,25 @@ public class ChainTechniqueTest extends BaseTechniqueTest{
 
         for(int i=0; i < technique.repetitions; i++) {
             boolean result = ChainTechnique.simpleColoring(sudoku);
+            assertTrue(result);
+        }
+        assertChecksMatch(sudoku, technique.checks);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3, 4})
+    void medusa3D(int fileNumber) throws IOException {
+        URL url = HiddenTechniqueTest.class.getResource(String.format("/techniques/3DMedusa%d.yml", fileNumber));
+        assertNotNull(url);
+
+        BaseTechniqueTest.TechniqueEntity technique = mapper.readValue(url, BaseTechniqueTest.TechniqueEntity.class);
+        assertNotNull(technique);
+        assertNotNull(technique.grid);
+
+        loadSudoku(technique);
+
+        for(int i=0; i < technique.repetitions; i++) {
+            boolean result = ChainTechnique.medusa3D(sudoku);
             assertTrue(result);
         }
         assertChecksMatch(sudoku, technique.checks);
