@@ -149,7 +149,8 @@ public class ChainTechnique {
             Set<ICell> cells = coloring.keySet().stream().map(CellNumPair::getCell).collect(Collectors.toSet());
             if (hasColorConflictInCell(coloring, cells)) return true;
             if (eliminateExtraCandidatesFromBicolorCells(coloring, cells)) return true;
-            if(removeUncoloredDueToUnitAndCellConflict(coloring, cells)) return true;
+            if (removeUncoloredDueToUnitAndCellConflict(coloring, cells)) return true;
+            if (removeUncoloredDueToAllCandidatesSeeSameColor(sudoku, coloring, cells)) return true;
         }
         return false;
     }
@@ -280,6 +281,34 @@ public class ChainTechnique {
 
                 if (hasConnection(cell, otherColorGroup)) {
                     cell.removeCandidate(otherCandidate);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Rule 6 is not tested cause of complexity of test propagation
+    // Rule 6 is not triggering cause previous rules trigger first
+    private static boolean removeUncoloredDueToAllCandidatesSeeSameColor(ISudoku sudoku, Map<CellNumPair, Integer> coloring, Set<ICell> cells) {
+        // Rule 6
+        // Check if uncolored cell has all candidates seeing the same color
+        Set<ICell> uncoloredCells = sudoku.getEmptyCells().stream().filter(cell -> !cells.contains(cell)).collect(Collectors.toSet());
+        for(ICell uncoloredCell : uncoloredCells) {
+            for (int color = 0; color <= 1; color++) {
+                int finalColor = color;
+                Set<CellNumPair> neighboringColorGroup = coloring.entrySet().stream()
+                        .filter(entry -> entry.getValue() == finalColor && areConnected(uncoloredCell, entry.getKey().getCell()))
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.toSet());
+                if (uncoloredCell.getCandidates().stream().allMatch(candidate ->
+                        neighboringColorGroup.stream().anyMatch(pair -> pair.getNum() == candidate)
+                )) {
+                    for(CellNumPair toBeDeleted : neighboringColorGroup){
+                        for(int candidate : uncoloredCell.getCandidates())
+                            if(candidate == toBeDeleted.getNum())
+                                toBeDeleted.getCell().removeCandidate(candidate);
+                    }
                     return true;
                 }
             }
