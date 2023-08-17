@@ -26,6 +26,12 @@ public class WingTechnique {
         return checkFinStructure(sudoku, 3);
     }
 
+    //https://www.sudokuwiki.org/Jelly_Fish_Strategy
+    //Section: Jellyfish
+    public static boolean jellyfish(ISudoku sudoku) {
+        return checkFinStructure(sudoku, 4);
+    }
+
     private static boolean checkFinStructure(ISudoku sudoku, int combSize) {
         return checkFin(sudoku, true, combSize) || checkFin(sudoku, false, combSize);
     }
