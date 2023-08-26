@@ -10,6 +10,8 @@ import org.apache.commons.math3.util.Pair;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.chgr.sudoku.utils.CellUtils.getPeers;
+
 public class ChainTechnique {
 
     private enum LinkType {
@@ -539,15 +541,6 @@ public class ChainTechnique {
             links.addAll(square);
         }
         return links;
-    }
-
-    private static Set<ICell> getPeers(ISudoku sudoku, ICell cell) {
-        Set<ICell> peers = new LinkedHashSet<>();
-        peers.addAll(Set.of(sudoku.getColumn(cell.getX())));
-        peers.addAll(Set.of(sudoku.getRow(cell.getY())));
-        peers.addAll(Set.of(sudoku.getSquare(cell.getX(), cell.getY())));
-        peers.removeIf(c -> cell.getX() == c.getX() && cell.getY() == c.getY());
-        return peers;
     }
 
     private static boolean hasConnection(ICell cell, Collection<ICell> chain) {
