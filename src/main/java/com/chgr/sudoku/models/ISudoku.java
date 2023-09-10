@@ -36,4 +36,6 @@ public interface ISudoku {
     ICell[] getSquare(int squareNumber);
 
     ICell[] getSquare(int x, int y);
+
+    ICell getCell(Pos key);
 }
