@@ -71,6 +71,11 @@ public class SudokuWithoutUI implements ISudoku {
     }
 
     @Override
+    public ICell getCell(Pos pos) {
+        return cells[pos.x()][pos.y()];
+    }
+
+    @Override
     public Set<Integer> getRowValue(int y) {
         return Arrays.stream(cells).map(row -> row[y].getValue()).collect(Collectors.toSet());
     }

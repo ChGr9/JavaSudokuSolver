@@ -63,6 +63,10 @@ public class Sudoku extends Pane implements ISudoku {
         return cells[x][y];
     }
 
+    public Cell getCell(Pos pos){
+        return cells[pos.x()][pos.y()];
+    }
+
     public Cell[] getAllCells(){
         return Arrays.stream(cells).flatMap(Arrays::stream).toArray(Cell[]::new);
     }
