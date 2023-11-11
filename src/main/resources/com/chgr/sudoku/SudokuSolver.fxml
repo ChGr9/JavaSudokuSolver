@@ -4,6 +4,9 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.layout.*?>
 <?import com.chgr.sudoku.models.Sudoku?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <BorderPane xmlns="http://javafx.com/javafx/18"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.chgr.sudoku.SudokuSolverController">
@@ -12,12 +15,12 @@
             <BorderPane.margin>
                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
             </BorderPane.margin>
-            <Button mnemonicParsing="false" onAction="#bruteSolve" text="Brute Solve">
+            <Button mnemonicParsing="false" onAction="#bruteSolve" text="Brute Solve" fx:id="btnBruteSolve">
                 <HBox.margin>
                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
                 </HBox.margin>
             </Button>
-            <Button mnemonicParsing="false" onAction="#logicalSolve" text="Logical Solve">
+            <Button mnemonicParsing="false" onAction="#logicalSolve" text="Logical Solve" fx:id="btnLogicalSolve">
                 <HBox.margin>
                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
                 </HBox.margin>
@@ -41,4 +44,58 @@
             </VBox>
         </StackPane>
     </center>
+    <right>
+        <VBox alignment="CENTER" visible="false" fx:id="solveStepView">
+            <ListView fx:id="solveStepList">
+                <VBox.margin>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </VBox.margin>
+            </ListView>
+            <HBox alignment="CENTER">
+                <VBox.margin>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                </VBox.margin>
+                <Button mnemonicParsing="false" onAction="#goToStart">
+                    <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </HBox.margin>
+                    <graphic>
+                        <ImageView fitHeight="30" fitWidth="30" preserveRatio="true">
+                            <Image url="@start.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button mnemonicParsing="false" onAction="#previousStep">
+                    <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </HBox.margin>
+                    <graphic>
+                        <ImageView fitHeight="30" fitWidth="30" preserveRatio="true">
+                            <Image url="@previous.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button mnemonicParsing="false" onAction="#nextStep">
+                    <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </HBox.margin>
+                    <graphic>
+                        <ImageView fitHeight="30" fitWidth="30" preserveRatio="true">
+                            <Image url="@next.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button mnemonicParsing="false" onAction="#goToEnd">
+                    <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </HBox.margin>
+                    <graphic>
+                        <ImageView fitHeight="30" fitWidth="30" preserveRatio="true">
+                            <Image url="@end.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </HBox>
+        </VBox>
+    </right>
 </BorderPane>

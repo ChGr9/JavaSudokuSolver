@@ -132,12 +132,6 @@ public class Cell extends StackPane implements ICell {
                 .reduce(false, (a, b) -> a || b);
     }
 
-    public boolean hasCandidate(int candidate) {
-        if(this.value == EMPTY)
-            return false;
-        return candidates.contains(candidate);
-    }
-
     public void clearCandidates() {
         candidates.clear();
         hasChanged = true;
@@ -168,7 +162,6 @@ public class Cell extends StackPane implements ICell {
                 (int) (color.getGreen() * 255),
                 (int) (color.getBlue() * 255));
         this.valuePane.setStyle(String.format("-fx-background-color: %s;", colorAsHex));
-        //this.valueText.setFill(color);
     }
 
     public void reRender() {
