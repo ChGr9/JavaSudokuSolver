@@ -1,6 +1,5 @@
-package com.chgr.sudoku.solver.utils;
+package com.chgr.sudoku.models;
 
-import com.chgr.sudoku.models.ICell;
 import lombok.Getter;
 
 import java.util.Collection;
@@ -10,10 +9,10 @@ import java.util.Set;
 public class CellWithoutUI implements ICell {
 
     @Getter
-    private int x;
+    private final int x;
     @Getter
-    private int y;
-    private Set<Integer> candidates;
+    private final int y;
+    private final Set<Integer> candidates;
     @Getter
     private int value;
 

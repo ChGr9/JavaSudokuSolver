@@ -1,19 +1,10 @@
-package com.chgr.sudoku.solver.utils;
+package com.chgr.sudoku.models;
 
-import com.chgr.sudoku.models.Cell;
-import com.chgr.sudoku.models.ICell;
-import com.chgr.sudoku.models.ISudoku;
-import com.chgr.sudoku.models.Pos;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class SudokuWithoutUI implements ISudoku {
-
     private final CellWithoutUI[][] cells = new CellWithoutUI[SUDOKU_SIZE][SUDOKU_SIZE];
 
     public SudokuWithoutUI(){

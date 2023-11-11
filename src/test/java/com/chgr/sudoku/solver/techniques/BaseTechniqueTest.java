@@ -1,7 +1,7 @@
 package com.chgr.sudoku.solver.techniques;
 
 import com.chgr.sudoku.models.ICell;
-import com.chgr.sudoku.solver.utils.SudokuWithoutUI;
+import com.chgr.sudoku.models.SudokuWithoutUI;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Setter;

@@ -1,19 +1,26 @@
 package com.chgr.sudoku.solver;
 
-import com.chgr.sudoku.models.ICell;
-import com.chgr.sudoku.models.ISudoku;
+import com.chgr.sudoku.models.*;
 import com.chgr.sudoku.solver.techniques.*;
+import com.chgr.sudoku.utils.SudokuConverter;
 import javafx.concurrent.Task;
 
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 public class LogicalSolver extends Task<Boolean> {
 
-    private final ISudoku sudoku;
+    private final List<BaseAction> solveSteps;
+    private Map<Pos, Integer> initialValues = new HashMap<>();
+    private final SudokuWithoutUI sudoku;
 
     public LogicalSolver(ISudoku sudoku) {
-        this.sudoku = sudoku;
+        this.solveSteps = new ArrayList<>();
+        this.initialValues = SudokuConverter.getInitialValues(sudoku);
+        this.sudoku = new SudokuWithoutUI();
+        for(Map.Entry<Pos, Integer> entry : initialValues.entrySet()){
+            this.sudoku.getCell(entry.getKey()).setValue(entry.getValue());
+        }
     }
 
     private boolean isSolved() {
@@ -50,6 +57,27 @@ public class LogicalSolver extends Task<Boolean> {
     );
 
     public boolean solve(){
+        solveSteps.add(SimpleAction.builder()
+                        .name("Initial values")
+                        .description("Set initial values")
+                        .function( (sud) -> {
+                            for(Map.Entry<Pos, Integer> entry : initialValues.entrySet()){
+                                Cell cell = sud.getCell(entry.getKey());
+                                cell.setValue(entry.getValue());
+                                cell.reRender(true);
+                            }
+                            return null;
+                        })
+                        .build());
+        solveSteps.add(SimpleAction.builder()
+                .name("Load candidates")
+                .description("Load candidates")
+                .function( (sud) -> {
+                    sud.loadCandidates();
+                    sud.reRender();
+                    return null;
+                })
+                .build());
         sudoku.loadCandidates();
         boolean changed = true;
         while(changed){
@@ -68,5 +96,9 @@ public class LogicalSolver extends Task<Boolean> {
     @Override
     protected Boolean call() {
         return solve();
+    }
+
+    public List<BaseAction> getSteps() {
+        return Collections.unmodifiableList(solveSteps);
     }
 }
