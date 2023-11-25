@@ -7,9 +7,31 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
 <BorderPane xmlns="http://javafx.com/javafx/18"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.chgr.sudoku.SudokuSolverController">
+    <top>
+        <HBox alignment="CENTER">
+            <BorderPane.margin>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+            </BorderPane.margin>
+            <TextField fx:id="importTextField" prefWidth="500.0" promptText="Import Sudoku text">
+                <HBox.margin>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </HBox.margin>
+                <tooltip>
+                    <Tooltip text="Import Sudoku in 81 number format.\nEmpty cells are represented by 0."/>
+                </tooltip>
+            </TextField>
+            <Button mnemonicParsing="false" onAction="#importSudoku" text="Import">
+                <HBox.margin>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </HBox.margin>
+            </Button>
+        </HBox>
+    </top>
     <bottom>
         <HBox alignment="CENTER">
             <BorderPane.margin>

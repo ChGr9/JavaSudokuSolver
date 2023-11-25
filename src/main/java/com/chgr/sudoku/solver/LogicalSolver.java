@@ -57,6 +57,8 @@ public class LogicalSolver extends Task<Boolean> {
     );
 
     public boolean solve(){
+        if(!sudoku.initialValidation())
+            return false;
         solveSteps.add(SimpleAction.builder()
                         .name("Initial values")
                         .description("Set initial values")

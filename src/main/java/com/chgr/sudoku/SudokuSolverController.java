@@ -7,11 +7,13 @@ import com.chgr.sudoku.models.Sudoku;
 import com.chgr.sudoku.solver.BacktrackingSolver;
 import com.chgr.sudoku.solver.LogicalSolver;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 
@@ -35,6 +37,8 @@ public class SudokuSolverController implements Initializable {
     private VBox solveStepView;
     @FXML
     private ListView<String> solveStepList;
+    @FXML
+    public TextField importTextField;
 
     private List<BaseAction> solveSteps;
 
@@ -130,5 +134,34 @@ public class SudokuSolverController implements Initializable {
         }
         solveSteps.get(index).display(sudoku);
         solveStepList.getSelectionModel().select(index);
+    }
+
+    public void importSudoku() {
+        String text = importTextField.getText().replace(" ", "");
+        if(text.length() != ISudoku.SUDOKU_SIZE*ISudoku.SUDOKU_SIZE){
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Import error");
+            alert.setContentText("Sudoku must be 81 characters long");
+            alert.show();
+            return;
+        }
+        if(!text.matches("[\\d]+")){
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Import error");
+            alert.setContentText("Sudoku must contain only numbers");
+            alert.show();
+            return;
+        }
+        sudoku.clear();
+        for(int i=0; i<ISudoku.SUDOKU_SIZE; i++){
+            for(int j=0; j<ISudoku.SUDOKU_SIZE; j++){
+                int value = Character.getNumericValue(text.charAt(i*ISudoku.SUDOKU_SIZE+j));
+                if(value != 0){
+                    Cell cell = sudoku.getCell(i, j);
+                    cell.setValue(value);
+                    cell.reRender(true);
+                }
+            }
+        }
     }
 }
