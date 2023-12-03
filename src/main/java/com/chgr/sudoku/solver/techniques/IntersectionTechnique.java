@@ -1,13 +1,9 @@
 package com.chgr.sudoku.solver.techniques;
 
-import com.chgr.sudoku.models.ICell;
-import com.chgr.sudoku.models.ISudoku;
-import com.chgr.sudoku.models.Sudoku;
+import com.chgr.sudoku.models.*;
+import javafx.scene.paint.Color;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -15,7 +11,7 @@ public class IntersectionTechnique {
 
     //https://www.sudokuwiki.org/Intersection_Removal#IR
     //Section: Pointing Pairs, Pointing Triples
-    public static boolean pointingTuple(ISudoku sudoku) {
+    public static Optional<TechniqueAction> pointingTuple(ISudoku sudoku) {
         final int SQUARE_SIZE = 3;
 
         for (int squareIndex = 0; squareIndex < ISudoku.SUDOKU_SIZE; squareIndex++) {
@@ -27,14 +23,15 @@ public class IntersectionTechnique {
                 squareRowCandidates.add(getCandidateSetByY(square, rowIndex));
                 squareColumnCandidates.add(getCandidateSetByX(square, rowIndex));
             }
-
-            if (processCandidates(sudoku, square, squareRowCandidates, true)
-                    || processCandidates(sudoku, square, squareColumnCandidates, false)) {
-                return true;
-            }
+            TechniqueAction techniqueAction = processCandidates(sudoku, square, squareIndex, squareRowCandidates, true);
+            if (techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = processCandidates(sudoku, square, squareIndex, squareColumnCandidates, false);
+            if (techniqueAction != null)
+                return Optional.of(techniqueAction);
         }
 
-        return false;
+        return Optional.empty();
     }
 
     private static Set<Integer> getCandidateSetByY(ICell[] square, int finalRowIndex) {
@@ -51,36 +48,50 @@ public class IntersectionTechnique {
                 .collect(Collectors.toSet());
     }
 
-    private static boolean processCandidates(ISudoku sudoku, ICell[] square, List<Set<Integer>> squareCandidates, boolean isRow) {
+    private static TechniqueAction processCandidates(ISudoku sudoku, ICell[] square, int squareIndex, List<Set<Integer>> squareCandidates, boolean isRow) {
         for (int candidateIndex = 0; candidateIndex < squareCandidates.size(); candidateIndex++) {
             Set<Integer> currentCandidateSet = squareCandidates.get(candidateIndex);
             Set<Integer> distinctCandidates = getDistinctCandidates(currentCandidateSet, squareCandidates);
 
-            if (!distinctCandidates.isEmpty() && removeCandidatesFromCells(sudoku, square, distinctCandidates, isRow, candidateIndex)) {
-                return true;
+            if (!distinctCandidates.isEmpty()){
+                TechniqueAction techniqueAction = removeCandidatesFromCells(sudoku, square, squareIndex, distinctCandidates, isRow, candidateIndex);
+                if(techniqueAction != null)
+                    return techniqueAction;
             }
         }
 
-        return false;
+        return null;
     }
 
-    private static boolean removeCandidatesFromCells(ISudoku sudoku, ICell[] square, Set<Integer> distinctCandidates, boolean isRow, int offset) {
-        boolean changed = false;
-
-        ICell[] cells = isRow ? sudoku.getRow(square[0].getY() + offset) : sudoku.getColumn(square[0].getX() + offset);
+    private static TechniqueAction removeCandidatesFromCells(ISudoku sudoku, ICell[] square, int squareIndex, Set<Integer> distinctCandidates, boolean isRow, int offset) {
+        int tupleAxis = (isRow ? square[0].getY() : square[0].getX()) + offset;
+        ICell[] cells = isRow ? sudoku.getRow(tupleAxis) : sudoku.getColumn(tupleAxis);
         int startAxis = isRow ? square[0].getX() : square[0].getY();
         int endAxis = isRow ? square[8].getX() : square[8].getY();
+        List<ICell> affectedCells = Arrays.stream(cells)
+                .filter(cell -> isRow?
+                        cell.getX() < startAxis || cell.getX() > endAxis:
+                        cell.getY() < startAxis || cell.getY() > endAxis
+                ).collect(Collectors.toList());
 
-        for (ICell cell : cells) {
-            int axis = isRow ? cell.getX() : cell.getY();
-            if (axis < startAxis || axis > endAxis) {
-                for (int candidate : distinctCandidates) {
-                    changed |= cell.removeCandidate(candidate);
-                }
-            }
-        }
+        Set<Integer> candidatesToBeRemoved = distinctCandidates.stream().filter(candidate -> affectedCells.stream().anyMatch(cell -> cell.getCandidates().contains(candidate))).collect(Collectors.toSet());
 
-        return changed;
+        affectedCells.removeIf(cell -> !cell.removeCandidates(candidatesToBeRemoved));
+
+        List<Pos> pointingCells = Arrays.stream(square)
+                .filter(cell -> cell.getCandidates().stream().anyMatch(candidatesToBeRemoved::contains))
+                .map(ICell::getPos).toList();
+
+        return affectedCells.isEmpty() ? null : TechniqueAction.builder()
+                .name("Pointing tuple")
+                .description("Cells " + pointingCells.stream().map(Pos::toString).collect(Collectors.joining(", ")) + " are the only cells in square " + squareIndex + " which have the candidate"+(candidatesToBeRemoved.size()==1?"":"s") + distinctCandidates.stream().map(String::valueOf).collect(Collectors.joining(", ")) + " this creates a pointing tuple in " + (isRow ? "row " : "column ") + tupleAxis + " for the candidates " + distinctCandidates.stream().map(String::valueOf).collect(Collectors.joining(", ")))
+                .removeCandidatesMap(affectedCells.stream().map(ICell::getPos).collect(Collectors.toMap(pos -> pos, pos -> candidatesToBeRemoved)))
+                .colorings(List.of(
+                        TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
+                        TechniqueAction.CellColoring.candidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
+                        TechniqueAction.CellColoring.lineColoring(List.of(square[0].getPos()), Color.YELLOW)
+                        ))
+                .build();
     }
 
 
@@ -94,45 +105,64 @@ public class IntersectionTechnique {
 
     //https://www.sudokuwiki.org/Intersection_Removal#IR
     //Section: Box Line Reduction
-    public static boolean boxLineReduction(ISudoku sudoku) {
+    public static Optional<TechniqueAction> boxLineReduction(ISudoku sudoku) {
         for (int i = 0; i < Sudoku.SUDOKU_SIZE; i++) {
-            if (checkBoxLineReduction(sudoku, sudoku.getRow(i), true))
-                return true;
-            if (checkBoxLineReduction(sudoku, sudoku.getColumn(i), false))
-                return true;
+            TechniqueAction techniqueAction = checkBoxLineReduction(sudoku, i, true);
+            if (techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkBoxLineReduction(sudoku, i, false);
+            if (techniqueAction != null)
+                return Optional.of(techniqueAction);
         }
-        return false;
+        return Optional.empty();
     }
 
-    private static boolean checkBoxLineReduction(ISudoku sudoku, ICell[] group, boolean isRow) {
+    private static TechniqueAction checkBoxLineReduction(ISudoku sudoku, int index, boolean isRow) {
+        ICell[] group = isRow ? sudoku.getRow(index) : sudoku.getColumn(index);
         List<Set<Integer>> groupSectionCandidates = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             int finalI = i;
-            groupSectionCandidates.add(IntStream.range(0, 3).mapToObj(index -> group[index + finalI * 3])
+            groupSectionCandidates.add(IntStream.range(0, 3).mapToObj(num -> group[num + finalI * 3])
                     .flatMap(cell -> cell.getCandidates().stream())
                     .collect(Collectors.toSet()));
         }
         for (int i = 0; i < 3; i++) {
             Set<Integer> currentCandidateSet = groupSectionCandidates.get(i);
             Set<Integer> distinctCandidates = getDistinctCandidates(currentCandidateSet, groupSectionCandidates);
-            if (!distinctCandidates.isEmpty() && removeCandidatesFromSquare(sudoku, group, distinctCandidates, isRow, i))
-                return true;
-        }
-        return false;
-    }
-
-    private static boolean removeCandidatesFromSquare(ISudoku sudoku, ICell[] group, Set<Integer> distinctCandidates, boolean isRow, int i) {
-        boolean changed = false;
-        ICell cell = group[i * 3];
-        int index = cell.getY() / 3 * 3 + cell.getX() / 3;
-        ICell[] cells = sudoku.getSquare(index);
-        int limit = isRow ? cell.getY() : cell.getX();
-        for (ICell cell1 : cells) {
-            int axis = isRow ? cell1.getY() : cell1.getX();
-            if (axis != limit && cell1.removeCandidates(distinctCandidates)) {
-                changed = true;
+            if (!distinctCandidates.isEmpty()) {
+                TechniqueAction techniqueAction = removeCandidatesFromSquare(sudoku, group, distinctCandidates, isRow, i);
+                if (techniqueAction != null)
+                    return techniqueAction;
             }
         }
-        return changed;
+        return null;
+    }
+
+    private static TechniqueAction removeCandidatesFromSquare(ISudoku sudoku, ICell[] group, Set<Integer> distinctCandidates, boolean isRow, int i) {
+        ICell firstCell = group[i * 3];
+        int index = firstCell.getY() / 3 * 3 + firstCell.getX() / 3;
+        ICell[] cells = sudoku.getSquare(index);
+        int limit = isRow ? firstCell.getY() : firstCell.getX();
+        List<ICell> affectedCells = Arrays.stream(cells)
+                .filter(cell -> isRow ?
+                        cell.getY() != limit :
+                        cell.getX() != limit
+                ).collect(Collectors.toList());
+        Set<Integer> candidatesToBeRemoved = distinctCandidates.stream().filter(candidate -> affectedCells.stream().anyMatch(cell -> cell.getCandidates().contains(candidate))).collect(Collectors.toSet());
+
+        affectedCells.removeIf(cell -> !cell.removeCandidates(candidatesToBeRemoved));
+
+        List<Pos> pointingCells = IntStream.range(0, 3).mapToObj(num -> group[num + i * 3].getPos()).toList();
+
+        return  affectedCells.isEmpty() ? null : TechniqueAction.builder()
+                .name("Box line reduction")
+                .description("Cells " + pointingCells.stream().map(Pos::toString).collect(Collectors.joining(", ")) + " are the only cells in " + (isRow ? "row " : "column ") + (isRow ? firstCell.getY() : firstCell.getX()) + " which have the candidate" + (candidatesToBeRemoved.size() == 1 ? "" : "s") + candidatesToBeRemoved.stream().map(String::valueOf).collect(Collectors.joining(", ")) + " this creates a box line reduction in square " + index + " for the candidates " + candidatesToBeRemoved.stream().map(String::valueOf).collect(Collectors.joining(", ")))
+                .removeCandidatesMap(affectedCells.stream().map(ICell::getPos).collect(Collectors.toMap(pos -> pos, pos -> candidatesToBeRemoved)))
+                .colorings(List.of(
+                        TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
+                        TechniqueAction.CellColoring.candidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
+                        TechniqueAction.CellColoring.lineColoring(List.of(isRow ? new Pos(-1, firstCell.getY()) : new Pos(firstCell.getX(), -1)), Color.YELLOW)
+                ))
+                .build();
     }
 }

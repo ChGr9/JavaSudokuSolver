@@ -74,4 +74,9 @@ public class CellWithoutUI implements ICell {
                 .map(this::removeCandidate)
                 .reduce(false, (a, b) -> a || b);
     }
+
+    @Override
+    public Pos getPos() {
+        return new Pos(x, y);
+    }
 }

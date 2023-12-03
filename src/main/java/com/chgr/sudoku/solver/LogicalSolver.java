@@ -11,7 +11,7 @@ import java.util.function.Function;
 public class LogicalSolver extends Task<Boolean> {
 
     private final List<BaseAction> solveSteps;
-    private Map<Pos, Integer> initialValues = new HashMap<>();
+    private final Map<Pos, Integer> initialValues;
     private final SudokuWithoutUI sudoku;
 
     public LogicalSolver(ISudoku sudoku) {
@@ -33,7 +33,19 @@ public class LogicalSolver extends Task<Boolean> {
         return true;
     }
 
-    private static final List<Function<ISudoku, Boolean>> techniques = List.of(
+    private static final List<Function<ISudoku, Boolean>> oldTechniques = List.of(
+            ChainTechnique::simpleColoring,
+            WingTechnique::yWing,
+            WingTechnique::swordfish,
+            WingTechnique::xyzWing,
+            ChainTechnique::xCycle,
+            ChainTechnique::xyChain,
+            ChainTechnique::medusa3D,
+            WingTechnique::jellyfish,
+            UniqueRectangleTechnique::uniqueRectangle
+    );
+
+    private static final List<Function<ISudoku, Optional<TechniqueAction>>> techniques = List.of(
             NakedTechnique::nakedSingle,
             HiddenTechnique::hiddenSingle,
             NakedTechnique::nakedPair,
@@ -44,16 +56,7 @@ public class LogicalSolver extends Task<Boolean> {
             HiddenTechnique::hiddenQuad,
             IntersectionTechnique::pointingTuple,
             IntersectionTechnique::boxLineReduction,
-            WingTechnique::xWing,
-            ChainTechnique::simpleColoring,
-            WingTechnique::yWing,
-            WingTechnique::swordfish,
-            WingTechnique::xyzWing,
-            ChainTechnique::xCycle,
-            ChainTechnique::xyChain,
-            ChainTechnique::medusa3D,
-            WingTechnique::jellyfish,
-            UniqueRectangleTechnique::uniqueRectangle
+            WingTechnique::xWing
     );
 
     public boolean solve(){
@@ -81,17 +84,25 @@ public class LogicalSolver extends Task<Boolean> {
                 })
                 .build());
         sudoku.loadCandidates();
-        boolean changed = true;
-        while(changed){
+        boolean changed;
+        do {
             sudoku.reRender();
             changed = false;
-            for(Function<ISudoku, Boolean> technique : techniques){
-                if(technique.apply(sudoku)){
+            for(Function<ISudoku, Optional<TechniqueAction>> technique : techniques){
+                Optional<TechniqueAction> action = technique.apply(sudoku);
+                if(action.isPresent()){
+                    solveSteps.add(action.get());
                     changed = true;
                     break;
                 }
             }
         }
+        while (changed);
+        solveSteps.add(SimpleAction.builder()
+                .name("End")
+                .description("Finished solving")
+                .function(sud -> null)
+                .build());
         return isSolved();
     }
 

@@ -3,6 +3,9 @@ package com.chgr.sudoku.models;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
+import javafx.scene.shape.Rectangle;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -178,5 +181,31 @@ public class Sudoku extends Pane implements ISudoku {
                 }
             }
         });
+    }
+
+    public void colorLine(List<Pos> pos, Color color) {
+        for(Pos p : pos){
+            if(p.x() == -1 && p.y() == -1)
+                continue;
+            Rectangle rect;
+            if(p.x() == -1){
+                int y = p.y() * Cell.SIZE + Cell.SIZE / 2;
+                rect = new Rectangle(0, y - Cell.SIZE / 2f, SIZE, Cell.SIZE);
+            } else if(p.y() == -1){
+                int x = p.x() * Cell.SIZE + Cell.SIZE / 2;
+                rect = new Rectangle(x - Cell.SIZE / 2f, 0, Cell.SIZE, SIZE);
+            } else {
+                int x = p.x() * Cell.SIZE + Cell.SIZE / 2;
+                int y = p.y() * Cell.SIZE + Cell.SIZE / 2;
+                rect = new Rectangle(x - Cell.SIZE / 2f, y - Cell.SIZE / 2f, Cell.SIZE*3, Cell.SIZE*3);
+            }
+            rect.setFill(color);
+            rect.setOpacity(0.25);
+            this.getChildren().add(rect);
+        }
+    }
+
+    public void clearColorLine() {
+        this.getChildren().removeIf(node -> node instanceof Rectangle);
     }
 }

@@ -2,6 +2,9 @@ package com.chgr.sudoku.solver.techniques;
 
 import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
+import com.chgr.sudoku.models.Pos;
+import com.chgr.sudoku.models.TechniqueAction;
+import javafx.scene.paint.Color;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
 import java.util.*;
@@ -11,60 +14,83 @@ import java.util.stream.IntStream;
 public class NakedTechnique {
     //https://www.sudokuwiki.org/Getting_Started
     //Section: The Last Possible Number
-    public static boolean nakedSingle(ISudoku sudoku) {
+    public static Optional<TechniqueAction> nakedSingle(ISudoku sudoku) {
         Optional<ICell> oCell = Arrays.stream(sudoku.getAllCells()).filter(c -> c.getCandidates().size() == 1).findFirst();
         if (oCell.isPresent()) {
             ICell cell = oCell.get();
             cell.setValue(cell.getCandidates().stream().findFirst().orElseThrow());
             sudoku.removeAffectedCandidates(cell.getX(), cell.getY(), cell.getValue());
-            return true;
+            return Optional.of(
+                    TechniqueAction.builder()
+                            .name("Naked Single")
+                            .description("Value " + cell.getValue() + " is the only available candidate at cell (" + cell.getX() + "," + cell.getY() + ")" )
+                            .setValueMap(Map.of(cell.getPos(), cell.getValue()))
+                            .colorings(List.of(
+                                    TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(cell.getValue()))
+                            ))
+                            .build()
+            );
         }
-        return false;
+        return Optional.empty();
     }
 
     //https://www.sudokuwiki.org/Naked_Candidates#NP
     //Section: Naked Pairs
-    public static boolean nakedPair(ISudoku sudoku) {
+    public static Optional<TechniqueAction> nakedPair(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
-            if(checkNakedTuple(sudoku.getRow(i), 2))
-                return true;
-            if(checkNakedTuple(sudoku.getColumn(i), 2))
-                return true;
-            if(checkNakedTuple(sudoku.getSquare(i), 2))
-                return true;
+            TechniqueAction techniqueAction = checkNakedTuple(sudoku, 2, i, ISudoku.GroupType.ROW);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkNakedTuple(sudoku, 2, i, ISudoku.GroupType.COLUMN);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkNakedTuple(sudoku, 2, i, ISudoku.GroupType.SQUARE);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
         }
-        return false;
+        return Optional.empty();
     }
 
     //https://www.sudokuwiki.org/Naked_Candidates#NP
     //Section: Naked Triples
-    public static boolean nakedTriple(ISudoku sudoku) {
+    public static Optional<TechniqueAction> nakedTriple(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
-            if(checkNakedTuple(sudoku.getRow(i), 3))
-                return true;
-            if(checkNakedTuple(sudoku.getColumn(i), 3))
-                return true;
-            if(checkNakedTuple(sudoku.getSquare(i), 3))
-                return true;
+            TechniqueAction techniqueAction = checkNakedTuple(sudoku, 3, i, ISudoku.GroupType.ROW);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkNakedTuple(sudoku, 3, i, ISudoku.GroupType.COLUMN);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkNakedTuple(sudoku, 3, i, ISudoku.GroupType.SQUARE);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
         }
-        return false;
+        return Optional.empty();
     }
 
     //https://www.sudokuwiki.org/Naked_Candidates#NP
     //Section: Naked Quads
-    public static Boolean nakedQuad(ISudoku sudoku) {
+    public static Optional<TechniqueAction> nakedQuad(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
-            if(checkNakedTuple(sudoku.getRow(i), 4))
-                return true;
-            if(checkNakedTuple(sudoku.getColumn(i), 4))
-                return true;
-            if(checkNakedTuple(sudoku.getSquare(i), 4))
-                return true;
+            TechniqueAction techniqueAction = checkNakedTuple(sudoku, 4, i, ISudoku.GroupType.ROW);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkNakedTuple(sudoku, 4, i, ISudoku.GroupType.COLUMN);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkNakedTuple(sudoku, 4, i, ISudoku.GroupType.SQUARE);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
         }
-        return false;
+        return Optional.empty();
     }
 
-    private static boolean checkNakedTuple(ICell[] group, int num){
+    private static TechniqueAction checkNakedTuple(ISudoku sudoku, int num, int i, ISudoku.GroupType groupType) {
+        ICell[] group = switch (groupType) {
+            case ROW -> sudoku.getRow(i);
+            case COLUMN -> sudoku.getColumn(i);
+            case SQUARE -> sudoku.getSquare(i);
+        };
         List<ICell> emptyCells = Arrays.stream(group)
                 .filter(c -> c.getValue() == ICell.EMPTY)
                 .toList();
@@ -72,7 +98,7 @@ public class NakedTechnique {
                 .filter(c -> c.getCandidates().size() <= num)
                 .toList();
 
-        if(cellsWithNumCandidates.size() < num) return false;
+        if(cellsWithNumCandidates.size() < num) return null;
 
         // Generate all combinations of 'num' empty cells.
         List<Integer> indices = IntStream.range(0, cellsWithNumCandidates.size()).boxed().toList();
@@ -93,7 +119,7 @@ public class NakedTechnique {
                     .collect(Collectors.toSet());
 
             // If the number of combined candidates is not equal to 'num', this is not a naked tuple.
-            if(combinedCandidates.size() != num) continue;
+            if (combinedCandidates.size() != num) continue;
 
             // Check if this combination is a subset of another larger combination.
             boolean isSubsetOfAnother = false;
@@ -112,18 +138,32 @@ public class NakedTechnique {
 
             // For each cell in the group that is not part of the combination, remove the combined candidates.
             boolean changed = false;
-            for(ICell c : emptyCells){
-                if(!combination.contains(c)){
-                    for(int candidate : combinedCandidates){
-                        changed |= c.removeCandidate(candidate);
-                    }
-                }
+            List<ICell> affectedCells = emptyCells.stream()
+                    .filter(c -> !combination.contains(c) && c.getCandidates().stream().anyMatch(combinedCandidates::contains))
+                    .toList();
+            for (ICell c : affectedCells) {
+                changed |= c.removeCandidates(combinedCandidates);
             }
 
-            if(changed)
-                return true;
+            if (changed) {
+                String type = switch (num) {
+                    case 2 -> "Pair";
+                    case 3 -> "Triple";
+                    case 4 -> "Quad";
+                    default -> "Tuple";
+                };
+                return TechniqueAction.builder()
+                        .name("Naked " + type)
+                        .description("Cells " + combination.stream().map(ICell::getPos).map(Pos::toString).collect(Collectors.joining(", ")) + " form a naked " + type + " in" + groupType.name() + " for the candidates " + combinedCandidates.stream().map(String::valueOf).collect(Collectors.joining(", ")))
+                        .removeCandidatesMap(affectedCells.stream().collect(Collectors.toMap(ICell::getPos, c -> combinedCandidates)))
+                        .colorings(List.of(
+                                TechniqueAction.CellColoring.candidatesColoring(combination.stream().map(ICell::getPos).toList(), Color.GREEN, combinedCandidates),
+                                TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, combinedCandidates)
+                        ))
+                        .build();
+            }
         }
 
-        return false;
+        return null;
     }
 }
