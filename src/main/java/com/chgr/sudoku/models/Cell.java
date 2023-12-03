@@ -1,6 +1,5 @@
 package com.chgr.sudoku.models;
 
-import javafx.geometry.Pos;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
@@ -51,12 +50,27 @@ public class Cell extends StackPane implements ICell {
         this.setLayoutY(y * SIZE);
 
         //Set background color
-        this.setStyle(((x / 3) + (y / 3)) % 2 == 0
-                ? "-fx-background-color: white;"
-                : "-fx-background-color: gray;");
+//        this.setStyle(((x / 3) + (y / 3)) % 2 == 0
+//                ? "-fx-background-color: white;"
+//                : "-fx-background-color: gray;");
+        String style = "-fx-background-color: white; ";
+        style += "-fx-border-color: black; ";
+        // Set flat look
+        style += "-fx-background-radius: 0; -fx-border-radius: 0; ";
+
+        int rightBorderWidth = x % 3 == 2 ? 5 : 1;
+        int bottomBorderWidth = y % 3 == 2 ? 5 : 1;
+
+        int topBorderWidth = y % 3 == 0 ? 5 : 1;
+        int leftBorderWidth = x % 3 == 0 ? 5 : 1;
+
+        style += "-fx-border-width: " + topBorderWidth + " " + rightBorderWidth + " " + bottomBorderWidth + " " + leftBorderWidth + "; ";
+
+        this.setStyle(style);
+
 
         GridPane candidateGrid = new GridPane();
-        candidateGrid.setAlignment(Pos.CENTER);
+        candidateGrid.setAlignment(javafx.geometry.Pos.CENTER);
         candidateGrid.setHgap(12.5);
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -69,11 +83,6 @@ public class Cell extends StackPane implements ICell {
             }
         }
         this.getChildren().addAll(candidateGrid, this.valuePane);
-        //Set border
-        this.setStyle(this.getStyle() + "-fx-border-color: black;");
-
-        //Set flat look
-        this.setStyle(this.getStyle() + "-fx-background-radius: 0; -fx-border-radius: 0;");
 
         this.x = x;
         this.y = y;
@@ -132,6 +141,11 @@ public class Cell extends StackPane implements ICell {
                 .reduce(false, (a, b) -> a || b);
     }
 
+    @Override
+    public com.chgr.sudoku.models.Pos getPos() {
+        return new Pos(x, y);
+    }
+
     public void clearCandidates() {
         candidates.clear();
         hasChanged = true;
@@ -143,25 +157,44 @@ public class Cell extends StackPane implements ICell {
         return Set.copyOf(candidates);
     }
 
-    public void colorCandidates(List<Integer> candidates, Color color) {
+    public void colorCandidates(Collection<Integer> candidates, Color color) {
         for(int candidate : candidates){
             if(candidate > 0 && candidate < 10){
-                String colorAsHex = String.format("#%02X%02X%02X",
+                int candidateX = (candidate - 1) / 3;
+                int candidateY = (candidate - 1) % 3;
+                if(this.candidatesText[candidateX][candidateY].getText().equals(""))
+                    continue;
+                String colorAsHex = String.format("#%02X%02X%02X%02X",
                         (int) (color.getRed() * 255),
                         (int) (color.getGreen() * 255),
-                        (int) (color.getBlue() * 255));
-                this.candidatesPane[(candidate - 1) / 3][(candidate - 1) % 3]
+                        (int) (color.getBlue() * 255),
+                        (int) (0.5 * 255));
+                this.candidatesPane[candidateX][candidateY]
                         .setStyle(String.format("-fx-background-color: %s;", colorAsHex));
             }
         }
     }
 
+    public void clearColorCandidates(Collection<Integer> candidates) {
+        for(int candidate : candidates){
+            if(candidate > 0 && candidate < 10){
+                this.candidatesPane[(candidate - 1) / 3][(candidate - 1) % 3]
+                        .setStyle("");
+            }
+        }
+    }
+
     public void colorValue(Color color) {
-        String colorAsHex = String.format("#%02X%02X%02X",
+        String colorAsHex = String.format("#%02X%02X%02X%02X",
                 (int) (color.getRed() * 255),
                 (int) (color.getGreen() * 255),
-                (int) (color.getBlue() * 255));
+                (int) (color.getBlue() * 255),
+                (int) (0.5 * 255));
         this.valuePane.setStyle(String.format("-fx-background-color: %s;", colorAsHex));
+    }
+
+    public void clearColorValue() {
+        this.valuePane.setStyle("");
     }
 
     public void reRender() {

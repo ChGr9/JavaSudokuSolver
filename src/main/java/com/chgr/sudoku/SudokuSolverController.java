@@ -1,13 +1,9 @@
 package com.chgr.sudoku;
 
-import com.chgr.sudoku.models.BaseAction;
-import com.chgr.sudoku.models.Cell;
-import com.chgr.sudoku.models.ISudoku;
-import com.chgr.sudoku.models.Sudoku;
+import com.chgr.sudoku.models.*;
 import com.chgr.sudoku.solver.BacktrackingSolver;
 import com.chgr.sudoku.solver.LogicalSolver;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
@@ -70,6 +66,7 @@ public class SudokuSolverController implements Initializable {
                 solveStepView.setVisible(true);
                 solveStepList.getItems().clear();
                 solveStepList.getItems().addAll(solveSteps.stream().map(BaseAction::getName).toList());
+                solveStepList.getSelectionModel().select(0);
                 setSolveStepView(0);
             }
             boolean result = solver.getValue();
@@ -125,7 +122,11 @@ public class SudokuSolverController implements Initializable {
         if(index < 0 || index >= solveSteps.size())
             return;
         int current = solveStepList.getSelectionModel().getSelectedIndex();
-        if(current < index){
+        if(current > index){
+            BaseAction lastAction = solveSteps.get(current);
+            if(lastAction instanceof TechniqueAction techniqueAction){
+                techniqueAction.clearColoring(sudoku);
+            }
             sudoku.clear();
             current = 0;
         }
@@ -134,6 +135,12 @@ public class SudokuSolverController implements Initializable {
         }
         solveSteps.get(index).display(sudoku);
         solveStepList.getSelectionModel().select(index);
+        double itemHeight = solveStepList.getFixedCellSize();
+        double listViewHeight = solveStepList.getHeight();
+        int visibleItemCount = (int) Math.floor(listViewHeight / itemHeight);
+
+        int targetIndex = Math.max(0, index - visibleItemCount/2);
+        solveStepList.scrollTo(targetIndex);
     }
 
     public void importSudoku() {
@@ -145,7 +152,7 @@ public class SudokuSolverController implements Initializable {
             alert.show();
             return;
         }
-        if(!text.matches("[\\d]+")){
+        if(!text.matches("\\d+")){
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Import error");
             alert.setContentText("Sudoku must contain only numbers");
@@ -157,7 +164,7 @@ public class SudokuSolverController implements Initializable {
             for(int j=0; j<ISudoku.SUDOKU_SIZE; j++){
                 int value = Character.getNumericValue(text.charAt(i*ISudoku.SUDOKU_SIZE+j));
                 if(value != 0){
-                    Cell cell = sudoku.getCell(i, j);
+                    Cell cell = sudoku.getCell(j, i);
                     cell.setValue(value);
                     cell.reRender(true);
                 }

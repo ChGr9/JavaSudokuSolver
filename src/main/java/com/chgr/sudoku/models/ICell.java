@@ -28,4 +28,6 @@ public interface ICell {
     boolean removeCandidate(int candidate);
 
     boolean removeCandidates(Collection<Integer> candidates);
+
+    Pos getPos();
 }

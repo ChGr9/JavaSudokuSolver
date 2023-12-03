@@ -2,88 +2,128 @@ package com.chgr.sudoku.solver.techniques;
 
 import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
+import com.chgr.sudoku.models.Pos;
+import com.chgr.sudoku.models.TechniqueAction;
+import javafx.scene.paint.Color;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class HiddenTechnique {
 
     //https://www.sudokuwiki.org/Getting_Started
     //Sections: Last Remaining Cell in a Box & Last Remaining Cell in a Row (or Column)
-    public static boolean hiddenSingle(ISudoku sudoku){
+    public static Optional<TechniqueAction> hiddenSingle(ISudoku sudoku){
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
-            if(checkHiddenSingle(sudoku, sudoku.getRow(i)))
-                return true;
-            if(checkHiddenSingle(sudoku, sudoku.getColumn(i)))
-                return true;
-            if(checkHiddenSingle(sudoku, sudoku.getSquare(i)))
-                return true;
+            TechniqueAction techniqueAction = checkHiddenSingle(sudoku, i, ISudoku.GroupType.ROW);
+            if(techniqueAction != null){
+                return Optional.of(techniqueAction);
+            }
+            techniqueAction = checkHiddenSingle(sudoku, i, ISudoku.GroupType.COLUMN);
+            if(techniqueAction != null){
+                return Optional.of(techniqueAction);
+            }
+            techniqueAction = checkHiddenSingle(sudoku, i, ISudoku.GroupType.SQUARE);
+            if(techniqueAction != null){
+                return Optional.of(techniqueAction);
+            }
         }
-        return false;
+        return Optional.empty();
     }
 
-    private static boolean checkHiddenSingle(ISudoku sudoku, ICell[] group) {
+    private static TechniqueAction checkHiddenSingle(ISudoku sudoku, int i, ISudoku.GroupType groupType) {
         //foreach digit check if only one cell in the provided group can have that digit as its value
+        ICell[] group = switch (groupType) {
+            case ROW -> sudoku.getRow(i);
+            case COLUMN -> sudoku.getColumn(i);
+            case SQUARE -> sudoku.getSquare(i);
+        };
         for(int digit : ICell.DIGITS){
             List<ICell> cellsWithDigit = Arrays.stream(group).filter(c -> c.getCandidates().contains(digit)).toList();
             if(cellsWithDigit.size() == 1){
                 ICell cell = cellsWithDigit.get(0);
                 cell.setValue(digit);
                 sudoku.removeAffectedCandidates(cell.getX(), cell.getY(), digit);
-                return true;
+
+                return TechniqueAction.builder()
+                        .name("Hidden Single")
+                        .setValueMap(Map.of(cell.getPos(), cell.getValue()))
+                        .colorings(List.of(
+                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(cell.getValue())),
+                                TechniqueAction.CellColoring.lineColoring(List.of(
+                                        switch (groupType) {
+                                            case ROW -> new Pos(-1, i);
+                                            case COLUMN -> new Pos(i, -1);
+                                            case SQUARE -> new Pos(i%3*3, i/3*3);
+                                        }),
+                                        Color.YELLOW)
+                                ))
+                        .build();
             }
         }
-        return false;
+        return null;
     }
 
     //https://www.sudokuwiki.org/Hidden_Candidates#HP
     //Section: Hidden Pairs
-    public static boolean hiddenPair(ISudoku sudoku) {
+    public static Optional<TechniqueAction> hiddenPair(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
-            if(checkHiddenTuple(sudoku.getRow(i), 2))
-                return true;
-            if(checkHiddenTuple(sudoku.getColumn(i), 2))
-                return true;
-            if(checkHiddenTuple(sudoku.getSquare(i), 2))
-                return true;
+            TechniqueAction techniqueAction = checkHiddenTuple(sudoku, 2, i, ISudoku.GroupType.ROW);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkHiddenTuple(sudoku, 2, i, ISudoku.GroupType.COLUMN);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkHiddenTuple(sudoku, 2, i, ISudoku.GroupType.SQUARE);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
         }
-        return false;
+        return Optional.empty();
     }
 
     //https://www.sudokuwiki.org/Hidden_Candidates#HT
     //Section: Hidden Triples
-    public static boolean hiddenTriple(ISudoku sudoku) {
+    public static Optional<TechniqueAction> hiddenTriple(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
-            if(checkHiddenTuple(sudoku.getRow(i), 3))
-                return true;
-            if(checkHiddenTuple(sudoku.getColumn(i), 3))
-                return true;
-            if(checkHiddenTuple(sudoku.getSquare(i), 3))
-                return true;
+            TechniqueAction techniqueAction = checkHiddenTuple(sudoku, 3, i, ISudoku.GroupType.ROW);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkHiddenTuple(sudoku, 3, i, ISudoku.GroupType.COLUMN);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkHiddenTuple(sudoku, 3, i, ISudoku.GroupType.SQUARE);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
         }
-        return false;
+        return Optional.empty();
     }
 
     //https://www.sudokuwiki.org/Hidden_Candidates#HQ
     //Section: Hidden Quads
-    public static Boolean hiddenQuad(ISudoku sudoku) {
+    public static Optional<TechniqueAction> hiddenQuad(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
-            if(checkHiddenTuple(sudoku.getRow(i), 4))
-                return true;
-            if(checkHiddenTuple(sudoku.getColumn(i), 4))
-                return true;
-            if(checkHiddenTuple(sudoku.getSquare(i), 4))
-                return true;
+            TechniqueAction techniqueAction = checkHiddenTuple(sudoku, 4, i, ISudoku.GroupType.ROW);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkHiddenTuple(sudoku, 4, i, ISudoku.GroupType.COLUMN);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
+            techniqueAction = checkHiddenTuple(sudoku, 4, i, ISudoku.GroupType.SQUARE);
+            if(techniqueAction != null)
+                return Optional.of(techniqueAction);
         }
-        return false;
+        return Optional.empty();
     }
 
-    private static boolean checkHiddenTuple(ICell[] group, int num){
+    private static TechniqueAction checkHiddenTuple(ISudoku sudoku, int num, int i, ISudoku.GroupType groupType) {
+        ICell[] group = switch (groupType) {
+            case ROW -> sudoku.getRow(i);
+            case COLUMN -> sudoku.getColumn(i);
+            case SQUARE -> sudoku.getSquare(i);
+        };
         Set<Integer> usedDigits = Arrays.stream(group)
                 .map(ICell::getValue)
                 .filter(value -> value != ICell.EMPTY)
@@ -92,7 +132,7 @@ public class HiddenTechnique {
                 .filter(d -> !usedDigits.contains(d))
                 .toList();
         if(availableDigits.size() < num)
-            return false;
+            return null;
         int[] indices = IntStream.range(0, availableDigits.size()).toArray();
         Iterator<int[]> combinationsIterator = CombinatoricsUtils.combinationsIterator(indices.length, num);
 
@@ -105,7 +145,7 @@ public class HiddenTechnique {
                     .filter(cell -> cell.getCandidates().stream().anyMatch(combination::contains))
                     .collect(Collectors.toSet());
 
-            if(cells.size() < num){
+            if(cells.size() != num){
                 continue;
             }
 
@@ -113,20 +153,43 @@ public class HiddenTechnique {
                     .flatMap(cell -> cell.getCandidates().stream())
                     .collect(Collectors.toSet());
 
-            if(cells.size() == num && !candidates.equals(combination)){
+            if(!candidates.equals(combination)){
+                Set<Integer> candidatesToRemove = candidates.stream()
+                        .filter(c -> !combination.contains(c))
+                        .collect(Collectors.toSet());
                 boolean changed = false;
                 for(ICell cell : cells){
-                    for(int candidate : cell.getCandidates()){
-                        if(!combination.contains(candidate)){
-                            changed |= cell.removeCandidate(candidate);
-                        }
+                    for(int candidate : candidatesToRemove){
+                        changed |= cell.removeCandidate(candidate);
                     }
                 }
 
-                if(changed)
-                    return true;
+                if(changed) {
+                    String type = switch (num) {
+                        case 2 -> "Pair";
+                        case 3 -> "Triple";
+                        case 4 -> "Quad";
+                        default -> "Tuple";
+                    };
+                    return TechniqueAction.builder()
+                            .name("Hidden " + type)
+                            .description("Cells " + cells.stream().map(ICell::getPos).map(Pos::toString).collect(Collectors.joining(", ")) + " form a hidden " + type + " in" + groupType.name() + " for the candidates " + candidates.stream().map(String::valueOf).collect(Collectors.joining(", ")))
+                            .removeCandidatesMap(cells.stream().collect(Collectors.toMap(ICell::getPos, c -> candidatesToRemove)))
+                            .colorings(List.of(
+                                    TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.GREEN, combination),
+                                    TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToRemove),
+                                    TechniqueAction.CellColoring.lineColoring(List.of(
+                                            switch (groupType) {
+                                                case ROW -> new Pos(-1, i);
+                                                case COLUMN -> new Pos(i, -1);
+                                                case SQUARE -> new Pos(i%3*3, i/3*3);
+                                            }),
+                                            Color.YELLOW)
+                            ))
+                            .build();
+                }
             }
         }
-        return false;
+        return null;
     }
 }

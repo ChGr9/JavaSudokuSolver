@@ -2,6 +2,7 @@ package com.chgr.sudoku.solver.techniques;
 
 import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
+import com.chgr.sudoku.models.TechniqueAction;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
 import java.util.*;
@@ -16,27 +17,90 @@ public class WingTechnique {
 
     //https://www.sudokuwiki.org/X_Wing_Strategy
     //Section: X-Wing
-    public static boolean xWing(ISudoku sudoku) {
-        return checkFinStructure(sudoku, 2);
+    public static Optional<TechniqueAction> xWing(ISudoku sudoku) {
+        return Optional.ofNullable(checkFinStructure(sudoku, 2));
     }
 
     //https://www.sudokuwiki.org/Sword_Fish_Strategy
     //Section: Swordfish
     public static boolean swordfish(ISudoku sudoku) {
-        return checkFinStructure(sudoku, 3);
+        return checkFinStructureOld(sudoku, 3);
     }
 
     //https://www.sudokuwiki.org/Jelly_Fish_Strategy
     //Section: Jellyfish
     public static boolean jellyfish(ISudoku sudoku) {
-        return checkFinStructure(sudoku, 4);
+        return checkFinStructureOld(sudoku, 4);
     }
 
-    private static boolean checkFinStructure(ISudoku sudoku, int combSize) {
-        return checkFin(sudoku, true, combSize) || checkFin(sudoku, false, combSize);
+    private static TechniqueAction checkFinStructure(ISudoku sudoku, int combSize) {
+        TechniqueAction techniqueAction = checkFin(sudoku, true, combSize);
+        if (techniqueAction != null)
+            return techniqueAction;
+        return checkFin(sudoku, false, combSize);
     }
 
-    private static boolean checkFin(ISudoku sudoku, boolean isRow, int combSize) {
+    private static boolean checkFinStructureOld(ISudoku sudoku, int combSize) {
+        return checkFinOld(sudoku, true, combSize) || checkFinOld(sudoku, false, combSize);
+    }
+
+    private static TechniqueAction checkFin(ISudoku sudoku, boolean isRow, int combSize) {
+        Map<Integer, List<PossibleWing>> map = new HashMap<>();
+
+        for (int i = 0; i < ISudoku.SUDOKU_SIZE; i++) {
+            List<ICell> group = Arrays.stream((isRow ? sudoku.getRow(i) : sudoku.getColumn(i)))
+                    .filter(cell -> cell.getValue() == ICell.EMPTY)
+                    .toList();
+            for (int j = 1; j <= ISudoku.SUDOKU_SIZE; j++) {
+                int finalJ = j;
+                List<ICell> cellsContainingCandidate = group.stream()
+                        .filter(cell -> cell.getCandidates().contains(finalJ))
+                        .toList();
+                if (cellsContainingCandidate.size() >= 2 && cellsContainingCandidate.size() <= combSize) {
+                    PossibleWing possibleWing = new PossibleWing();
+                    possibleWing.rowOrColIndex = i;
+                    possibleWing.cellIndices = cellsContainingCandidate.stream()
+                            .map(cell -> isRow ? cell.getX() : cell.getY())
+                            .collect(Collectors.toList());
+                    map.computeIfAbsent(j, k -> new ArrayList<>()).add(possibleWing);
+                }
+            }
+        }
+
+        for (Map.Entry<Integer, List<PossibleWing>> entry : map.entrySet()) {
+            List<PossibleWing> possibleWings = entry.getValue();
+
+            if (possibleWings.size() >= combSize) {
+                List<List<PossibleWing>> combinations = generateCombinations(possibleWings, combSize);
+
+                for (List<PossibleWing> combination : combinations) {
+                    Set<Integer> groupIndices = new HashSet<>();
+                    for (PossibleWing wing : combination) {
+                        groupIndices.addAll(wing.cellIndices);
+                    }
+
+                    if (groupIndices.size() == combSize) {
+                        boolean changed = false;
+                        for (Integer groupIndex : groupIndices) {
+                            ICell[] group = isRow ? sudoku.getColumn(groupIndex) : sudoku.getRow(groupIndex);
+                            for (ICell cell : group) {
+                                int index = isRow ? cell.getY() : cell.getX();
+                                if (combination.stream().noneMatch(wing -> wing.rowOrColIndex == index)) {
+                                    changed |= cell.removeCandidate(entry.getKey());
+                                }
+                            }
+                        }
+                        if (changed) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean checkFinOld(ISudoku sudoku, boolean isRow, int combSize) {
         Map<Integer, List<PossibleWing>> map = new HashMap<>();
 
         for (int i = 0; i < ISudoku.SUDOKU_SIZE; i++) {

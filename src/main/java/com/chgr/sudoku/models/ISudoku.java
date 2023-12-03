@@ -5,6 +5,12 @@ import java.util.Set;
 public interface ISudoku {
     int SUDOKU_SIZE = 9;
 
+    enum GroupType{
+        ROW,
+        COLUMN,
+        SQUARE
+    }
+
     boolean initialValidation();
 
     void loadCandidates();
