@@ -21,14 +21,12 @@ class LogicalSolverTest{
 
     private record SudokuMap (List<List<Integer>> unsolved, List<List<Integer>> solved) {
     }
-    private LogicalSolver solver;
     private SudokuWithoutUI sudoku;
     private ObjectMapper mapper;
 
     @BeforeEach
     void setUp() {
         sudoku = new SudokuWithoutUI();
-        solver = new LogicalSolver(sudoku);
         mapper = new ObjectMapper(new YAMLFactory());
     }
 
@@ -63,7 +61,10 @@ class LogicalSolverTest{
             }
         }
 
+        LogicalSolver solver = new LogicalSolver(sudoku);
+
         assertTrue(solver.solve());
+        solver.getSteps().forEach(step -> step.apply(sudoku));
         assertEquals(sudokuMap.solved, sudoku.toIntList());
     }
 }

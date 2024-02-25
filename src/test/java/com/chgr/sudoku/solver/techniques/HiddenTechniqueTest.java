@@ -1,11 +1,13 @@
 package com.chgr.sudoku.solver.techniques;
 
+import com.chgr.sudoku.models.TechniqueAction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,9 +26,9 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        boolean result = HiddenTechnique.hiddenSingle(sudoku);
+        Optional<TechniqueAction> result = HiddenTechnique.hiddenSingle(sudoku);
 
-        assertTrue(result);
+        assertTrue(result.isPresent());
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -43,8 +45,8 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
         loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
-            boolean result = HiddenTechnique.hiddenPair(sudoku);
-            assertTrue(result);
+            Optional<TechniqueAction> result = HiddenTechnique.hiddenPair(sudoku);
+            assertTrue(result.isPresent());
         }
         assertChecksMatch(sudoku, technique.checks);
     }
@@ -61,8 +63,8 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
         loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
-            boolean result = HiddenTechnique.hiddenTriple(sudoku);
-            assertTrue(result);
+            Optional<TechniqueAction> result = HiddenTechnique.hiddenTriple(sudoku);
+            assertTrue(result.isPresent());
         }
         assertChecksMatch(sudoku, technique.checks);
     }
@@ -79,8 +81,8 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
         loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
-            boolean result = HiddenTechnique.hiddenQuad(sudoku);
-            assertTrue(result);
+            Optional<TechniqueAction> result = HiddenTechnique.hiddenQuad(sudoku);
+            assertTrue(result.isPresent());
         }
         assertChecksMatch(sudoku, technique.checks);
     }

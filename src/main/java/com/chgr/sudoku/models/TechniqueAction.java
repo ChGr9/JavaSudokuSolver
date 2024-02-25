@@ -46,7 +46,7 @@ public class TechniqueAction extends BaseAction {
     private Map<Pos, Integer> setValueMap;
 
     @Override
-    public void apply(Sudoku sudoku) {
+    public void apply(ISudoku sudoku) {
         clearColoring(sudoku);
         if (setValueMap != null)
             for (var setValue : setValueMap.entrySet()) {
@@ -60,7 +60,7 @@ public class TechniqueAction extends BaseAction {
         sudoku.reRender();
     }
 
-    public void clearColoring(Sudoku sudoku) {
+    public void clearColoring(ISudoku sudoku) {
         for (CellColoring coloring : colorings) {
             for (Pos pos : coloring.pos){
                 switch (coloring.type) {
@@ -73,7 +73,7 @@ public class TechniqueAction extends BaseAction {
     }
 
     @Override
-    public void display(Sudoku sudoku) {
+    public void display(ISudoku sudoku) {
         for (CellColoring coloring : colorings) {
             for (Pos pos : coloring.pos){
                 switch (coloring.type) {
