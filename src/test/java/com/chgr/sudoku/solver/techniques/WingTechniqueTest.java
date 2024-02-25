@@ -1,5 +1,6 @@
 package com.chgr.sudoku.solver.techniques;
 
+import com.chgr.sudoku.models.TechniqueAction;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -7,6 +8,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,8 +28,8 @@ class WingTechniqueTest extends BaseTechniqueTest {
         loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
-            boolean result = WingTechnique.xWing(sudoku);
-            assertTrue(result);
+            Optional<TechniqueAction> result = WingTechnique.xWing(sudoku);
+            assertTrue(result.isPresent());
         }
         assertChecksMatch(sudoku, technique.checks);
     }

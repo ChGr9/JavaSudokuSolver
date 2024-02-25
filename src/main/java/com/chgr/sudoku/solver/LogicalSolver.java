@@ -67,7 +67,7 @@ public class LogicalSolver extends Task<Boolean> {
                         .description("Set initial values")
                         .function( (sud) -> {
                             for(Map.Entry<Pos, Integer> entry : initialValues.entrySet()){
-                                Cell cell = sud.getCell(entry.getKey());
+                                ICell cell = sud.getCell(entry.getKey());
                                 cell.setValue(entry.getValue());
                                 cell.reRender(true);
                             }

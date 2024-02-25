@@ -1,10 +1,12 @@
 package com.chgr.sudoku.solver.techniques;
 
+import com.chgr.sudoku.models.TechniqueAction;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,8 +25,8 @@ class IntersectionTechniqueTest extends BaseTechniqueTest {
         loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
-            boolean result = IntersectionTechnique.pointingTuple(sudoku);
-            assertTrue(result);
+            Optional<TechniqueAction> result = IntersectionTechnique.pointingTuple(sudoku);
+            assertTrue(result.isPresent());
         }
         assertChecksMatch(sudoku, technique.checks);
     }
@@ -42,8 +44,8 @@ class IntersectionTechniqueTest extends BaseTechniqueTest {
         loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
-            boolean result = IntersectionTechnique.boxLineReduction(sudoku);
-            assertTrue(result);
+            Optional<TechniqueAction> result = IntersectionTechnique.boxLineReduction(sudoku);
+            assertTrue(result.isPresent());
         }
         assertChecksMatch(sudoku, technique.checks);
     }

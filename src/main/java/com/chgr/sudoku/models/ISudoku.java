@@ -1,5 +1,8 @@
 package com.chgr.sudoku.models;
 
+import javafx.scene.paint.Color;
+
+import java.util.Collection;
 import java.util.Set;
 
 public interface ISudoku {
@@ -44,4 +47,8 @@ public interface ISudoku {
     ICell[] getSquare(int x, int y);
 
     ICell getCell(Pos key);
+
+    default void colorLine(Collection<Pos> pos, Color color) {}
+
+    default void clearColorLine() {}
 }

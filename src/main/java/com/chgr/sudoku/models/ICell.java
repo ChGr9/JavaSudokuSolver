@@ -1,5 +1,7 @@
 package com.chgr.sudoku.models;
 
+import javafx.scene.paint.Color;
+
 import java.util.Collection;
 import java.util.Set;
 
@@ -30,4 +32,14 @@ public interface ICell {
     boolean removeCandidates(Collection<Integer> candidates);
 
     Pos getPos();
+
+    default void colorValue(Color color) {}
+
+    default void colorCandidates(Collection<Integer> candidates, Color color) {}
+
+    default void clearColorValue() {}
+
+    default void clearColorCandidates(Collection<Integer> candidates) {}
+
+    default void reRender(boolean fromUser) {}
 }
