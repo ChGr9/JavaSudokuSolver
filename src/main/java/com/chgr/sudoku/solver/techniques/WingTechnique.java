@@ -2,7 +2,10 @@ package com.chgr.sudoku.solver.techniques;
 
 import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
+import com.chgr.sudoku.models.Pos;
 import com.chgr.sudoku.models.TechniqueAction;
+import javafx.scene.paint.Color;
+import lombok.Getter;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
 import java.util.*;
@@ -10,6 +13,7 @@ import java.util.stream.Collectors;
 
 public class WingTechnique {
 
+    @Getter
     private static class PossibleWing {
         int rowOrColIndex;
         List<Integer> cellIndices;
@@ -80,18 +84,43 @@ public class WingTechnique {
                     }
 
                     if (groupIndices.size() == combSize) {
-                        boolean changed = false;
+                        Set<Pos> removeCandidates = new HashSet<>();
                         for (Integer groupIndex : groupIndices) {
                             ICell[] group = isRow ? sudoku.getColumn(groupIndex) : sudoku.getRow(groupIndex);
                             for (ICell cell : group) {
                                 int index = isRow ? cell.getY() : cell.getX();
                                 if (combination.stream().noneMatch(wing -> wing.rowOrColIndex == index)) {
-                                    changed |= cell.removeCandidate(entry.getKey());
+                                    if(cell.removeCandidate(entry.getKey())){
+                                        removeCandidates.add(cell.getPos());
+                                    }
                                 }
                             }
                         }
-                        if (changed) {
-                            return true;
+                        if(!removeCandidates.isEmpty()){
+                            String name = switch (combSize) {
+                                case 2 -> "X-Wing";
+                                case 3 -> "Swordfish";
+                                case 4 -> "Jellyfish";
+                                default -> "Fin";
+                            };
+
+                            Set<Pos> finCells = groupIndices.stream()
+                                    .flatMap(index -> combination.stream().map(comb -> isRow ?
+                                            new Pos(index, comb.rowOrColIndex) :
+                                            new Pos(comb.rowOrColIndex, index)
+                                    )).collect(Collectors.toSet());
+
+                            return TechniqueAction.builder()
+                                    .name(name)
+                                    .description("Cells: " + finCells.stream().map(Pos::toString).collect(Collectors.joining(", "))
+                                            + " form a " + name + " on " + (isRow? "rows " : "columns ")
+                                            + combination.stream().map(PossibleWing::getRowOrColIndex).map(Object::toString).collect(Collectors.joining(", ")))
+                                    .removeCandidatesMap(removeCandidates.stream().collect(Collectors.toMap(pos -> pos, pos -> Set.of(entry.getKey()))))
+                                    .colorings(List.of(
+                                            TechniqueAction.CellColoring.candidatesColoring(finCells, Color.GREEN, Set.of(entry.getKey())),
+                                            TechniqueAction.CellColoring.candidatesColoring(removeCandidates, Color.RED, Set.of(entry.getKey()))
+                                    ))
+                                    .build();
                         }
                     }
                 }

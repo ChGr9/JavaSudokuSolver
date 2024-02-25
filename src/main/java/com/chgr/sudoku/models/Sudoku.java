@@ -32,6 +32,7 @@ public class Sudoku extends Pane implements ISudoku {
                 cells[i][j].reRender();
             }
         }
+        clearColorLine();
     }
 
     public boolean initialValidation(){
@@ -183,7 +184,7 @@ public class Sudoku extends Pane implements ISudoku {
         });
     }
 
-    public void colorLine(List<Pos> pos, Color color) {
+    public void colorLine(Collection<Pos> pos, Color color) {
         for(Pos p : pos){
             if(p.x() == -1 && p.y() == -1)
                 continue;

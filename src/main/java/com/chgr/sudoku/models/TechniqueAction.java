@@ -17,7 +17,7 @@ public class TechniqueAction extends BaseAction {
             LINE
         }
 
-        List<Pos> pos;
+        Collection<Pos> pos;
         Color color;
         Collection<Integer> candidates;
         ColoringType type;
@@ -26,7 +26,7 @@ public class TechniqueAction extends BaseAction {
             return new CellColoring(pos, color, null, ColoringType.VALUE);
         }
 
-        public static CellColoring candidatesColoring(List<Pos> pos, Color color, Collection<Integer> candidates) {
+        public static CellColoring candidatesColoring(Collection<Pos> pos, Color color, Collection<Integer> candidates) {
             return new CellColoring(pos, color, candidates, ColoringType.CANDIDATES);
         }
 
@@ -34,7 +34,7 @@ public class TechniqueAction extends BaseAction {
             return new CellColoring(pos, color, null, ColoringType.LINE);
         }
 
-        private CellColoring(List<Pos> pos, Color color, Collection<Integer> candidates, ColoringType type) {
+        private CellColoring(Collection<Pos> pos, Color color, Collection<Integer> candidates, ColoringType type) {
             this.pos = pos;
             this.color = color;
             this.candidates = candidates;

@@ -110,6 +110,8 @@ public class Cell extends StackPane implements ICell {
 
     public void clear() {
         setValue(EMPTY);
+        clearColorCandidates(Set.of(1, 2, 3, 4, 5, 6, 7, 8, 9));
+        clearColorValue();
     }
 
     public void addCandidate(int candidate) {
