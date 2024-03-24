@@ -28,6 +28,7 @@ class NakedTechniqueTest extends BaseTechniqueTest {
         Optional<TechniqueAction> result = NakedTechnique.nakedSingle(sudoku);
 
         assertTrue(result.isPresent());
+        result.get().apply(sudoku);
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -46,6 +47,7 @@ class NakedTechniqueTest extends BaseTechniqueTest {
         for(int i=0; i < technique.repetitions; i++) {
             Optional<TechniqueAction> result = NakedTechnique.nakedPair(sudoku);
             assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }
@@ -65,6 +67,7 @@ class NakedTechniqueTest extends BaseTechniqueTest {
         for(int i=0; i < technique.repetitions; i++) {
             Optional<TechniqueAction> result = NakedTechnique.nakedTriple(sudoku);
             assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }
@@ -83,6 +86,7 @@ class NakedTechniqueTest extends BaseTechniqueTest {
         for(int i=0; i < technique.repetitions; i++) {
             Optional<TechniqueAction> result = NakedTechnique.nakedQuad(sudoku);
             assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }

@@ -45,12 +45,10 @@ public class HiddenTechnique {
             List<ICell> cellsWithDigit = Arrays.stream(group).filter(c -> c.getCandidates().contains(digit)).toList();
             if(cellsWithDigit.size() == 1){
                 ICell cell = cellsWithDigit.get(0);
-                cell.setValue(digit);
-                sudoku.removeAffectedCandidates(cell.getX(), cell.getY(), digit);
 
                 return TechniqueAction.builder()
                         .name("Hidden Single")
-                        .setValueMap(Map.of(cell.getPos(), cell.getValue()))
+                        .setValueMap(Map.of(cell.getPos(), digit))
                         .colorings(List.of(
                                 TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(cell.getValue())),
                                 TechniqueAction.CellColoring.lineColoring(List.of(
@@ -157,14 +155,8 @@ public class HiddenTechnique {
                 Set<Integer> candidatesToRemove = candidates.stream()
                         .filter(c -> !combination.contains(c))
                         .collect(Collectors.toSet());
-                boolean changed = false;
-                for(ICell cell : cells){
-                    for(int candidate : candidatesToRemove){
-                        changed |= cell.removeCandidate(candidate);
-                    }
-                }
 
-                if(changed) {
+                if(!candidatesToRemove.isEmpty()) {
                     String type = switch (num) {
                         case 2 -> "Pair";
                         case 3 -> "Triple";

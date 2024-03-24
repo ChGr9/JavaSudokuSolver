@@ -29,6 +29,7 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
         Optional<TechniqueAction> result = HiddenTechnique.hiddenSingle(sudoku);
 
         assertTrue(result.isPresent());
+        result.get().apply(sudoku);
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -47,6 +48,7 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
         for(int i=0; i < technique.repetitions; i++) {
             Optional<TechniqueAction> result = HiddenTechnique.hiddenPair(sudoku);
             assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }
@@ -65,6 +67,7 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
         for(int i=0; i < technique.repetitions; i++) {
             Optional<TechniqueAction> result = HiddenTechnique.hiddenTriple(sudoku);
             assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }
@@ -83,6 +86,7 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
         for(int i=0; i < technique.repetitions; i++) {
             Optional<TechniqueAction> result = HiddenTechnique.hiddenQuad(sudoku);
             assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }

@@ -18,13 +18,11 @@ public class NakedTechnique {
         Optional<ICell> oCell = Arrays.stream(sudoku.getAllCells()).filter(c -> c.getCandidates().size() == 1).findFirst();
         if (oCell.isPresent()) {
             ICell cell = oCell.get();
-            cell.setValue(cell.getCandidates().stream().findFirst().orElseThrow());
-            sudoku.removeAffectedCandidates(cell.getX(), cell.getY(), cell.getValue());
             return Optional.of(
                     TechniqueAction.builder()
                             .name("Naked Single")
                             .description("Value " + cell.getValue() + " is the only available candidate at cell (" + cell.getX() + "," + cell.getY() + ")" )
-                            .setValueMap(Map.of(cell.getPos(), cell.getValue()))
+                            .setValueMap(Map.of(cell.getPos(), cell.getCandidates().stream().findFirst().orElseThrow()))
                             .colorings(List.of(
                                     TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(cell.getValue()))
                             ))
@@ -137,15 +135,11 @@ public class NakedTechnique {
             if (isSubsetOfAnother) continue;
 
             // For each cell in the group that is not part of the combination, remove the combined candidates.
-            boolean changed = false;
             List<ICell> affectedCells = emptyCells.stream()
                     .filter(c -> !combination.contains(c) && c.getCandidates().stream().anyMatch(combinedCandidates::contains))
                     .toList();
-            for (ICell c : affectedCells) {
-                changed |= c.removeCandidates(combinedCandidates);
-            }
 
-            if (changed) {
+            if (!affectedCells.isEmpty()) {
                 String type = switch (num) {
                     case 2 -> "Pair";
                     case 3 -> "Triple";
@@ -163,7 +157,6 @@ public class NakedTechnique {
                         .build();
             }
         }
-
         return null;
     }
 }

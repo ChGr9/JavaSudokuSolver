@@ -78,25 +78,31 @@ public class WingTechnique {
                 List<List<PossibleWing>> combinations = generateCombinations(possibleWings, combSize);
 
                 for (List<PossibleWing> combination : combinations) {
-                    Set<Integer> groupIndices = new HashSet<>();
-                    for (PossibleWing wing : combination) {
-                        groupIndices.addAll(wing.cellIndices);
-                    }
+                    Set<Integer> groupIndices = combination.stream()
+                            .map(PossibleWing::getCellIndices)
+                            .flatMap(List::stream)
+                            .collect(Collectors.toSet());
 
                     if (groupIndices.size() == combSize) {
-                        Set<Pos> removeCandidates = new HashSet<>();
+                        Set<Pos> affectedPos = new HashSet<>();
+                        Set<Integer> combinationIndices = combination.stream()
+                                .map(PossibleWing::getRowOrColIndex)
+                                .collect(Collectors.toSet());
+
                         for (Integer groupIndex : groupIndices) {
                             ICell[] group = isRow ? sudoku.getColumn(groupIndex) : sudoku.getRow(groupIndex);
                             for (ICell cell : group) {
                                 int index = isRow ? cell.getY() : cell.getX();
-                                if (combination.stream().noneMatch(wing -> wing.rowOrColIndex == index)) {
-                                    if(cell.removeCandidate(entry.getKey())){
-                                        removeCandidates.add(cell.getPos());
+                                if (!combinationIndices.contains(index)) {
+                                    Set<Integer> candidates = cell.getCandidates();
+                                    Pos position = cell.getPos();
+                                    if(candidates.contains(entry.getKey())){
+                                        affectedPos.add(position);
                                     }
                                 }
                             }
                         }
-                        if(!removeCandidates.isEmpty()){
+                        if(!affectedPos.isEmpty()){
                             String name = switch (combSize) {
                                 case 2 -> "X-Wing";
                                 case 3 -> "Swordfish";
@@ -115,10 +121,10 @@ public class WingTechnique {
                                     .description("Cells: " + finCells.stream().map(Pos::toString).collect(Collectors.joining(", "))
                                             + " form a " + name + " on " + (isRow? "rows " : "columns ")
                                             + combination.stream().map(PossibleWing::getRowOrColIndex).map(Object::toString).collect(Collectors.joining(", ")))
-                                    .removeCandidatesMap(removeCandidates.stream().collect(Collectors.toMap(pos -> pos, pos -> Set.of(entry.getKey()))))
+                                    .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, pos -> Set.of(entry.getKey()))))
                                     .colorings(List.of(
                                             TechniqueAction.CellColoring.candidatesColoring(finCells, Color.GREEN, Set.of(entry.getKey())),
-                                            TechniqueAction.CellColoring.candidatesColoring(removeCandidates, Color.RED, Set.of(entry.getKey()))
+                                            TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, Set.of(entry.getKey()))
                                     ))
                                     .build();
                         }
