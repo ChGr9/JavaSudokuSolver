@@ -74,7 +74,7 @@ public class Cell extends StackPane implements ICell {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 this.candidatesPane[i][j] = new StackPane();
-                this.candidatesText[i][j] = new Text();
+                this.candidatesText[i][j] = new Text(" ");
                 // Make the candidate numbers small
                 this.candidatesText[i][j].setFont(new Font(this.candidatesText[i][j].getFont().getFamily(), SIZE/4f));
                 this.candidatesPane[i][j].getChildren().add(this.candidatesText[i][j]);
@@ -163,7 +163,7 @@ public class Cell extends StackPane implements ICell {
             if(candidate > 0 && candidate < 10){
                 int candidateX = (candidate - 1) / 3;
                 int candidateY = (candidate - 1) % 3;
-                if(this.candidatesText[candidateX][candidateY].getText().equals(""))
+                if(this.candidatesText[candidateX][candidateY].getText().equals(" "))
                     continue;
                 String colorAsHex = String.format("#%02X%02X%02X%02X",
                         (int) (color.getRed() * 255),
@@ -214,7 +214,7 @@ public class Cell extends StackPane implements ICell {
             valueText.setText(String.valueOf(value));
             for(int i = 0; i < 3; i++){
                 for(int j = 0; j < 3; j++){
-                    candidatesText[i][j].setText("");
+                    candidatesText[i][j].setText(" ");
                 }
             }
         }
@@ -227,7 +227,7 @@ public class Cell extends StackPane implements ICell {
                         candidatesText[i][j].setText(String.valueOf(candidate));
                     }
                     else{
-                        candidatesText[i][j].setText("");
+                        candidatesText[i][j].setText(" ");
                     }
                 }
             }
