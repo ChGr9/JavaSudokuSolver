@@ -91,6 +91,7 @@ public class LogicalSolver extends Task<Boolean> {
             for(Function<ISudoku, Optional<TechniqueAction>> technique : techniques){
                 Optional<TechniqueAction> action = technique.apply(sudoku);
                 if(action.isPresent()){
+                    action.get().apply(sudoku);
                     solveSteps.add(action.get());
                     changed = true;
                     break;

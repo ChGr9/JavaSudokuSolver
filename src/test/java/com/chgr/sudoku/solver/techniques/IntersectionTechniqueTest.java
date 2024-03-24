@@ -27,6 +27,7 @@ class IntersectionTechniqueTest extends BaseTechniqueTest {
         for(int i=0; i < technique.repetitions; i++) {
             Optional<TechniqueAction> result = IntersectionTechnique.pointingTuple(sudoku);
             assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }
@@ -46,6 +47,7 @@ class IntersectionTechniqueTest extends BaseTechniqueTest {
         for(int i=0; i < technique.repetitions; i++) {
             Optional<TechniqueAction> result = IntersectionTechnique.boxLineReduction(sudoku);
             assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }

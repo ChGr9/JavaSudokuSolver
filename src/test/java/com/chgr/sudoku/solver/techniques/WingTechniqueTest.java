@@ -30,6 +30,7 @@ class WingTechniqueTest extends BaseTechniqueTest {
         for(int i=0; i < technique.repetitions; i++) {
             Optional<TechniqueAction> result = WingTechnique.xWing(sudoku);
             assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }

@@ -69,14 +69,14 @@ public class IntersectionTechnique {
         int startAxis = isRow ? square[0].getX() : square[0].getY();
         int endAxis = isRow ? square[8].getX() : square[8].getY();
         List<ICell> affectedCells = Arrays.stream(cells)
-                .filter(cell -> isRow?
+                .filter(cell -> (isRow?
                         cell.getX() < startAxis || cell.getX() > endAxis:
-                        cell.getY() < startAxis || cell.getY() > endAxis
+                        cell.getY() < startAxis || cell.getY() > endAxis)
                 ).collect(Collectors.toList());
 
         Set<Integer> candidatesToBeRemoved = distinctCandidates.stream().filter(candidate -> affectedCells.stream().anyMatch(cell -> cell.getCandidates().contains(candidate))).collect(Collectors.toSet());
 
-        affectedCells.removeIf(cell -> !cell.removeCandidates(candidatesToBeRemoved));
+        affectedCells.removeIf(cell -> cell.getCandidates().stream().noneMatch(candidatesToBeRemoved::contains));
 
         List<Pos> pointingCells = Arrays.stream(square)
                 .filter(cell -> cell.getCandidates().stream().anyMatch(candidatesToBeRemoved::contains))
@@ -150,7 +150,7 @@ public class IntersectionTechnique {
                 ).collect(Collectors.toList());
         Set<Integer> candidatesToBeRemoved = distinctCandidates.stream().filter(candidate -> affectedCells.stream().anyMatch(cell -> cell.getCandidates().contains(candidate))).collect(Collectors.toSet());
 
-        affectedCells.removeIf(cell -> !cell.removeCandidates(candidatesToBeRemoved));
+        affectedCells.removeIf(cell -> cell.getCandidates().stream().noneMatch(candidatesToBeRemoved::contains));
 
         List<Pos> pointingCells = IntStream.range(0, 3).mapToObj(num -> group[num + i * 3].getPos()).toList();
 
