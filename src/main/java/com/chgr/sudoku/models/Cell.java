@@ -163,7 +163,7 @@ public class Cell extends StackPane implements ICell {
             if(candidate > 0 && candidate < 10){
                 int candidateX = (candidate - 1) / 3;
                 int candidateY = (candidate - 1) % 3;
-                if(this.candidatesText[candidateX][candidateY].getText().equals(" "))
+                if(!this.candidates.contains(candidate))
                     continue;
                 String colorAsHex = String.format("#%02X%02X%02X%02X",
                         (int) (color.getRed() * 255),

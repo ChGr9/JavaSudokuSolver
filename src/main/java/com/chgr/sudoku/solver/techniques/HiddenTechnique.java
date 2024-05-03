@@ -10,7 +10,6 @@ import org.apache.commons.math3.util.CombinatoricsUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class HiddenTechnique {
 
@@ -51,7 +50,7 @@ public class HiddenTechnique {
                         .setValueMap(Map.of(cell.getPos(), digit))
                         .colorings(List.of(
                                 TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(cell.getValue())),
-                                TechniqueAction.CellColoring.lineColoring(List.of(
+                                TechniqueAction.CellColoring.groupColoring(List.of(
                                         switch (groupType) {
                                             case ROW -> new Pos(-1, i);
                                             case COLUMN -> new Pos(i, -1);
@@ -170,7 +169,7 @@ public class HiddenTechnique {
                             .colorings(List.of(
                                     TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.GREEN, combination),
                                     TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToRemove),
-                                    TechniqueAction.CellColoring.lineColoring(List.of(
+                                    TechniqueAction.CellColoring.groupColoring(List.of(
                                             switch (groupType) {
                                                 case ROW -> new Pos(-1, i);
                                                 case COLUMN -> new Pos(i, -1);

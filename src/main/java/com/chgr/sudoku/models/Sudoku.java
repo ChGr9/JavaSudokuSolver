@@ -1,9 +1,11 @@
 package com.chgr.sudoku.models;
 
 import javafx.application.Platform;
+import javafx.geometry.Point2D;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 
 import java.util.Arrays;
@@ -34,7 +36,7 @@ public class Sudoku extends Pane implements ISudoku {
                 cells[i][j].reRender();
             }
         }
-        clearColorLine();
+        clearColorGroup();
     }
 
     public boolean initialValidation(){
@@ -186,7 +188,7 @@ public class Sudoku extends Pane implements ISudoku {
         });
     }
 
-    public void colorLine(Collection<Pos> pos, Color color) {
+    public void colorGroup(Collection<Pos> pos, Color color) {
         for(Pos p : pos){
             if(p.x() == -1 && p.y() == -1)
                 continue;
@@ -208,7 +210,33 @@ public class Sudoku extends Pane implements ISudoku {
         }
     }
 
-    public void clearColorLine() {
+    public void clearColorGroup() {
         this.getChildren().removeIf(node -> node instanceof Rectangle);
+    }
+
+    public void colorLine(Pos first, Pos second, int candidate, Color color) {
+        Point2D start = getCenter(first);
+        Point2D end = getCenter(second);
+
+        int xOffset = (candidate - 1) % 3 - 1;
+        int yOffset = (candidate - 1) / 3 - 1;
+
+        start = start.add(xOffset * Cell.SIZE * 0.6f / 2f, yOffset * Cell.SIZE * 0.6f / 2f);
+        end = end.add(xOffset * Cell.SIZE * 0.6f / 2f, yOffset * Cell.SIZE * 0.6f / 2f);
+
+        Line line = new Line(start.getX(), start.getY(), end.getX(), end.getY());
+        line.setStroke(color);
+        line.setStrokeWidth(2);
+
+        this.getChildren().add(line);
+    }
+
+    private Point2D getCenter(Pos first) {
+        return new Point2D(first.x() * Cell.SIZE + Cell.SIZE / 2f, first.y() * Cell.SIZE + Cell.SIZE / 2f);
+    }
+
+    @Override
+    public void clearColorLine() {
+        this.getChildren().removeIf(node -> node instanceof Line);
     }
 }

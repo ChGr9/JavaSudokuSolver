@@ -89,7 +89,7 @@ public class IntersectionTechnique {
                 .colorings(List.of(
                         TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
                         TechniqueAction.CellColoring.candidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
-                        TechniqueAction.CellColoring.lineColoring(List.of(square[0].getPos()), Color.YELLOW)
+                        TechniqueAction.CellColoring.groupColoring(List.of(square[0].getPos()), Color.YELLOW)
                         ))
                 .build();
     }
@@ -161,7 +161,7 @@ public class IntersectionTechnique {
                 .colorings(List.of(
                         TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
                         TechniqueAction.CellColoring.candidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
-                        TechniqueAction.CellColoring.lineColoring(List.of(isRow ? new Pos(-1, firstCell.getY()) : new Pos(firstCell.getX(), -1)), Color.YELLOW)
+                        TechniqueAction.CellColoring.groupColoring(List.of(isRow ? new Pos(-1, firstCell.getY()) : new Pos(firstCell.getX(), -1)), Color.YELLOW)
                 ))
                 .build();
     }

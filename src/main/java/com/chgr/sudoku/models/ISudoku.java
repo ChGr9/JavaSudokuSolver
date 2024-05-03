@@ -48,7 +48,11 @@ public interface ISudoku {
 
     ICell getCell(Pos key);
 
-    default void colorLine(Collection<Pos> pos, Color color) {}
+    default void colorGroup(Collection<Pos> pos, Color color) {}
+
+    default void clearColorGroup() {}
+
+    default void colorLine(Pos first, Pos second, int candidate, Color color) {}
 
     default void clearColorLine() {}
 }
