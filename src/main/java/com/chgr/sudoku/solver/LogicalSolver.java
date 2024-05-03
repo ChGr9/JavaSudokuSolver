@@ -5,6 +5,7 @@ import com.chgr.sudoku.solver.techniques.*;
 import com.chgr.sudoku.utils.SudokuConverter;
 import javafx.concurrent.Task;
 
+import java.io.Console;
 import java.util.*;
 import java.util.function.Function;
 
@@ -34,7 +35,6 @@ public class LogicalSolver extends Task<Boolean> {
     }
 
     private static final List<Function<ISudoku, Boolean>> oldTechniques = List.of(
-            ChainTechnique::simpleColoring,
             WingTechnique::yWing,
             WingTechnique::swordfish,
             WingTechnique::xyzWing,
@@ -56,7 +56,8 @@ public class LogicalSolver extends Task<Boolean> {
             HiddenTechnique::hiddenQuad,
             IntersectionTechnique::pointingTuple,
             IntersectionTechnique::boxLineReduction,
-            WingTechnique::xWing
+            WingTechnique::xWing,
+            ChainTechnique::simpleColoring
     );
 
     public boolean solve(){
