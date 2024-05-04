@@ -206,7 +206,7 @@ public class WingTechnique {
 
     //https://www.sudokuwiki.org/Y_Wing_Strategy
     //Section: Y-Wing
-    public static boolean yWing(ISudoku sudoku) {
+    public static Optional<TechniqueAction> yWing(ISudoku sudoku) {
         Map<ICell, Set<ICell>> peerMap = new HashMap<>();
 
         for (ICell cell : sudoku.getEmptyCells()) {
@@ -233,14 +233,22 @@ public class WingTechnique {
                                     Set<ICell> commonPeers = new HashSet<>(peerMap.get(wing1));
                                     commonPeers.retainAll(peerMap.get(wing2));
 
-                                    boolean changed = false;
-                                    for (ICell peer : commonPeers) {
-                                        if (peer != pivot) {
-                                            changed |= peer.removeCandidate(C);
-                                        }
+                                    List<ICell> toRemove = commonPeers.stream()
+                                            .filter(cell -> cell != pivot && cell.getCandidates().contains(C))
+                                            .toList();
+                                    if(!toRemove.isEmpty()){
+                                        Set<Pos> affectedPos = toRemove.stream().map(ICell::getPos).collect(Collectors.toSet());
+                                        return Optional.of(TechniqueAction.builder()
+                                                .name("Y-Wing")
+                                                .description("Cells: " + pivot.getPos() + ", " + wing1.getPos() + ", " + wing2.getPos()
+                                                        + " form a Y-Wing on candidates " + A + ", " + B + ", " + C)
+                                                .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, pos -> Set.of(C))))
+                                                .colorings(List.of(
+                                                        TechniqueAction.CellColoring.candidatesColoring(Set.of(pivot.getPos(), wing1.getPos(), wing2.getPos()), Color.GREEN, Set.of(A, B, C)),
+                                                        TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, Set.of(C))
+                                                ))
+                                                .build());
                                     }
-                                    if (changed)
-                                        return true;
                                 }
                             }
                         }
@@ -248,7 +256,7 @@ public class WingTechnique {
                 }
             }
         }
-        return false;
+        return Optional.empty();
     }
 
 

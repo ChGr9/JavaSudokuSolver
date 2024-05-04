@@ -18,13 +18,14 @@ public class NakedTechnique {
         Optional<ICell> oCell = Arrays.stream(sudoku.getAllCells()).filter(c -> c.getCandidates().size() == 1).findFirst();
         if (oCell.isPresent()) {
             ICell cell = oCell.get();
+            int value = cell.getCandidates().stream().findFirst().orElseThrow();
             return Optional.of(
                     TechniqueAction.builder()
                             .name("Naked Single")
                             .description("Value " + cell.getValue() + " is the only available candidate at cell (" + cell.getX() + "," + cell.getY() + ")" )
-                            .setValueMap(Map.of(cell.getPos(), cell.getCandidates().stream().findFirst().orElseThrow()))
+                            .setValueMap(Map.of(cell.getPos(), value))
                             .colorings(List.of(
-                                    TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(cell.getValue()))
+                                    TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(value))
                             ))
                             .build()
             );

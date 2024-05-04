@@ -49,7 +49,7 @@ public class HiddenTechnique {
                         .name("Hidden Single")
                         .setValueMap(Map.of(cell.getPos(), digit))
                         .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(cell.getValue())),
+                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(digit)),
                                 TechniqueAction.CellColoring.groupColoring(List.of(
                                         switch (groupType) {
                                             case ROW -> new Pos(-1, i);
