@@ -7,6 +7,7 @@ import java.util.Set;
 
 public interface ISudoku {
     int SUDOKU_SIZE = 9;
+    int SQUARE_SIZE = 3;
 
     enum GroupType{
         ROW,
