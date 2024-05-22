@@ -40,7 +40,7 @@ public class LogicalSolver extends Task<Boolean> {
             ChainTechnique::xyChain,
             ChainTechnique::medusa3D,
             WingTechnique::jellyfish,
-            UniqueRectangleTechnique::uniqueRectangle
+            RectangleTechnique::uniqueRectangle
     );
 
     private static final List<Function<ISudoku, Optional<TechniqueAction>>> techniques = List.of(
@@ -56,7 +56,8 @@ public class LogicalSolver extends Task<Boolean> {
             IntersectionTechnique::boxLineReduction,
             WingTechnique::xWing,
             ChainTechnique::simpleColoring,
-            WingTechnique::yWing
+            WingTechnique::yWing,
+            RectangleTechnique::rectangleElimination
     );
 
     public boolean solve(){

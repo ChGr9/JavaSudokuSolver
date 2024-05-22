@@ -12,14 +12,13 @@ public class IntersectionTechnique {
     //https://www.sudokuwiki.org/Intersection_Removal#IR
     //Section: Pointing Pairs, Pointing Triples
     public static Optional<TechniqueAction> pointingTuple(ISudoku sudoku) {
-        final int SQUARE_SIZE = 3;
 
         for (int squareIndex = 0; squareIndex < ISudoku.SUDOKU_SIZE; squareIndex++) {
             ICell[] square = sudoku.getSquare(squareIndex);
             List<Set<Integer>> squareRowCandidates = new ArrayList<>();
             List<Set<Integer>> squareColumnCandidates = new ArrayList<>();
 
-            for (int rowIndex = 0; rowIndex < SQUARE_SIZE; rowIndex++) {
+            for (int rowIndex = 0; rowIndex < ISudoku.SQUARE_SIZE; rowIndex++) {
                 squareRowCandidates.add(getCandidateSetByY(square, rowIndex));
                 squareColumnCandidates.add(getCandidateSetByX(square, rowIndex));
             }

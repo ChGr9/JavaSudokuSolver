@@ -2,13 +2,18 @@ package com.chgr.sudoku.solver.techniques;
 
 import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
+import com.chgr.sudoku.models.TechniqueAction;
+import javafx.scene.paint.Color;
+import org.apache.commons.math3.util.Pair;
 
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.chgr.sudoku.utils.CellUtils.getPeers;
+import static com.chgr.sudoku.utils.CellUtils.isPeer;
 
-public class UniqueRectangleTechnique {
+public class RectangleTechnique {
 
     public static boolean uniqueRectangle(ISudoku sudoku) {
         Map<Set<Integer>, List<ICell>> biValueMap = sudoku.getEmptyCells().stream()
@@ -269,5 +274,85 @@ public class UniqueRectangleTechnique {
                         .collect(Collectors.toSet()));
         }
         return extraCandidates;
+    }
+
+    public static Optional<TechniqueAction> rectangleElimination(ISudoku sudoku) {
+        for (int i = 0; i < ISudoku.SUDOKU_SIZE; i++) {
+            Optional<TechniqueAction> result = checkRectangle(sudoku, i, ISudoku.GroupType.ROW);
+            if (result.isPresent())
+                return result;
+            result = checkRectangle(sudoku, i, ISudoku.GroupType.COLUMN);
+            if (result.isPresent())
+                return result;
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> checkRectangle(ISudoku sudoku, int i, ISudoku.GroupType groupType) {
+        ICell[] group = switch (groupType) {
+            case ROW -> sudoku.getRow(i);
+            case COLUMN -> sudoku.getColumn(i);
+            case SQUARE -> throw new RuntimeException("Square not supported");
+        };
+        for(int num: ICell.DIGITS) {
+            List<ICell> cellsWithNum = Arrays.stream(group)
+                    .filter(c -> c.getCandidates().contains(num))
+                    .toList();
+            if (cellsWithNum.size() != 2)
+                continue;
+
+            ICell cell1 = cellsWithNum.get(0);
+            ICell cell2 = cellsWithNum.get(1);
+            //If in same square then skip
+            if(cell1.getX()/3 == cell2.getX()/3 && cell1.getY()/3 == cell2.getY()/3)
+                continue;
+            Optional<TechniqueAction> result = checkRectangle(sudoku, cell1, cell2, num, groupType);
+            if (result.isPresent())
+                return result;
+            result = checkRectangle(sudoku, cell2, cell1, num, groupType);
+            if (result.isPresent())
+                return result;
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> checkRectangle(ISudoku sudoku, ICell cell1, ICell cell2, int num, ISudoku.GroupType groupType) {
+        List<ICell> peers = Arrays.stream(switch (groupType) {
+            case ROW -> sudoku.getColumn(cell1.getX());
+            case COLUMN -> sudoku.getRow(cell1.getY());
+            case SQUARE -> throw new RuntimeException("Square not supported");
+        }).filter(c -> c.getCandidates().contains(num) && (cell1.getX()/3 != c.getX()/3 || cell1.getY()/3 != c.getY()/3))
+                .toList();
+
+        for(ICell peer : peers) {
+            int squareNumber = switch (groupType) {
+                case ROW -> peer.getY() / 3 * 3 + cell2.getX() / 3;
+                case COLUMN -> cell2.getY() / 3 * 3 + peer.getX() / 3;
+                case SQUARE -> throw new RuntimeException("Square not supported");
+            };
+            List<ICell> affectedPeerSquareCells = Arrays.stream(sudoku.getSquare(squareNumber)).filter(c -> c.getCandidates().contains(num))
+                    .toList();
+            if(affectedPeerSquareCells.isEmpty())
+                continue;
+            if(affectedPeerSquareCells.stream().allMatch(c -> isPeer(c, peer) || isPeer(c, cell2))) {
+                return Optional.of(TechniqueAction.builder()
+                        .name("Rectangle Elimination")
+                        .description(MessageFormat.format("If cell {0} is {1} then cell {2} cannot be {1} and cell {3} has to be {1}. Making it impossible to place {1} in square {4}",
+                                peer.getPos(), num, cell1.getPos(), cell2.getPos(), squareNumber))
+                        .removeCandidatesMap(Map.of(peer.getPos(), Set.of(num)))
+                        .colorings(List.of(
+                                TechniqueAction.CellColoring.candidatesColoring(List.of(peer.getPos()), Color.RED, List.of(num)),
+                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos()), Color.GREEN, List.of(num)),
+                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell2.getPos()), Color.YELLOW, List.of(num)),
+                                TechniqueAction.CellColoring.candidatesColoring(affectedPeerSquareCells.stream().map(ICell::getPos).toList(), Color.ORANGE, List.of(num)),
+                                TechniqueAction.CellColoring.lineColoring(List.of(
+                                        Pair.create(cell1.getPos(), cell2.getPos()),
+                                        Pair.create(cell1.getPos(), peer.getPos())
+                                ), num, Color.BLUE)
+                        ))
+                        .build());
+            }
+        }
+        return Optional.empty();
     }
 }
