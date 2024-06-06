@@ -265,7 +265,7 @@ public class WingTechnique {
 
     //https://www.sudokuwiki.org/XYZ_Wing
     //Section: XYZ-Wing
-    public static boolean xyzWing(ISudoku sudoku){
+    public static Optional<TechniqueAction> xyzWing(ISudoku sudoku){
         Map<ICell, Set<ICell>> peerMap = new HashMap<>();
 
         for (ICell cell : sudoku.getEmptyCells()) {
@@ -294,19 +294,29 @@ public class WingTechnique {
                                 commonPeers.retainAll(peerMap.get(wing2));
 
                                 Integer candidateToRemove = allCommonCandidates.iterator().next();
-                                boolean changed = false;
-                                for (ICell peer : commonPeers) {
-                                    changed |= peer.removeCandidate(candidateToRemove);
+                                Set<Pos> toRemove = commonPeers.stream()
+                                        .filter(cell -> cell.getCandidates().contains(candidateToRemove))
+                                        .map(ICell::getPos)
+                                        .collect(Collectors.toSet());
+                                if(!toRemove.isEmpty()) {
+                                    return Optional.of(TechniqueAction.builder()
+                                            .name("XYZ-Wing")
+                                            .description("Cells: " + pivot.getPos() + ", " + wing1.getPos() + ", " + wing2.getPos()
+                                                    + " form a XYZ-Wing on candidates " + allCommonCandidates.iterator().next())
+                                            .removeCandidatesMap(toRemove.stream().collect(Collectors.toMap(pos -> pos, pos -> Set.of(candidateToRemove))))
+                                            .colorings(List.of(
+                                                    TechniqueAction.CellColoring.candidatesColoring(Set.of(pivot.getPos()), Color.YELLOW, allCommonCandidates),
+                                                    TechniqueAction.CellColoring.candidatesColoring(Set.of(wing1.getPos(), wing2.getPos()), Color.GREEN, allCommonCandidates),
+                                                    TechniqueAction.CellColoring.candidatesColoring(toRemove, Color.RED, Set.of(candidateToRemove))
+                                            )).build());
                                 }
-                                if (changed)
-                                    return true;
                             }
                         }
                     }
                 }
             }
         }
-        return false;
+        return Optional.empty();
     }
 
     private static Set<ICell> getPeers(ISudoku sudoku, int row, int col) {
