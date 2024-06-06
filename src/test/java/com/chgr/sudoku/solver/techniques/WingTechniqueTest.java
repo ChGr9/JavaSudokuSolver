@@ -126,8 +126,9 @@ class WingTechniqueTest extends BaseTechniqueTest {
         loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
-            boolean result = WingTechnique.xyzWing(sudoku);
-            assertTrue(result);
+            Optional<TechniqueAction> result = WingTechnique.xyzWing(sudoku);
+            assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }
