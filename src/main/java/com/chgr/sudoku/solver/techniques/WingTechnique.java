@@ -27,8 +27,8 @@ public class WingTechnique {
 
     //https://www.sudokuwiki.org/Sword_Fish_Strategy
     //Section: Swordfish
-    public static boolean swordfish(ISudoku sudoku) {
-        return checkFinStructureOld(sudoku, 3);
+    public static Optional<TechniqueAction> swordfish(ISudoku sudoku) {
+        return Optional.ofNullable(checkFinStructure(sudoku, 3));
     }
 
     //https://www.sudokuwiki.org/Jelly_Fish_Strategy
@@ -120,10 +120,13 @@ public class WingTechnique {
                                     .name(name)
                                     .description("Cells: " + finCells.stream().map(Pos::toString).collect(Collectors.joining(", "))
                                             + " form a " + name + " on " + (isRow? "rows " : "columns ")
-                                            + combination.stream().map(PossibleWing::getRowOrColIndex).map(Object::toString).collect(Collectors.joining(", ")))
+                                            + combinationIndices.stream().map(String::valueOf).collect(Collectors.joining(", ")))
                                     .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, pos -> Set.of(entry.getKey()))))
                                     .colorings(List.of(
                                             TechniqueAction.CellColoring.candidatesColoring(finCells, Color.GREEN, Set.of(entry.getKey())),
+                                            TechniqueAction.CellColoring.groupColoring(combinationIndices.stream().map(index -> isRow ?
+                                                new Pos(-1, index) : new Pos(index, -1)
+                                            ).toList(), Color.YELLOW),
                                             TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, Set.of(entry.getKey()))
                                     ))
                                     .build();
