@@ -18,7 +18,8 @@ public class TechniqueAction extends BaseAction {
             VALUE,
             CANDIDATES,
             GROUP,
-            LINE
+            LINE,
+            DOUBLE_LINE
         }
 
         Collection<Pos> pos;
@@ -40,7 +41,11 @@ public class TechniqueAction extends BaseAction {
         }
 
         public static CellColoring lineColoring(List<Pair<Pos, Pos>> linePos, int candidate, Color color) {
-            return new CellColoring(linePos, candidate, color);
+            return new CellColoring(linePos, candidate, color, false);
+        }
+
+        public static CellColoring doubleLineColoring(List<Pair<Pos, Pos>> linePos, int candidate, Color color) {
+            return new CellColoring(linePos, candidate, color, true);
         }
 
         private CellColoring(Collection<Pos> pos, Color color, Collection<Integer> candidates) {
@@ -56,10 +61,10 @@ public class TechniqueAction extends BaseAction {
             this.type = coloringType;
         }
 
-        private CellColoring(List<Pair<Pos, Pos>> linePos, int candidate, Color color) {
+        private CellColoring(List<Pair<Pos, Pos>> linePos, int candidate, Color color, boolean doubleLine) {
             this.linePos = linePos;
             this.color = color;
-            this.type = ColoringType.LINE;
+            this.type = doubleLine? ColoringType.DOUBLE_LINE : ColoringType.LINE;
             this.candidates = Set.of(candidate);
         }
     }
@@ -88,7 +93,7 @@ public class TechniqueAction extends BaseAction {
                 case VALUE -> coloring.pos.forEach(pos -> sudoku.getCell(pos).clearColorValue());
                 case CANDIDATES -> coloring.pos.forEach(pos -> sudoku.getCell(pos).clearColorCandidates(coloring.candidates));
                 case GROUP -> sudoku.clearColorGroup();
-                case LINE -> sudoku.clearColorLine();
+                case LINE, DOUBLE_LINE -> sudoku.clearColorLine();
             }
         }
     }
@@ -100,7 +105,8 @@ public class TechniqueAction extends BaseAction {
                 case VALUE -> coloring.pos.forEach(pos -> sudoku.getCell(pos).colorValue(coloring.color));
                 case CANDIDATES -> coloring.pos.forEach(pos -> sudoku.getCell(pos).colorCandidates(coloring.candidates, coloring.color));
                 case GROUP -> sudoku.colorGroup(coloring.pos, coloring.color);
-                case LINE -> coloring.linePos.forEach(poses -> sudoku.colorLine(poses.getFirst(), poses.getSecond(), coloring.candidates.stream().findAny().orElseThrow(), coloring.color));
+                case LINE -> coloring.linePos.forEach(poses -> sudoku.colorLine(poses.getFirst(), poses.getSecond(), coloring.candidates.stream().findAny().orElseThrow(), coloring.color, false));
+                case DOUBLE_LINE -> coloring.linePos.forEach(poses -> sudoku.colorLine(poses.getFirst(), poses.getSecond(), coloring.candidates.stream().findAny().orElseThrow(), coloring.color, true));
             }
         }
     }

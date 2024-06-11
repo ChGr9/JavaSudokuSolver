@@ -37,6 +37,7 @@ public class Sudoku extends Pane implements ISudoku {
             }
         }
         clearColorGroup();
+        clearColorLine();
     }
 
     public boolean initialValidation(){
@@ -214,7 +215,7 @@ public class Sudoku extends Pane implements ISudoku {
         this.getChildren().removeIf(node -> node instanceof Rectangle);
     }
 
-    public void colorLine(Pos first, Pos second, int candidate, Color color) {
+    public void colorLine(Pos first, Pos second, int candidate, Color color, boolean isDoubleLine) {
         Point2D start = getCenter(first);
         Point2D end = getCenter(second);
 
@@ -226,9 +227,28 @@ public class Sudoku extends Pane implements ISudoku {
 
         Line line = new Line(start.getX(), start.getY(), end.getX(), end.getY());
         line.setStroke(color);
-        line.setStrokeWidth(2);
+        line.setStrokeWidth(isDoubleLine ? 2 : 4);
 
         this.getChildren().add(line);
+
+        if (isDoubleLine) {
+            // Calculate the offset for the double line
+            double offset = 5; // Adjust this value to control the distance between the lines
+            double angle = Math.atan2(end.getY() - start.getY(), end.getX() - start.getX());
+
+            // Offset the start and end points
+            double offsetX = offset * Math.cos(angle + Math.PI / 2);
+            double offsetY = offset * Math.sin(angle + Math.PI / 2);
+
+            Point2D startOffset = start.add(offsetX, offsetY);
+            Point2D endOffset = end.add(offsetX, offsetY);
+
+            Line line2 = new Line(startOffset.getX(), startOffset.getY(), endOffset.getX(), endOffset.getY());
+            line2.setStroke(color);
+            line2.setStrokeWidth(2);
+
+            this.getChildren().add(line2);
+        }
     }
 
     private Point2D getCenter(Pos first) {
