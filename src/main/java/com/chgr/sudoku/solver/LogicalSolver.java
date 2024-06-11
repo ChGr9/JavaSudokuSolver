@@ -34,7 +34,6 @@ public class LogicalSolver extends Task<Boolean> {
     }
 
     private static final List<Function<ISudoku, Boolean>> oldTechniques = List.of(
-            ChainTechnique::xCycle,
             ChainTechnique::xyChain,
             ChainTechnique::medusa3D,
             WingTechnique::jellyfish,
@@ -57,7 +56,8 @@ public class LogicalSolver extends Task<Boolean> {
             WingTechnique::yWing,
             RectangleTechnique::rectangleElimination,
             WingTechnique::swordfish,
-            WingTechnique::xyzWing
+            WingTechnique::xyzWing,
+            ChainTechnique::xCycle
     );
 
     public boolean solve(){

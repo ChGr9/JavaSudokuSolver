@@ -434,7 +434,7 @@ public class ChainTechnique {
     // https://www.sudokuwiki.org/X_Cycles
     // https://www.sudokuwiki.org/X_Cycles_Part_2
     // X-Cycles
-    public static boolean xCycle(ISudoku sudoku) {
+    public static Optional<TechniqueAction> xCycle(ISudoku sudoku) {
         for(int num =1; num <= ISudoku.SUDOKU_SIZE; num ++){
             Set<List<ICell>> strongLinks = generateStrongLinks(sudoku, num);
             for(List<ICell> strongLink: strongLinks){
@@ -443,20 +443,22 @@ public class ChainTechnique {
                 cycle.add(new Link(strongLink.get(0), strongLink.get(1), LinkType.STRONG));
                 visited.add(strongLink.get(1));
                 if(findCycle(sudoku, strongLink.get(1), cycle, num, visited, strongLinks)){
-                    if(handleCycle(sudoku, cycle, num))
-                        return true;
+                    Optional<TechniqueAction> techniqueAction = handleCycle(sudoku, cycle, num);
+                    if(techniqueAction.isPresent())
+                        return techniqueAction;
                 }
                 cycle = new ArrayList<>();
                 visited = new HashSet<>();
                 cycle.add(new Link(strongLink.get(1), strongLink.get(0), LinkType.STRONG));
                 visited.add(strongLink.get(0));
                 if(findCycle(sudoku, strongLink.get(0), cycle, num, visited, strongLinks)){
-                    if(handleCycle(sudoku, cycle, num))
-                        return true;
+                    Optional<TechniqueAction> techniqueAction = handleCycle(sudoku, cycle, num);
+                    if(techniqueAction.isPresent())
+                        return techniqueAction;
                 }
             }
         }
-        return false;
+        return Optional.empty();
     }
 
     private static boolean findCycle(ISudoku sudoku, ICell current, List<Link> cycle, int num, Set<ICell> visited, Set<List<ICell>> strongLinks) {
@@ -535,29 +537,66 @@ public class ChainTechnique {
         return strongLinks;
     }
 
-    private static boolean handleCycle(ISudoku sudoku, List<Link> cycle, int num) {
+    private static Optional<TechniqueAction> handleCycle(ISudoku sudoku, List<Link> cycle, int num) {
+        Set<Pos> col1 = cycle.stream().filter(l -> l.type == LinkType.STRONG).map(l -> l.start.getPos()).collect(Collectors.toSet());
+        Set<Pos> col2 = cycle.stream().filter(l -> l.type == LinkType.STRONG).map(l -> l.end.getPos()).collect(Collectors.toSet());
+        List<Pair<Pos, Pos>> weakLinks = cycle.stream().filter(l -> l.type == LinkType.WEAK).map(l -> Pair.create(l.start.getPos(), l.end.getPos())).toList();
+        List<Pair<Pos, Pos>> strongLinks = cycle.stream().filter(l -> l.type == LinkType.STRONG).map(l -> Pair.create(l.start.getPos(), l.end.getPos())).toList();
         Link startLink = cycle.get(0);
         Link endLink = cycle.get(cycle.size() - 1);
         if(startLink.type == endLink.type){
             // Discontinuous cycle
             if(startLink.type == LinkType.STRONG){
-                startLink.start.setValue(num);
-                return true;
+                return Optional.of(TechniqueAction.builder()
+                        .name("X-Cycle")
+                        .description("Cell " + startLink.start.getPos() + " has to be " + num)
+                        .setValueMap(Map.of(startLink.start.getPos(), num))
+                        .colorings(List.of(
+                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
+                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, num, Color.BLUE),
+                                TechniqueAction.CellColoring.lineColoring(strongLinks, num, Color.BLUE),
+                                TechniqueAction.CellColoring.candidatesColoring(List.of(startLink.start.getPos()), Color.BLUE, Set.of(num))
+                        )).build());
             }
             else{
-                return startLink.start.removeCandidate(num);
+                if(startLink.start.getCandidates().contains(num))
+                    return Optional.of(TechniqueAction.builder()
+                            .name("X-Cycle")
+                            .description("Eliminate " + num + " from " + startLink.start.getPos())
+                            .removeCandidatesMap(Map.of(startLink.start.getPos(), Set.of(num)))
+                            .colorings(List.of(
+                                    TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                    TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
+                                    TechniqueAction.CellColoring.doubleLineColoring(weakLinks, num, Color.BLUE),
+                                    TechniqueAction.CellColoring.lineColoring(strongLinks, num, Color.BLUE),
+                                    TechniqueAction.CellColoring.candidatesColoring(List.of(startLink.start.getPos()), Color.RED, Set.of(num))
+                            )).build());
             }
         }
         else {
             // Continuous cycle
-            boolean changed = false;
+            List<ICell> affectedCells = new ArrayList<>();
             for (Link link : cycle.stream().filter(l -> l.type == LinkType.WEAK).toList()) {
                 for (ICell cell : findCommon(sudoku, link.start, link.end)) {
-                    changed |= cell.removeCandidate(num);
+                    if(cell.getCandidates().contains(num))
+                        affectedCells.add(cell);
                 }
             }
-            return changed;
+            if(!affectedCells.isEmpty())
+                return Optional.of(TechniqueAction.builder()
+                        .name("X-Cycle")
+                        .description("Eliminate " + num + " from common peers")
+                        .removeCandidatesMap(affectedCells.stream().collect(Collectors.toMap(ICell::getPos, c -> Set.of(num))))
+                        .colorings(List.of(
+                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
+                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, num, Color.BLUE),
+                                TechniqueAction.CellColoring.lineColoring(strongLinks, num, Color.BLUE),
+                                TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(num))
+                        )).build());
         }
+        return Optional.empty();
     }
 
     // https://www.sudokuwiki.org/XY_Chains

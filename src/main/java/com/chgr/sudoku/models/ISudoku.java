@@ -53,7 +53,7 @@ public interface ISudoku {
 
     default void clearColorGroup() {}
 
-    default void colorLine(Pos first, Pos second, int candidate, Color color) {}
+    default void colorLine(Pos first, Pos second, int candidate, Color color, boolean isDoubleLine) {}
 
     default void clearColorLine() {}
 }
