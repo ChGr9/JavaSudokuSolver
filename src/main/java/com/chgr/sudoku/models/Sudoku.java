@@ -229,9 +229,9 @@ public class Sudoku extends Pane implements ISudoku {
         line.setStroke(color);
         line.setStrokeWidth(isDoubleLine ? 2 : 4);
 
-        this.getChildren().add(line);
-
         if (isDoubleLine) {
+            line.getStrokeDashArray().addAll(10d, 10d);
+
             // Calculate the offset for the double line
             double offset = 5; // Adjust this value to control the distance between the lines
             double angle = Math.atan2(end.getY() - start.getY(), end.getX() - start.getX());
@@ -246,9 +246,12 @@ public class Sudoku extends Pane implements ISudoku {
             Line line2 = new Line(startOffset.getX(), startOffset.getY(), endOffset.getX(), endOffset.getY());
             line2.setStroke(color);
             line2.setStrokeWidth(2);
+            line2.getStrokeDashArray().addAll(10d, 10d);
 
             this.getChildren().add(line2);
         }
+
+        this.getChildren().add(line);
     }
 
     private Point2D getCenter(Pos first) {

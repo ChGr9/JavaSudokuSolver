@@ -577,10 +577,17 @@ public class ChainTechnique {
         else {
             // Continuous cycle
             List<ICell> affectedCells = new ArrayList<>();
+            List<Pos> groupColoring = new ArrayList<>();
             for (Link link : cycle.stream().filter(l -> l.type == LinkType.WEAK).toList()) {
-                for (ICell cell : findCommon(sudoku, link.start, link.end)) {
-                    if(cell.getCandidates().contains(num))
-                        affectedCells.add(cell);
+                Pair<List<ICell>, ISudoku.GroupType> result = findCommon(sudoku, link.start, link.end);
+                List<ICell> common = result.getFirst().stream().filter(c -> c.getCandidates().contains(num)).toList();
+                if(!common.isEmpty()){
+                    affectedCells.addAll(common);
+                    groupColoring.add(switch (result.getSecond()) {
+                        case ROW -> new Pos(-1, link.start.getPos().y());
+                        case COLUMN -> new Pos(link.start.getPos().x(), -1);
+                        case SQUARE -> new Pos(link.start.getPos().x() / 3 * 3, link.start.getPos().y() / 3 * 3);
+                    });
                 }
             }
             if(!affectedCells.isEmpty())
@@ -593,6 +600,7 @@ public class ChainTechnique {
                                 TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
                                 TechniqueAction.CellColoring.doubleLineColoring(weakLinks, num, Color.BLUE),
                                 TechniqueAction.CellColoring.lineColoring(strongLinks, num, Color.BLUE),
+                                TechniqueAction.CellColoring.groupColoring(groupColoring, Color.YELLOW),
                                 TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(num))
                         )).build());
         }
@@ -662,19 +670,26 @@ public class ChainTechnique {
 
     // Helper function to determine if a cell is connected to any cell in a chain
 
-    private static List<ICell> findCommon(ISudoku sudoku, ICell start, ICell end) {
+    private static Pair<List<ICell>, ISudoku.GroupType> findCommon(ISudoku sudoku, ICell start, ICell end) {
         List<ICell> common = new ArrayList<>();
-        if(start.getY() == end.getY())
+        ISudoku.GroupType groupType = null;
+        if(start.getY() == end.getY()) {
             common.addAll(List.of(sudoku.getRow(start.getY())));
-        else if(start.getX() == end.getX())
+            groupType = ISudoku.GroupType.ROW;
+        }
+        else if(start.getX() == end.getX()) {
             common.addAll(List.of(sudoku.getColumn(start.getX())));
-        else if (start.getX() / 3 == end.getX() / 3 && start.getY() / 3 == end.getY() / 3)
+            groupType = ISudoku.GroupType.COLUMN;
+        }
+        else if (start.getX() / 3 == end.getX() / 3 && start.getY() / 3 == end.getY() / 3) {
             common.addAll(List.of(sudoku.getSquare(start.getX(), start.getY())));
+            groupType = ISudoku.GroupType.SQUARE;
+        }
         else
             throw new IllegalArgumentException("Cells are not connected");
         common.remove(start);
         common.remove(end);
-        return common;
+        return Pair.create(common, groupType);
     }
 
     private static Set<ICell> findLinks(ISudoku sudoku, ICell cell, int num) {
