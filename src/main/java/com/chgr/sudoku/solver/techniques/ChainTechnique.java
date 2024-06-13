@@ -611,7 +611,7 @@ public class ChainTechnique {
     // XY-Chains
     // This technique is not tested cause of complexity of test
     // XY chains can be a bit tricky and one may cause another to be created or destroyed
-    public static boolean xyChain(ISudoku sudoku) {
+    public static Optional<TechniqueAction> xyChain(ISudoku sudoku) {
         for(ICell cell : sudoku.getEmptyCells().stream().filter(c -> c.getCandidates().size() == 2).toList()){
             for (int candidate: cell.getCandidates()){
                 int otherCandidate = cell.getCandidates().stream()
@@ -622,28 +622,48 @@ public class ChainTechnique {
                 if(findXYChain(sudoku, cell, candidate, otherCandidate, chain)){
                     // Chain found
                     // Check for contradictions and make deductions
-                    if(handleXYChain(sudoku, chain, otherCandidate)){
-                        return true;
+                    Optional<TechniqueAction> techniqueAction = handleXYChain(sudoku, chain, otherCandidate);
+                    if(techniqueAction.isPresent()){
+                        return techniqueAction;
                     }
                 }
             }
         }
-        return false;
+        return Optional.empty();
     }
 
-    private static boolean handleXYChain(ISudoku sudoku, List<ICell> chain, int otherCandidate) {
+    private static Optional<TechniqueAction> handleXYChain(ISudoku sudoku, List<ICell> chain, int otherCandidate) {
+        List<Pair<Integer, Pair<Pos, Pos>>> weakLinks = new ArrayList<>();
+        int currentCandidate = chain.get(0).getCandidates().stream()
+                .filter(c -> c != otherCandidate)
+                .findFirst().orElseThrow( () -> new IllegalStateException("Expected other candidate not found"));
+        for(int i=0; i<chain.size()-1; i++){
+            weakLinks.add(Pair.create(currentCandidate, Pair.create(chain.get(i).getPos(), chain.get(i+1).getPos())));
+            int finalCurrentCandidate = currentCandidate;
+            currentCandidate = chain.get(i+1).getCandidates().stream()
+                    .filter(c -> c != finalCurrentCandidate)
+                    .findFirst().orElseThrow( () -> new IllegalStateException("Expected other candidate not found"));
+        }
         ICell start = chain.get(0);
         ICell end = chain.get(chain.size()-1);
         Set<ICell> commonPeers = getPeers(sudoku, start);
         commonPeers.retainAll(getPeers(sudoku, end));
         commonPeers = commonPeers.stream().filter(c -> c.getCandidates().contains(otherCandidate)).collect(Collectors.toSet());
         if(!commonPeers.isEmpty()){
-            for(ICell commonPeer : commonPeers){
-                commonPeer.removeCandidate(otherCandidate);
-            }
-            return true;
+            List<TechniqueAction.CellColoring> coloringList = weakLinks.stream().map(link -> TechniqueAction.CellColoring.lineColoring(List.of(link.getSecond()), link.getFirst(), Color.BLUE)).collect(Collectors.toList());
+            coloringList.addAll(weakLinks.stream().map(link -> TechniqueAction.CellColoring.candidatesColoring(Set.of(link.getSecond().getFirst()), Color.BLUE, Set.of(link.getFirst()))).toList());
+            coloringList.addAll(weakLinks.stream().map(link -> TechniqueAction.CellColoring.candidatesColoring(Set.of(link.getSecond().getSecond()), Color.YELLOW, Set.of(link.getFirst()))).toList());
+            coloringList.addAll(List.of(
+                    TechniqueAction.CellColoring.candidatesColoring(Set.of(start.getPos()), Color.YELLOW, Set.of(otherCandidate)),
+                    TechniqueAction.CellColoring.candidatesColoring(Set.of(end.getPos()), Color.BLUE, Set.of(otherCandidate)),
+                    TechniqueAction.CellColoring.candidatesColoring(commonPeers.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(otherCandidate))));
+            return Optional.of(TechniqueAction.builder()
+                    .name("XY-Chain")
+                    .description("Eliminate " + otherCandidate + " from common peers of " + start.getPos() + " and " + end.getPos())
+                    .removeCandidatesMap(commonPeers.stream().collect(Collectors.toMap(ICell::getPos, c -> Set.of(otherCandidate))))
+                    .colorings(coloringList).build());
         }
-        return false;
+        return Optional.empty();
     }
 
     private static boolean findXYChain(ISudoku sudoku, ICell cell, int currentCandidate, int otherCandidate, List<ICell> chain) {
