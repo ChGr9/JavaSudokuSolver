@@ -49,8 +49,9 @@ public class ChainTechniqueTest extends BaseTechniqueTest{
         loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
-            boolean result = ChainTechnique.medusa3D(sudoku);
-            assertTrue(result);
+            Optional<TechniqueAction> result = ChainTechnique.medusa3D(sudoku);
+            assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }
