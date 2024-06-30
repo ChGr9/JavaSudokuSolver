@@ -1,7 +1,6 @@
 package com.chgr.sudoku.models;
 
 import javafx.scene.paint.Color;
-import lombok.Builder;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.math3.util.Pair;
 
@@ -40,11 +39,11 @@ public class TechniqueAction extends BaseAction {
             return new CellColoring(pos, color, ColoringType.GROUP);
         }
 
-        public static CellColoring lineColoring(List<Pair<Pos, Pos>> linePos, int candidate, Color color) {
+        public static CellColoring lineColoring(List<Pair<Pos, Pos>> linePos, Color color, int candidate) {
             return new CellColoring(linePos, candidate, color, false);
         }
 
-        public static CellColoring doubleLineColoring(List<Pair<Pos, Pos>> linePos, int candidate, Color color) {
+        public static CellColoring doubleLineColoring(List<Pair<Pos, Pos>> linePos, Color color, int candidate) {
             return new CellColoring(linePos, candidate, color, true);
         }
 

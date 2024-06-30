@@ -94,7 +94,7 @@ public class ChainTechnique {
                                 Color.GREEN, Set.of(num))
                 );
                 techniqueColoring.add(
-                        TechniqueAction.CellColoring.lineColoring(linkList, num, Color.BLUE)
+                        TechniqueAction.CellColoring.lineColoring(linkList, Color.BLUE, num)
                 );
                 Optional<TechniqueAction> techniqueAction = hasDuplicateInUnit(colorGroup0, colorGroup1, num, techniqueColoring, "Simple Coloring");
                 if (techniqueAction.isPresent())
@@ -170,7 +170,7 @@ public class ChainTechnique {
             techniqueColoring.addAll(
                     linkList.stream()
                             .filter(pair -> coloring.keySet().stream().anyMatch(cellNumPair -> cellNumPair.getCell().getPos().equals(pair.getFirst().getFirst()) && cellNumPair.getNum() == pair.getSecond()))
-                            .map(pair -> TechniqueAction.CellColoring.lineColoring(List.of(pair.getFirst()), pair.getSecond(), Color.BLUE)
+                            .map(pair -> TechniqueAction.CellColoring.lineColoring(List.of(pair.getFirst()), Color.BLUE, pair.getSecond())
                             ).toList());
             for (int num : nums) {
                 Set<ICell> colorGroup0 = coloring.entrySet().stream()
@@ -544,8 +544,8 @@ public class ChainTechnique {
                         .colorings(List.of(
                                 TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
                                 TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
-                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, num, Color.BLUE),
-                                TechniqueAction.CellColoring.lineColoring(strongLinks, num, Color.BLUE),
+                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
+                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
                                 TechniqueAction.CellColoring.candidatesColoring(List.of(startLink.start.getPos()), Color.BLUE, Set.of(num))
                         )).build());
             }
@@ -558,8 +558,8 @@ public class ChainTechnique {
                             .colorings(List.of(
                                     TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
                                     TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
-                                    TechniqueAction.CellColoring.doubleLineColoring(weakLinks, num, Color.BLUE),
-                                    TechniqueAction.CellColoring.lineColoring(strongLinks, num, Color.BLUE),
+                                    TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
+                                    TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
                                     TechniqueAction.CellColoring.candidatesColoring(List.of(startLink.start.getPos()), Color.RED, Set.of(num))
                             )).build());
             }
@@ -588,8 +588,8 @@ public class ChainTechnique {
                         .colorings(List.of(
                                 TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
                                 TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
-                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, num, Color.BLUE),
-                                TechniqueAction.CellColoring.lineColoring(strongLinks, num, Color.BLUE),
+                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
+                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
                                 TechniqueAction.CellColoring.groupColoring(groupColoring, Color.YELLOW),
                                 TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(num))
                         )).build());
@@ -640,7 +640,7 @@ public class ChainTechnique {
         commonPeers.retainAll(getPeers(sudoku, end));
         commonPeers = commonPeers.stream().filter(c -> c.getCandidates().contains(otherCandidate)).collect(Collectors.toSet());
         if(!commonPeers.isEmpty()){
-            List<TechniqueAction.CellColoring> coloringList = weakLinks.stream().map(link -> TechniqueAction.CellColoring.lineColoring(List.of(link.getSecond()), link.getFirst(), Color.BLUE)).collect(Collectors.toList());
+            List<TechniqueAction.CellColoring> coloringList = weakLinks.stream().map(link -> TechniqueAction.CellColoring.lineColoring(List.of(link.getSecond()), Color.BLUE, link.getFirst())).collect(Collectors.toList());
             coloringList.addAll(weakLinks.stream().map(link -> TechniqueAction.CellColoring.candidatesColoring(Set.of(link.getSecond().getFirst()), Color.BLUE, Set.of(link.getFirst()))).toList());
             coloringList.addAll(weakLinks.stream().map(link -> TechniqueAction.CellColoring.candidatesColoring(Set.of(link.getSecond().getSecond()), Color.YELLOW, Set.of(link.getFirst()))).toList());
             coloringList.addAll(List.of(
