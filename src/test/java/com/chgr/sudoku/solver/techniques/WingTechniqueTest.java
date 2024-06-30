@@ -68,27 +68,9 @@ class WingTechniqueTest extends BaseTechniqueTest {
         loadSudoku(technique);
 
         for(int i=0; i < technique.repetitions; i++) {
-            boolean result = WingTechnique.jellyfish(sudoku);
-            assertTrue(result);
-        }
-        assertChecksMatch(sudoku, technique.checks);
-    }
-
-    @RepeatedTest(100)
-    void jellyfishtest() throws IOException {
-        int fileNumber = 4;
-        URL url = WingTechniqueTest.class.getResource(String.format("/techniques/jellyfish%d.yml", fileNumber));
-        assertNotNull(url);
-
-        TechniqueEntity technique = mapper.readValue(url, TechniqueEntity.class);
-        assertNotNull(technique);
-        assertNotNull(technique.grid);
-
-        loadSudoku(technique);
-
-        for(int i=0; i < technique.repetitions; i++) {
-            boolean result = WingTechnique.jellyfish(sudoku);
-            assertTrue(result);
+            Optional<TechniqueAction> result = WingTechnique.jellyfish(sudoku);
+            assertTrue(result.isPresent());
+            result.get().apply(sudoku);
         }
         assertChecksMatch(sudoku, technique.checks);
     }
