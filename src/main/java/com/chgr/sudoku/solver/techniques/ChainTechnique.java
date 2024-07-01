@@ -607,10 +607,8 @@ public class ChainTechnique {
                 int otherCandidate = cell.getCandidates().stream()
                         .filter(c -> c != candidate)
                         .findFirst().orElseThrow( () -> new IllegalStateException("Expected other candidate not found"));
-                List<ICell> chain = new ArrayList<>();
-                chain.add(cell);
-                if(findXYChain(sudoku, cell, candidate, otherCandidate, chain)){
-                    // Chain found
+                List<List<ICell>> chains = findXYChains(sudoku, cell, candidate, otherCandidate);
+                for (List<ICell> chain: chains){
                     // Check for contradictions and make deductions
                     Optional<TechniqueAction> techniqueAction = handleXYChain(sudoku, chain, otherCandidate);
                     if(techniqueAction.isPresent()){
@@ -656,26 +654,32 @@ public class ChainTechnique {
         return Optional.empty();
     }
 
-    private static boolean findXYChain(ISudoku sudoku, ICell cell, int currentCandidate, int otherCandidate, List<ICell> chain) {
-        if(cell.getCandidates().contains(otherCandidate) && chain.size() > 1)
-            return true;
-        int finalCurrentCandidate = currentCandidate;
+    private static List<List<ICell>> findXYChains(ISudoku sudoku, ICell startCell, int currentCandidate, int otherCandidate) {
+        List<List<ICell>> allChains = new ArrayList<>();
+        List<ICell> chain = new ArrayList<>();
+        chain.add(startCell);
+        findXyChainsRecursive(sudoku, startCell, currentCandidate, otherCandidate, chain, allChains);
+        return allChains;
+    }
+    private static void findXyChainsRecursive(ISudoku sudoku, ICell cell, int currentCandidate, int otherCandidate, List<ICell> chain, List<List<ICell>> allChains) {
+        if(currentCandidate == otherCandidate)
+            allChains.add(new ArrayList<>(chain));
+
         List<ICell> peers = getPeers(sudoku, cell).stream()
-                .filter(c -> c.getCandidates().contains(finalCurrentCandidate) && c.getCandidates().size() == 2)
+                .filter(c -> c.getCandidates().contains(currentCandidate) && c.getCandidates().size() == 2)
                 .toList();
+
         for(ICell peer : peers){
             if(chain.contains(peer))
                 continue;
-            currentCandidate = peer.getCandidates().stream()
-                    .filter(c -> c != finalCurrentCandidate)
+            int nextCandidate = peer.getCandidates().stream()
+                    .filter(c -> c != currentCandidate)
                     .findFirst().orElseThrow( () -> new IllegalStateException("Expected other candidate not found"));
+
             chain.add(peer);
-            if(findXYChain(sudoku, peer, currentCandidate, otherCandidate, chain)){
-                return true;
-            }
+            findXyChainsRecursive(sudoku, peer, nextCandidate, otherCandidate, chain, allChains);
             chain.remove(chain.size()-1);
         }
-        return false;
     }
 
     // Helper function to determine if a cell is connected to any cell in a chain

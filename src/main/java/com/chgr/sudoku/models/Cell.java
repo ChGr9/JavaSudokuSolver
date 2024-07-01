@@ -210,7 +210,7 @@ public class Cell extends StackPane implements ICell {
             if(fromUser)
                 valueText.setFill(Color.BLACK);
             else
-                valueText.setFill(Color.RED);
+                valueText.setFill(Color.BLUE);
             valueText.setText(String.valueOf(value));
             for(int i = 0; i < 3; i++){
                 for(int j = 0; j < 3; j++){

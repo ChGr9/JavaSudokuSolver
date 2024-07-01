@@ -13,7 +13,7 @@ public class CellUtils {
         peers.addAll(Set.of(sudoku.getColumn(cell.getX())));
         peers.addAll(Set.of(sudoku.getRow(cell.getY())));
         peers.addAll(Set.of(sudoku.getSquare(cell.getX(), cell.getY())));
-        peers.removeIf(c -> cell.getX() == c.getX() && cell.getY() == c.getY());
+        peers.removeIf(cell::equals);
         return peers;
     }
 
