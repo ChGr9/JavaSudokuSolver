@@ -51,4 +51,24 @@ class IntersectionTechniqueTest extends BaseTechniqueTest {
         }
         assertChecksMatch(sudoku, technique.checks);
     }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    void firework(int fileNumber) throws IOException {
+        URL url = IntersectionTechniqueTest.class.getResource(String.format("/techniques/firework%d.yml", fileNumber));
+        assertNotNull(url);
+
+        TechniqueEntity technique = mapper.readValue(url, TechniqueEntity.class);
+        assertNotNull(technique);
+        assertNotNull(technique.grid);
+
+        loadSudoku(technique);
+
+        for (int i = 0; i < technique.repetitions; i++) {
+            Optional<TechniqueAction> result = IntersectionTechnique.firework(sudoku);
+            assertTrue(result.isPresent());
+            result.get().apply(sudoku);
+        }
+        assertChecksMatch(sudoku, technique.checks);
+    }
 }

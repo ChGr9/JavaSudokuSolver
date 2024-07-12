@@ -2,11 +2,14 @@ package com.chgr.sudoku.solver.techniques;
 
 import com.chgr.sudoku.models.*;
 import javafx.scene.paint.Color;
+import org.apache.commons.math3.util.Combinations;
 import org.apache.commons.math3.util.Pair;
 
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class IntersectionTechnique {
 
@@ -170,5 +173,78 @@ public class IntersectionTechnique {
                                 , Color.YELLOW)
                 ))
                 .build();
+    }
+
+    //https://www.sudokuwiki.org/Fireworks
+    //Section: Triple Firework
+    //Did not implement Quadruple Firework as it is a very rare case and implementing wouldn't be worth it since other techniques can be used to substitute it
+    public static Optional<TechniqueAction> firework(ISudoku sudoku) {
+        List<ICell> possibleCells = sudoku.getEmptyCells().stream()
+                .filter(cell -> cell.getCandidates().size() >= 3)
+                .toList();
+        for (ICell cell : possibleCells){
+            List<Integer> candidates = cell.getCandidates().stream().sorted().toList();
+            Combinations combinations = new Combinations(cell.getCandidates().size(), 3);
+            for(int[] combination : combinations){
+                Set<Integer> combinationCandidates = Arrays.stream(combination).mapToObj(candidates::get).collect(Collectors.toSet());
+                List<ICell> rowCells = Arrays.stream(sudoku.getRow(cell.getY())).filter(c -> c.getX()/3 != cell.getX()/3).toList();
+                List<ICell> matchingRowCells = rowCells.stream().filter(c -> c.getCandidates().stream().anyMatch(combinationCandidates::contains)).toList();
+                if(matchingRowCells.size() != 1)
+                    continue;
+                List<ICell> columnCells = Arrays.stream(sudoku.getColumn(cell.getX())).filter(c -> c.getY()/3 != cell.getY()/3).toList();
+                List<ICell> matchingColumnCells = columnCells.stream().filter(c -> c.getCandidates().stream().anyMatch(combinationCandidates::contains)).toList();
+                if(matchingColumnCells.size() != 1)
+                    continue;
+
+                Map<Pos, Set<Integer>> otherCandidateMap = Stream.of(cell, matchingRowCells.get(0), matchingColumnCells.get(0))
+                        .map(c -> Pair.create(c.getPos(), c.getCandidates().stream().filter(candidate -> !combinationCandidates.contains(candidate)).collect(Collectors.toSet())))
+                        .filter(pair -> !pair.getSecond().isEmpty())
+                        .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
+                if(otherCandidateMap.isEmpty())
+                    continue;
+                List<TechniqueAction.CellColoring> colorings = new ArrayList<>();
+                otherCandidateMap.forEach((pos, otherCandidates) -> colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(pos), Color.RED, otherCandidates)));
+                colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos(), matchingRowCells.get(0).getPos(), matchingColumnCells.get(0).getPos()), Color.GREEN, combinationCandidates));
+                colorings.add(TechniqueAction.CellColoring.groupColoring(
+                        getConsecutiveRanges(rowCells.stream().map(ICell::getX).filter(x -> x != matchingRowCells.get(0).getX()).toList())
+                                .stream().map(pair -> Pair.create(new Pos(pair.getFirst(), cell.getY()), new Pos(pair.getSecond(), cell.getY()))).toList()
+                        , Color.BLUE));
+                colorings.add(TechniqueAction.CellColoring.groupColoring(
+                        getConsecutiveRanges(columnCells.stream().map(ICell::getY).filter(y -> y != matchingColumnCells.get(0).getY()).toList())
+                                .stream().map(pair -> Pair.create(new Pos(cell.getX(), pair.getFirst()), new Pos(cell.getX(), pair.getSecond()))).toList()
+                        , Color.BLUE));
+
+                return Optional.of(TechniqueAction.builder()
+                        .name("Firework")
+                        .description(MessageFormat.format("Cells {0} and {1} are the only cells in their respective row and column outside square {2} which have the candidates {3}, this creates a firework with cell {4} which is the intersection of the row and column, the cells {0}, {1} and {4} will need to the candidates {3} and the the other candidates are eliminated",
+                                matchingRowCells.get(0).getPos(), matchingColumnCells.get(0).getPos(),
+                                cell.getX()/3 + cell.getY()/3*3,
+                                combinationCandidates.stream().map(String::valueOf).collect(Collectors.joining(", ")),
+                                cell.getPos()
+                                ))
+                        .removeCandidatesMap(otherCandidateMap)
+                        .colorings(colorings).build());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static List<Pair<Integer, Integer>> getConsecutiveRanges(List<Integer> numbers){
+        List<Integer> sortedNumbers = numbers.stream().sorted().toList();
+        List<Pair<Integer, Integer>> ranges = new ArrayList<>();
+        int start = sortedNumbers.get(0);
+        int end = start;
+
+        for(int i = 1; i < sortedNumbers.size(); i++){
+            if(sortedNumbers.get(i) == end + 1){
+                end = sortedNumbers.get(i);
+            } else {
+                ranges.add(Pair.create(start, end));
+                start = sortedNumbers.get(i);
+                end = start;
+            }
+        }
+        ranges.add(Pair.create(start, end));
+        return ranges;
     }
 }
