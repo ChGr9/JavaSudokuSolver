@@ -33,11 +33,7 @@ public interface ICell {
 
     Pos getPos();
 
-    default void colorValue(Color color) {}
-
     default void colorCandidates(Collection<Integer> candidates, Color color) {}
-
-    default void clearColorValue() {}
 
     default void clearColorCandidates(Collection<Integer> candidates) {}
 

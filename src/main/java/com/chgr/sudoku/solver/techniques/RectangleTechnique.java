@@ -151,7 +151,10 @@ public class RectangleTechnique {
                             .colorings(List.of(
                                     TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
                                     TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, extraCandidates),
-                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ? new Pos(-1, i): new Pos(i, -1)), Color.ORANGE)
+                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                                                    Pair.create(new Pos(0, i), new Pos(8, i)) :
+                                                    Pair.create(new Pos(i, 0), new Pos(i, 8)))
+                                            , Color.ORANGE)
                             )).build());
             }
             List<ICell> groupCells = Arrays.stream(isRow ? sudoku.getRow(i): sudoku.getColumn(i))
@@ -170,22 +173,28 @@ public class RectangleTechnique {
                                     TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
                                     TechniqueAction.CellColoring.candidatesColoring(result.getSecond().keySet(), Color.RED, extraCandidates),
                                     TechniqueAction.CellColoring.candidatesColoring(List.of(result.getFirst()), Color.BLUE, extraCandidates),
-                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ? new Pos(-1, i): new Pos(i, -1)), Color.ORANGE)
+                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                                                    Pair.create(new Pos(0, i), new Pos(8, i)) :
+                                                    Pair.create(new Pos(i, 0), new Pos(i, 8)))
+                                            , Color.ORANGE)
                             )).build());
                 }
                 //Type 3 with Triple Pseudo-Cells
                 Pair<List<Pos>, Map<Pos, Set<Integer>>> pairResult = checkComplementaryPair(extraCandidates, groupCells);
-                if(pairResult != null && !pairResult.getSecond().isEmpty()){
+                if(pairResult != null && !pairResult.getSecond().isEmpty()) {
                     return Optional.of(TechniqueAction.builder()
                             .name("Unique Rectangle")
                             .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5}, so {0}, {1}, {6} and {7} are the only cells in {8} {9} that can have the values {2} and the cells {10} cannot have the values {2}",
-                                    cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), pairResult.getFirst().get(0), pairResult.getFirst().get(1), isRow? "row" : "column", i, pairResult.getSecond().keySet()))
+                                    cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), pairResult.getFirst().get(0), pairResult.getFirst().get(1), isRow ? "row" : "column", i, pairResult.getSecond().keySet()))
                             .removeCandidatesMap(pairResult.getSecond())
                             .colorings(List.of(
                                     TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
                                     TechniqueAction.CellColoring.candidatesColoring(pairResult.getSecond().keySet(), Color.RED, extraCandidates),
                                     TechniqueAction.CellColoring.candidatesColoring(pairResult.getFirst(), Color.BLUE, extraCandidates),
-                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ? new Pos(-1, i): new Pos(i, -1)), Color.ORANGE)
+                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                                                    Pair.create(new Pos(0, i), new Pos(8, i)) :
+                                                    Pair.create(new Pos(i, 0), new Pos(i, 8)))
+                                            , Color.ORANGE)
                             )).build());
                 }
             }
@@ -266,7 +275,10 @@ public class RectangleTechnique {
                             .colorings(List.of(
                                     TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
                                     TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, extraCandidates),
-                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ? new Pos(-1, i): new Pos(i, -1)), Color.ORANGE)
+                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                                                    Pair.create(new Pos(0, i), new Pos(8, i)) :
+                                                    Pair.create(new Pos(i, 0), new Pos(i, 8)))
+                                            , Color.ORANGE)
                             )).build());
             }
             List<ICell> groupCells = Arrays.stream(isRow ? sudoku.getRow(i): sudoku.getColumn(i))
@@ -293,13 +305,16 @@ public class RectangleTechnique {
                     colorings.add(TechniqueAction.CellColoring.candidatesColoring(removeCandidateMap.keySet().stream().toList(), Color.RED, extraCandidates));
                     if(groupResult != null){
                         colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(groupResult.getFirst()), Color.BLUE, extraCandidates));
-                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(isRow ? new Pos(-1, cell3.getY()): new Pos(cell3.getX(), -1)), Color.ORANGE));
+                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                                        Pair.create(new Pos(0, i), new Pos(8, i)) :
+                                        Pair.create(new Pos(i, 0), new Pos(i, 8)))
+                                , Color.ORANGE));
                         descriptionEndList.add(MessageFormat.format("so cells {0} and {1} form a pointing tuple with cell {2} with values {3} for the cells {4}",
                                 cell3.getPos(), cell4.getPos(), groupResult.getFirst(), extraCandidates, groupResult.getSecond().keySet()));
                     }
                     if(squareResult != null){
                         colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(squareResult.getFirst()), Color.BLUE, extraCandidates));
-                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(new Pos(cell3.getX()/3*3, cell3.getY()/3*3)), Color.ORANGE));
+                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(new Pos(cell3.getX()/3*3, cell3.getY()/3*3), new Pos(cell3.getX()/3*3+2, cell3.getY()/3*3+2))), Color.ORANGE));
                         descriptionEndList.add(MessageFormat.format("so cells {0} and {1} form a Box/Line reduction with cell {2} with values {3} for the cells {4}",
                                 cell3.getPos(), cell4.getPos(), squareResult.getFirst(), extraCandidates, squareResult.getSecond().keySet()));
                     }
@@ -325,13 +340,16 @@ public class RectangleTechnique {
                     colorings.add(TechniqueAction.CellColoring.candidatesColoring(removeCandidateMap.keySet().stream().toList(), Color.RED, extraCandidates));
                     if(groupPairResult != null){
                         colorings.add(TechniqueAction.CellColoring.candidatesColoring(groupPairResult.getFirst(), Color.BLUE, extraCandidates));
-                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(isRow ? new Pos(-1, cell3.getY()): new Pos(cell3.getX(), -1)), Color.ORANGE));
+                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                                        Pair.create(new Pos(0, cell3.getY()), new Pos(8, cell3.getY())) :
+                                        Pair.create(new Pos(cell3.getX(), 0), new Pos(cell3.getX(), 8)))
+                                , Color.ORANGE));
                         descriptionEndList.add(MessageFormat.format("so cells {0} and {1} form a pointing tuple with cells {2} and {3} with values {4} for the cells {5}",
                                 cell3.getPos(), cell4.getPos(), groupPairResult.getFirst().get(0), groupPairResult.getFirst().get(1), extraCandidates, groupPairResult.getSecond().keySet()));
                     }
                     if(squarePairResult != null){
                         colorings.add(TechniqueAction.CellColoring.candidatesColoring(squarePairResult.getFirst(), Color.BLUE, extraCandidates));
-                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(new Pos(cell3.getX()/3*3, cell3.getY()/3*3)), Color.ORANGE));
+                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(new Pos(cell3.getX()/3*3, cell3.getY()/3*3), new Pos(cell3.getX()/3*3+2, cell3.getY()/3*3+2))), Color.ORANGE));
                         descriptionEndList.add(MessageFormat.format("so cells {0} and {1} form a Box/Line reduction with cells {2} and {3} with values {4} for the cells {5}",
                                 cell3.getPos(), cell4.getPos(), squarePairResult.getFirst().get(0), squarePairResult.getFirst().get(1), extraCandidates, squarePairResult.getSecond().keySet()));
                     }

@@ -2,6 +2,7 @@ package com.chgr.sudoku.solver.techniques;
 
 import com.chgr.sudoku.models.*;
 import javafx.scene.paint.Color;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -88,7 +89,10 @@ public class IntersectionTechnique {
                 .colorings(List.of(
                         TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
                         TechniqueAction.CellColoring.candidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
-                        TechniqueAction.CellColoring.groupColoring(List.of(square[0].getPos()), Color.YELLOW)
+                        TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(
+                                new Pos(square[0].getX()/3*3, square[0].getY()/3*3),
+                                new Pos(square[0].getX()/3*3+2, square[0].getY()/3*3+2)
+                        )), Color.YELLOW)
                         ))
                 .build();
     }
@@ -153,14 +157,17 @@ public class IntersectionTechnique {
 
         List<Pos> pointingCells = IntStream.range(0, 3).mapToObj(num -> group[num + i * 3].getPos()).toList();
 
-        return  affectedCells.isEmpty() ? null : TechniqueAction.builder()
+        return affectedCells.isEmpty() ? null : TechniqueAction.builder()
                 .name("Box line reduction")
                 .description("Cells " + pointingCells.stream().map(Pos::toString).collect(Collectors.joining(", ")) + " are the only cells in " + (isRow ? "row " : "column ") + (isRow ? firstCell.getY() : firstCell.getX()) + " which have the candidate" + (candidatesToBeRemoved.size() == 1 ? "" : "s") + candidatesToBeRemoved.stream().map(String::valueOf).collect(Collectors.joining(", ")) + " this creates a box line reduction in square " + index + " for the candidates " + candidatesToBeRemoved.stream().map(String::valueOf).collect(Collectors.joining(", ")))
                 .removeCandidatesMap(affectedCells.stream().map(ICell::getPos).collect(Collectors.toMap(pos -> pos, pos -> candidatesToBeRemoved)))
                 .colorings(List.of(
                         TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
                         TechniqueAction.CellColoring.candidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
-                        TechniqueAction.CellColoring.groupColoring(List.of(isRow ? new Pos(-1, firstCell.getY()) : new Pos(firstCell.getX(), -1)), Color.YELLOW)
+                        TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                                        Pair.create(new Pos(0, firstCell.getY()), new Pos(8, firstCell.getY())) :
+                                        Pair.create(new Pos(firstCell.getX(), 0), new Pos(firstCell.getX(), 8)))
+                                , Color.YELLOW)
                 ))
                 .build();
     }
