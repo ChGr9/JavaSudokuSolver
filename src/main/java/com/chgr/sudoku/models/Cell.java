@@ -28,7 +28,6 @@ public class Cell extends StackPane implements ICell {
     private final Text[][] candidatesText = new Text[3][3];
     @Getter
     private int value;
-    private final StackPane valuePane = new StackPane();
     private final Text valueText = new Text();
     private boolean hasChanged = false;
 
@@ -42,8 +41,9 @@ public class Cell extends StackPane implements ICell {
         super();
 
         this.valueText.setFont(Font.font(this.valueText.getFont().getFamily(), FontWeight.BOLD, SIZE/2.5f));
-        this.valuePane.getChildren().add(this.valueText);
-        this.valuePane.setMaxSize(SIZE/1.5f, SIZE/1.5f);
+        StackPane valuePane = new StackPane();
+        valuePane.getChildren().add(this.valueText);
+        valuePane.setMaxSize(SIZE/1.5f, SIZE/1.5f);
         this.setPrefSize(SIZE, SIZE);
         this.setLayoutX(x * SIZE);
         this.setLayoutY(y * SIZE);
@@ -81,7 +81,7 @@ public class Cell extends StackPane implements ICell {
                 candidateGrid.add(this.candidatesPane[i][j], j, i);
             }
         }
-        this.getChildren().addAll(candidateGrid, this.valuePane);
+        this.getChildren().addAll(candidateGrid, valuePane);
 
         this.x = x;
         this.y = y;
@@ -110,7 +110,6 @@ public class Cell extends StackPane implements ICell {
     public void clear() {
         setValue(EMPTY);
         clearColorCandidates(Set.of(1, 2, 3, 4, 5, 6, 7, 8, 9));
-        clearColorValue();
     }
 
     public void addCandidate(int candidate) {
@@ -183,19 +182,6 @@ public class Cell extends StackPane implements ICell {
                         .setStyle("");
             }
         }
-    }
-
-    public void colorValue(Color color) {
-        String colorAsHex = String.format("#%02X%02X%02X%02X",
-                (int) (color.getRed() * 255),
-                (int) (color.getGreen() * 255),
-                (int) (color.getBlue() * 255),
-                (int) (0.5 * 255));
-        this.valuePane.setStyle(String.format("-fx-background-color: %s;", colorAsHex));
-    }
-
-    public void clearColorValue() {
-        this.valuePane.setStyle("");
     }
 
     public void reRender() {

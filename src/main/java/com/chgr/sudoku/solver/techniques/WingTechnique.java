@@ -7,6 +7,7 @@ import com.chgr.sudoku.models.TechniqueAction;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import org.apache.commons.math3.util.CombinatoricsUtils;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -121,7 +122,8 @@ public class WingTechnique {
                                     .colorings(List.of(
                                             TechniqueAction.CellColoring.candidatesColoring(finCells, Color.GREEN, Set.of(entry.getKey())),
                                             TechniqueAction.CellColoring.groupColoring(combinationIndices.stream().map(index -> isRow ?
-                                                new Pos(-1, index) : new Pos(index, -1)
+                                                    Pair.create(new Pos(0, index), new Pos(8, index)) :
+                                                    Pair.create(new Pos(index, 0), new Pos(index, 8))
                                             ).toList(), Color.YELLOW),
                                             TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, Set.of(entry.getKey()))
                                     ))

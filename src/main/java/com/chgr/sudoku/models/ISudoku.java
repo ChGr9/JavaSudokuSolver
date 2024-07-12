@@ -2,7 +2,6 @@ package com.chgr.sudoku.models;
 
 import javafx.scene.paint.Color;
 
-import java.util.Collection;
 import java.util.Set;
 
 public interface ISudoku {
@@ -49,7 +48,7 @@ public interface ISudoku {
 
     ICell getCell(Pos key);
 
-    default void colorGroup(Collection<Pos> pos, Color color) {}
+    default void colorGroup(Pos first, Pos second, Color color) {}
 
     default void clearColorGroup() {}
 

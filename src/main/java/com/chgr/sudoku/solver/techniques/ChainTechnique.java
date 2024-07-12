@@ -567,16 +567,16 @@ public class ChainTechnique {
         else {
             // Continuous cycle
             List<ICell> affectedCells = new ArrayList<>();
-            List<Pos> groupColoring = new ArrayList<>();
+            List<Pair<Pos, Pos>> groupColoring = new ArrayList<>();
             for (Link link : cycle.stream().filter(l -> l.type == LinkType.WEAK).toList()) {
                 Pair<List<ICell>, ISudoku.GroupType> result = findCommon(sudoku, link.start, link.end);
                 List<ICell> common = result.getFirst().stream().filter(c -> c.getCandidates().contains(num)).toList();
                 if(!common.isEmpty()){
                     affectedCells.addAll(common);
                     groupColoring.add(switch (result.getSecond()) {
-                        case ROW -> new Pos(-1, link.start.getPos().y());
-                        case COLUMN -> new Pos(link.start.getPos().x(), -1);
-                        case SQUARE -> new Pos(link.start.getPos().x() / 3 * 3, link.start.getPos().y() / 3 * 3);
+                        case ROW -> Pair.create(new Pos(0, link.start.getPos().y()), new Pos(8, link.start.getPos().y()));
+                        case COLUMN -> Pair.create(new Pos(link.start.getPos().x(), 0), new Pos(link.start.getPos().x(), 8));
+                        case SQUARE -> Pair.create(new Pos((link.start.getPos().x() / 3) * 3, (link.start.getPos().y() / 3) * 3), new Pos((link.start.getPos().x() / 3) * 3 + 2, (link.start.getPos().y() / 3) * 3 + 2));
                     });
                 }
             }

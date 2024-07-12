@@ -6,6 +6,7 @@ import com.chgr.sudoku.models.Pos;
 import com.chgr.sudoku.models.TechniqueAction;
 import javafx.scene.paint.Color;
 import org.apache.commons.math3.util.CombinatoricsUtils;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -52,9 +53,9 @@ public class HiddenTechnique {
                                 TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(digit)),
                                 TechniqueAction.CellColoring.groupColoring(List.of(
                                         switch (groupType) {
-                                            case ROW -> new Pos(-1, i);
-                                            case COLUMN -> new Pos(i, -1);
-                                            case SQUARE -> new Pos(i%3*3, i/3*3);
+                                            case ROW -> Pair.create(new Pos(0, i), new Pos(8, i));
+                                            case COLUMN -> Pair.create(new Pos(i, 0), new Pos(i, 8));
+                                            case SQUARE -> Pair.create(new Pos(i%3*3, i/3*3), new Pos(i%3*3+2, i/3*3+2));
                                         }),
                                         Color.YELLOW)
                                 ))
@@ -171,9 +172,9 @@ public class HiddenTechnique {
                                     TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToRemove),
                                     TechniqueAction.CellColoring.groupColoring(List.of(
                                             switch (groupType) {
-                                                case ROW -> new Pos(-1, i);
-                                                case COLUMN -> new Pos(i, -1);
-                                                case SQUARE -> new Pos(i%3*3, i/3*3);
+                                                case ROW -> Pair.create(new Pos(0, i), new Pos(8, i));
+                                                case COLUMN -> Pair.create(new Pos(i, 0), new Pos(i, 8));
+                                                case SQUARE -> Pair.create(new Pos(i%3*3, i/3*3), new Pos(i%3*3+2, i/3*3+2));
                                             }),
                                             Color.YELLOW)
                             ))

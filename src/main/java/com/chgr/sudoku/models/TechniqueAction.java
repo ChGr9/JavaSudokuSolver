@@ -14,7 +14,6 @@ public class TechniqueAction extends BaseAction {
     public static class CellColoring{
 
         enum ColoringType{
-            VALUE,
             CANDIDATES,
             GROUP,
             LINE,
@@ -27,16 +26,12 @@ public class TechniqueAction extends BaseAction {
         Collection<Integer> candidates;
         ColoringType type;
 
-        public static CellColoring valueColoring(List<Pos> pos, Color color) {
-            return new CellColoring(pos, color, ColoringType.VALUE);
-        }
-
         public static CellColoring candidatesColoring(Collection<Pos> pos, Color color, Collection<Integer> candidates) {
             return new CellColoring(pos, color, candidates);
         }
 
-        public static CellColoring groupColoring(List<Pos> pos, Color color) {
-            return new CellColoring(pos, color, ColoringType.GROUP);
+        public static CellColoring groupColoring(List<Pair<Pos, Pos>> linePos, Color color) {
+            return new CellColoring(linePos, color, ColoringType.GROUP);
         }
 
         public static CellColoring lineColoring(List<Pair<Pos, Pos>> linePos, Color color, int candidate) {
@@ -54,8 +49,8 @@ public class TechniqueAction extends BaseAction {
             this.type = ColoringType.CANDIDATES;
         }
 
-        private CellColoring(List<Pos> pos, Color color, ColoringType coloringType) {
-            this.pos = pos;
+        private CellColoring(List<Pair<Pos, Pos>> linePos, Color color, ColoringType coloringType) {
+            this.linePos = linePos;
             this.color = color;
             this.type = coloringType;
         }
@@ -89,7 +84,6 @@ public class TechniqueAction extends BaseAction {
     public void clearColoring(ISudoku sudoku) {
         for (CellColoring coloring : colorings) {
             switch (coloring.type) {
-                case VALUE -> coloring.pos.forEach(pos -> sudoku.getCell(pos).clearColorValue());
                 case CANDIDATES -> coloring.pos.forEach(pos -> sudoku.getCell(pos).clearColorCandidates(coloring.candidates));
                 case GROUP -> sudoku.clearColorGroup();
                 case LINE, DOUBLE_LINE -> sudoku.clearColorLine();
@@ -101,9 +95,8 @@ public class TechniqueAction extends BaseAction {
     public void display(ISudoku sudoku) {
         for (CellColoring coloring : colorings) {
             switch (coloring.type) {
-                case VALUE -> coloring.pos.forEach(pos -> sudoku.getCell(pos).colorValue(coloring.color));
                 case CANDIDATES -> coloring.pos.forEach(pos -> sudoku.getCell(pos).colorCandidates(coloring.candidates, coloring.color));
-                case GROUP -> sudoku.colorGroup(coloring.pos, coloring.color);
+                case GROUP -> coloring.linePos.forEach(poses -> sudoku.colorGroup(poses.getFirst(), poses.getSecond(), coloring.color));
                 case LINE -> coloring.linePos.forEach(poses -> sudoku.colorLine(poses.getFirst(), poses.getSecond(), coloring.candidates.stream().findAny().orElseThrow(), coloring.color, false));
                 case DOUBLE_LINE -> coloring.linePos.forEach(poses -> sudoku.colorLine(poses.getFirst(), poses.getSecond(), coloring.candidates.stream().findAny().orElseThrow(), coloring.color, true));
             }
