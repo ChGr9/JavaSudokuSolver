@@ -55,7 +55,8 @@ public class LogicalSolver extends Task<Boolean> {
             ChainTechnique::medusa3D,
             WingTechnique::jellyfish,
             RectangleTechnique::uniqueRectangle,
-            IntersectionTechnique::firework
+            IntersectionTechnique::firework,
+            ChainTechnique::SKLoop
     );
 
     public boolean solve(){
@@ -101,7 +102,7 @@ public class LogicalSolver extends Task<Boolean> {
         solveSteps.add(SimpleAction.builder()
                 .name("End")
                 .description("Finished solving")
-                .function(sud -> null)
+                .function(_ -> null)
                 .build());
         return isSolved();
     }

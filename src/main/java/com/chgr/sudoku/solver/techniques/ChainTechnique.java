@@ -12,6 +12,8 @@ import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.chgr.sudoku.utils.CellUtils.getPeers;
 
@@ -38,7 +40,7 @@ public class ChainTechnique {
     }
 
     // https://www.sudokuwiki.org/Singles_Chains
-    // Simple Coloring or Single Chains
+    // Simple Coloring or Singles Chains
     public static Optional<TechniqueAction> simpleColoring(ISudoku sudoku) {
         for (int num = 1; num <= ISudoku.SUDOKU_SIZE; num++) {
             Set<ICell> emptyCells = sudoku.getEmptyCells();
@@ -408,7 +410,7 @@ public class ChainTechnique {
                     techniqueColoring.addAll(
                             candidatesToRemove.entrySet().stream()
                                     .map(entry -> TechniqueAction.CellColoring.candidatesColoring(Set.of(entry.getKey()), Color.RED, entry.getValue())
-                            ).toList());
+                                    ).toList());
                     return Optional.of(TechniqueAction.builder()
                             .name("3D Medusa")
                             .description("Eliminate " + candidatesToRemove.keySet() + " from " + uncoloredCell.getPos() + " due to all candidates seeing the same color")
@@ -680,6 +682,198 @@ public class ChainTechnique {
             findXyChainsRecursive(sudoku, peer, nextCandidate, otherCandidate, chain, allChains);
             chain.removeLast();
         }
+    }
+
+    public static Optional<TechniqueAction> SKLoop(ISudoku sudoku) {
+        Set<Pos> nonEmptyPosSet = sudoku.getNonEmptyCells().stream().map(ICell::getPos).collect(Collectors.toSet());
+        Iterator<Pos> posIterator = nonEmptyPosSet.iterator();
+        while (posIterator.hasNext()) {
+            Pos pos1 = posIterator.next();
+            posIterator.remove();
+
+            for (Pos pos4 : nonEmptyPosSet) {
+                if (pos1.x() / 3 == pos4.x() / 3 || pos1.y() / 3 == pos4.y() / 3)
+                    continue;
+                Pos pos2 = new Pos(pos4.x(), pos1.y());
+                if (!nonEmptyPosSet.contains(pos2))
+                    continue;
+                Pos pos3 = new Pos(pos1.x(), pos4.y());
+                if (!nonEmptyPosSet.contains(pos3))
+                    continue;
+
+                Map<Pos, Map<ISudoku.GroupType, Set<ICell>>> cellsMap = Map.of(
+                        pos1, Map.of(ISudoku.GroupType.ROW, findAdjacentCells(sudoku, pos1, true), ISudoku.GroupType.COLUMN, findAdjacentCells(sudoku, pos1, false)),
+                        pos2, Map.of(ISudoku.GroupType.ROW, findAdjacentCells(sudoku, pos2, true), ISudoku.GroupType.COLUMN, findAdjacentCells(sudoku, pos2, false)),
+                        pos3, Map.of(ISudoku.GroupType.ROW, findAdjacentCells(sudoku, pos3, true), ISudoku.GroupType.COLUMN, findAdjacentCells(sudoku, pos3, false)),
+                        pos4, Map.of(ISudoku.GroupType.ROW, findAdjacentCells(sudoku, pos4, true), ISudoku.GroupType.COLUMN, findAdjacentCells(sudoku, pos4, false))
+                );
+                Map<Integer, List<Set<Integer>>> rowCommonCandidatesCombinations = new HashMap<>();
+                Map<Integer, List<Set<Integer>>> colCommonCandidatesCombinations = new HashMap<>();
+
+                rowCommonCandidatesCombinations.put(pos1.y(), getCommonCandidatesCombinations(cellsMap.get(pos1).get(ISudoku.GroupType.ROW), cellsMap.get(pos2).get(ISudoku.GroupType.ROW)));
+                rowCommonCandidatesCombinations.put(pos4.y(), getCommonCandidatesCombinations(cellsMap.get(pos3).get(ISudoku.GroupType.ROW), cellsMap.get(pos4).get(ISudoku.GroupType.ROW)));
+
+                colCommonCandidatesCombinations.put(pos1.x(), getCommonCandidatesCombinations(cellsMap.get(pos1).get(ISudoku.GroupType.COLUMN), cellsMap.get(pos3).get(ISudoku.GroupType.COLUMN)));
+                colCommonCandidatesCombinations.put(pos4.x(), getCommonCandidatesCombinations(cellsMap.get(pos2).get(ISudoku.GroupType.COLUMN), cellsMap.get(pos4).get(ISudoku.GroupType.COLUMN)));
+
+                if (rowCommonCandidatesCombinations.values().stream().anyMatch(List::isEmpty) || colCommonCandidatesCombinations.values().stream().anyMatch(List::isEmpty))
+                    continue;
+                for (int k = 0; k < rowCommonCandidatesCombinations.get(pos1.y()).size(); k++) {
+                    for (int l = 0; l < rowCommonCandidatesCombinations.get(pos4.y()).size(); l++) {
+                        for (int m = 0; m < colCommonCandidatesCombinations.get(pos1.x()).size(); m++) {
+                            for (int n = 0; n < colCommonCandidatesCombinations.get(pos4.x()).size(); n++) {
+                                Set<Integer> rowCommonCandidates1 = rowCommonCandidatesCombinations.get(pos1.y()).get(k);
+                                Set<Integer> rowCommonCandidates2 = rowCommonCandidatesCombinations.get(pos4.y()).get(l);
+                                Set<Integer> colCommonCandidates1 = colCommonCandidatesCombinations.get(pos1.x()).get(m);
+                                Set<Integer> colCommonCandidates2 = colCommonCandidatesCombinations.get(pos4.x()).get(n);
+                                if (rowCommonCandidates1.isEmpty() || rowCommonCandidates2.isEmpty() || colCommonCandidates1.isEmpty() || colCommonCandidates2.isEmpty())
+                                    continue;
+
+                                Map<Integer, Set<Integer>> rowCommonCandidates = Map.of(pos1.y(), rowCommonCandidates1, pos4.y(), rowCommonCandidates2);
+                                Map<Integer, Set<Integer>> colCommonCandidates = Map.of(pos1.x(), colCommonCandidates1, pos4.x(), colCommonCandidates2);
+                                Optional<TechniqueAction> techniqueAction = handlePossibleSKLoop(sudoku, pos1, pos2, pos3, pos4, cellsMap, rowCommonCandidates, colCommonCandidates);
+                                if (techniqueAction.isPresent())
+                                    return techniqueAction;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> handlePossibleSKLoop(ISudoku sudoku, Pos pos1, Pos pos2, Pos pos3, Pos pos4, Map<Pos, Map<ISudoku.GroupType, Set<ICell>>> cellsMap, Map<Integer, Set<Integer>> rowCommonCandidates, Map<Integer, Set<Integer>> colCommonCandidates) {
+        Map<Pos, Set<Integer>> uniqueCandidates = new HashMap<>();
+        boolean hadMismatch = false;
+        for (Pos pos : List.of(pos1, pos2, pos3, pos4)) {
+            Set<Integer> candidateRows = cellsMap.get(pos).get(ISudoku.GroupType.ROW).stream()
+                    .flatMap(c -> c.getCandidates().stream())
+                    .filter(candidate -> !rowCommonCandidates.get(pos.y()).contains(candidate))
+                    .collect(Collectors.toSet());
+            Set<Integer> candidateCols = cellsMap.get(pos).get(ISudoku.GroupType.COLUMN).stream()
+                    .flatMap(c -> c.getCandidates().stream())
+                    .filter(candidate -> !colCommonCandidates.get(pos.x()).contains(candidate))
+                    .collect(Collectors.toSet());
+            if (candidateCols.isEmpty() || candidateRows.isEmpty() || !candidateCols.equals(candidateRows)) {
+                hadMismatch = true;
+                break;
+            }
+            uniqueCandidates.put(pos, candidateRows);
+        }
+        if (hadMismatch)
+            return Optional.empty();
+
+        int counter1 = 0;
+        int counter2 = 0;
+        Map<Pos, Set<Integer>> coloring1 = new HashMap<>();
+        Map<Pos, Set<Integer>> coloring2 = new HashMap<>();
+        boolean oscillator = false;
+        for (Pos pos : List.of(pos1, pos2, pos4, pos3)) {
+            if (oscillator) {
+                Set<Integer> uniqueCandidates1 = uniqueCandidates.get(pos);
+                counter1 += uniqueCandidates1.size();
+                counter1 += colCommonCandidates.get(pos.x()).size();
+
+                Set<Integer> uniqueCandidates2 = uniqueCandidates.get(pos);
+                counter2 += uniqueCandidates2.size();
+                counter2 += rowCommonCandidates.get(pos.y()).size();
+
+                cellsMap.get(pos).get(ISudoku.GroupType.ROW).forEach(c -> coloring1.put(c.getPos(), uniqueCandidates1));
+                cellsMap.get(pos).get(ISudoku.GroupType.COLUMN).forEach(c -> coloring1.put(c.getPos(), colCommonCandidates.get(pos.x())));
+
+                cellsMap.get(pos).get(ISudoku.GroupType.COLUMN).forEach(c -> coloring2.put(c.getPos(), uniqueCandidates2));
+                cellsMap.get(pos).get(ISudoku.GroupType.ROW).forEach(c -> coloring2.put(c.getPos(), rowCommonCandidates.get(pos.y())));
+            } else {
+                Set<Integer> uniqueCandidates2 = uniqueCandidates.get(pos);
+                counter2 += uniqueCandidates2.size();
+                counter2 += colCommonCandidates.get(pos.x()).size();
+
+                Set<Integer> uniqueCandidates1 = uniqueCandidates.get(pos);
+                counter1 += uniqueCandidates1.size();
+                counter1 += rowCommonCandidates.get(pos.y()).size();
+
+                cellsMap.get(pos).get(ISudoku.GroupType.ROW).forEach(c -> coloring2.put(c.getPos(), uniqueCandidates2));
+                cellsMap.get(pos).get(ISudoku.GroupType.COLUMN).forEach(c -> coloring2.put(c.getPos(), colCommonCandidates.get(pos.x())));
+
+                cellsMap.get(pos).get(ISudoku.GroupType.COLUMN).forEach(c -> coloring1.put(c.getPos(), uniqueCandidates1));
+                cellsMap.get(pos).get(ISudoku.GroupType.ROW).forEach(c -> coloring1.put(c.getPos(), rowCommonCandidates.get(pos.y())));
+            }
+            oscillator = !oscillator;
+        }
+        if (counter1 > 16 || counter2 > 16)
+            return Optional.empty();
+
+        // Found SK-Loop
+        Map<Pos, Set<Integer>> candidatesToRemove = new HashMap<>();
+        rowCommonCandidates.forEach((row, candidates) -> Arrays.stream(sudoku.getRow(row))
+                .filter(c -> c.getX() / 3 != pos1.x() / 3 && c.getX() / 3 != pos4.x() / 3)
+                .filter(c -> c.getCandidates().stream().anyMatch(candidates::contains))
+                .forEach(c -> candidatesToRemove.put(c.getPos(), candidates)));
+        colCommonCandidates.forEach((col, candidates) -> Arrays.stream(sudoku.getColumn(col))
+                .filter(c -> c.getY() / 3 != pos1.y() / 3 && c.getY() / 3 != pos4.y() / 3)
+                .filter(c -> c.getCandidates().stream().anyMatch(candidates::contains))
+                .forEach(c -> candidatesToRemove.put(c.getPos(), candidates)));
+        for (Pos pos : List.of(pos1, pos2, pos3, pos4)) {
+            Set<Integer> candidates = uniqueCandidates.get(pos);
+            Arrays.stream(sudoku.getSquare(pos.x(), pos.y()))
+                    .filter(c -> c.getX() != pos.x() && c.getY() != pos.y())
+                    .filter(c -> c.getCandidates().stream().anyMatch(candidates::contains))
+                    .forEach(c -> candidatesToRemove.put(c.getPos(), candidates));
+        }
+
+        if (candidatesToRemove.isEmpty())
+            return Optional.empty();
+
+        List<TechniqueAction.CellColoring> colorings = new ArrayList<>();
+        coloring1.forEach((pos, candidates) -> colorings.add(TechniqueAction.CellColoring.candidatesColoring(Set.of(pos), Color.YELLOW, candidates)));
+        coloring2.forEach((pos, candidates) -> colorings.add(TechniqueAction.CellColoring.candidatesColoring(Set.of(pos), Color.BLUE, candidates)));
+        candidatesToRemove.forEach((pos, candidates) -> colorings.add(TechniqueAction.CellColoring.candidatesColoring(Set.of(pos), Color.RED, candidates)));
+        Stream.of(pos1, pos2, pos3, pos4).forEach(pos -> colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(pos, pos)), Color.CYAN)));
+
+        return Optional.of(TechniqueAction.builder()
+                .name("SK-Loop")
+                .description("Eliminate candidates from SK-Loop formed by " + pos1 + ", " + pos2 + ", " + pos3 + ", " + pos4)
+                .removeCandidatesMap(candidatesToRemove)
+                .colorings(colorings)
+                .build());
+    }
+
+    private static List<Set<Integer>> getCommonCandidatesCombinations(Set<ICell> cellsA, Set<ICell> cellsB){
+        Set<Integer> candidates = getCommonCandidates(cellsA, cellsB);
+        List<Set<Integer>> combinations = new ArrayList<>();
+        for(int i=1; i<Math.pow(2, candidates.size()); i++){
+            Set<Integer> combination = new HashSet<>();
+            for(int j=0; j<candidates.size(); j++){
+                if((i & (1 << j)) > 0)
+                    combination.add((Integer) candidates.toArray()[j]);
+            }
+            combinations.add(combination);
+        }
+        combinations.sort(Comparator.comparingInt(Set<Integer>::size).reversed());
+        return combinations;
+    }
+
+    private static Set<Integer> getCommonCandidates(Set<ICell> cellsA, Set<ICell> cellsB) {
+        Set<Integer> candidatesA = cellsA.stream().flatMap(c -> c.getCandidates().stream()).collect(Collectors.toSet());
+        Set<Integer> candidatesB = cellsB.stream().flatMap(c -> c.getCandidates().stream()).collect(Collectors.toSet());
+        candidatesA.retainAll(candidatesB);
+        return candidatesA;
+    }
+
+    private static Set<ICell> findAdjacentCells(ISudoku sudoku, Pos pos, boolean isRow){
+        if(isRow)
+            return IntStream.range(0,3)
+                    .map(i -> pos.x()/3*3 + i)
+                    .filter(i -> i != pos.x())
+                    .mapToObj(i -> sudoku.getCell(i, pos.y()))
+                    .collect(Collectors.toSet());
+        else
+            return IntStream.range(0,3)
+                    .map(i -> pos.y()/3*3 + i)
+                    .filter(i -> i != pos.y())
+                    .mapToObj(i -> sudoku.getCell(pos.x(), i))
+                    .collect(Collectors.toSet());
     }
 
     // Helper function to determine if a cell is connected to any cell in a chain

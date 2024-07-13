@@ -74,4 +74,24 @@ public class ChainTechniqueTest extends BaseTechniqueTest{
         }
         assertChecksMatch(sudoku, technique.checks);
     }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3})
+    void SKLoop(int fileNumber) throws IOException {
+        URL url = HiddenTechniqueTest.class.getResource(String.format("/techniques/SKLoop%d.yml", fileNumber));
+        assertNotNull(url);
+
+        BaseTechniqueTest.TechniqueEntity technique = mapper.readValue(url, BaseTechniqueTest.TechniqueEntity.class);
+        assertNotNull(technique);
+        assertNotNull(technique.grid);
+
+        loadSudoku(technique);
+
+        for (int i = 0; i < technique.repetitions; i++) {
+            Optional<TechniqueAction> result = ChainTechnique.SKLoop(sudoku);
+            assertTrue(result.isPresent());
+            result.get().apply(sudoku);
+        }
+        assertChecksMatch(sudoku, technique.checks);
+    }
 }
