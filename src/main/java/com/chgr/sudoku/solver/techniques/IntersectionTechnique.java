@@ -88,7 +88,7 @@ public class IntersectionTechnique {
         return affectedCells.isEmpty() ? null : TechniqueAction.builder()
                 .name("Pointing tuple")
                 .description("Cells " + pointingCells.stream().map(Pos::toString).collect(Collectors.joining(", ")) + " are the only cells in square " + squareIndex + " which have the candidate"+(candidatesToBeRemoved.size()==1?"":"s") + distinctCandidates.stream().map(String::valueOf).collect(Collectors.joining(", ")) + " this creates a pointing tuple in " + (isRow ? "row " : "column ") + tupleAxis + " for the candidates " + distinctCandidates.stream().map(String::valueOf).collect(Collectors.joining(", ")))
-                .removeCandidatesMap(affectedCells.stream().map(ICell::getPos).collect(Collectors.toMap(pos -> pos, pos -> candidatesToBeRemoved)))
+                .removeCandidatesMap(affectedCells.stream().map(ICell::getPos).collect(Collectors.toMap(pos -> pos, _ -> candidatesToBeRemoved)))
                 .colorings(List.of(
                         TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
                         TechniqueAction.CellColoring.candidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
@@ -163,7 +163,7 @@ public class IntersectionTechnique {
         return affectedCells.isEmpty() ? null : TechniqueAction.builder()
                 .name("Box line reduction")
                 .description("Cells " + pointingCells.stream().map(Pos::toString).collect(Collectors.joining(", ")) + " are the only cells in " + (isRow ? "row " : "column ") + (isRow ? firstCell.getY() : firstCell.getX()) + " which have the candidate" + (candidatesToBeRemoved.size() == 1 ? "" : "s") + candidatesToBeRemoved.stream().map(String::valueOf).collect(Collectors.joining(", ")) + " this creates a box line reduction in square " + index + " for the candidates " + candidatesToBeRemoved.stream().map(String::valueOf).collect(Collectors.joining(", ")))
-                .removeCandidatesMap(affectedCells.stream().map(ICell::getPos).collect(Collectors.toMap(pos -> pos, pos -> candidatesToBeRemoved)))
+                .removeCandidatesMap(affectedCells.stream().map(ICell::getPos).collect(Collectors.toMap(pos -> pos, _ -> candidatesToBeRemoved)))
                 .colorings(List.of(
                         TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
                         TechniqueAction.CellColoring.candidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
@@ -196,7 +196,7 @@ public class IntersectionTechnique {
                 if(matchingColumnCells.size() != 1)
                     continue;
 
-                Map<Pos, Set<Integer>> otherCandidateMap = Stream.of(cell, matchingRowCells.get(0), matchingColumnCells.get(0))
+                Map<Pos, Set<Integer>> otherCandidateMap = Stream.of(cell, matchingRowCells.getFirst(), matchingColumnCells.getFirst())
                         .map(c -> Pair.create(c.getPos(), c.getCandidates().stream().filter(candidate -> !combinationCandidates.contains(candidate)).collect(Collectors.toSet())))
                         .filter(pair -> !pair.getSecond().isEmpty())
                         .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
@@ -204,20 +204,20 @@ public class IntersectionTechnique {
                     continue;
                 List<TechniqueAction.CellColoring> colorings = new ArrayList<>();
                 otherCandidateMap.forEach((pos, otherCandidates) -> colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(pos), Color.RED, otherCandidates)));
-                colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos(), matchingRowCells.get(0).getPos(), matchingColumnCells.get(0).getPos()), Color.GREEN, combinationCandidates));
+                colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos(), matchingRowCells.getFirst().getPos(), matchingColumnCells.getFirst().getPos()), Color.GREEN, combinationCandidates));
                 colorings.add(TechniqueAction.CellColoring.groupColoring(
-                        getConsecutiveRanges(rowCells.stream().map(ICell::getX).filter(x -> x != matchingRowCells.get(0).getX()).toList())
+                        getConsecutiveRanges(rowCells.stream().map(ICell::getX).filter(x -> x != matchingRowCells.getFirst().getX()).toList())
                                 .stream().map(pair -> Pair.create(new Pos(pair.getFirst(), cell.getY()), new Pos(pair.getSecond(), cell.getY()))).toList()
                         , Color.BLUE));
                 colorings.add(TechniqueAction.CellColoring.groupColoring(
-                        getConsecutiveRanges(columnCells.stream().map(ICell::getY).filter(y -> y != matchingColumnCells.get(0).getY()).toList())
+                        getConsecutiveRanges(columnCells.stream().map(ICell::getY).filter(y -> y != matchingColumnCells.getFirst().getY()).toList())
                                 .stream().map(pair -> Pair.create(new Pos(cell.getX(), pair.getFirst()), new Pos(cell.getX(), pair.getSecond()))).toList()
                         , Color.BLUE));
 
                 return Optional.of(TechniqueAction.builder()
                         .name("Firework")
                         .description(MessageFormat.format("Cells {0} and {1} are the only cells in their respective row and column outside square {2} which have the candidates {3}, this creates a firework with cell {4} which is the intersection of the row and column, the cells {0}, {1} and {4} will need to the candidates {3} and the the other candidates are eliminated",
-                                matchingRowCells.get(0).getPos(), matchingColumnCells.get(0).getPos(),
+                                matchingRowCells.getFirst().getPos(), matchingColumnCells.getFirst().getPos(),
                                 cell.getX()/3 + cell.getY()/3*3,
                                 combinationCandidates.stream().map(String::valueOf).collect(Collectors.joining(", ")),
                                 cell.getPos()
@@ -232,7 +232,7 @@ public class IntersectionTechnique {
     private static List<Pair<Integer, Integer>> getConsecutiveRanges(List<Integer> numbers){
         List<Integer> sortedNumbers = numbers.stream().sorted().toList();
         List<Pair<Integer, Integer>> ranges = new ArrayList<>();
-        int start = sortedNumbers.get(0);
+        int start = sortedNumbers.getFirst();
         int end = start;
 
         for(int i = 1; i < sortedNumbers.size(); i++){

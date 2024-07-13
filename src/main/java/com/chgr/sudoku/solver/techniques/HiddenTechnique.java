@@ -44,7 +44,7 @@ public class HiddenTechnique {
         for(int digit : ICell.DIGITS){
             List<ICell> cellsWithDigit = Arrays.stream(group).filter(c -> c.getCandidates().contains(digit)).toList();
             if(cellsWithDigit.size() == 1){
-                ICell cell = cellsWithDigit.get(0);
+                ICell cell = cellsWithDigit.getFirst();
 
                 return TechniqueAction.builder()
                         .name("Hidden Single")
@@ -166,7 +166,7 @@ public class HiddenTechnique {
                     return TechniqueAction.builder()
                             .name("Hidden " + type)
                             .description("Cells " + cells.stream().map(ICell::getPos).map(Pos::toString).collect(Collectors.joining(", ")) + " form a hidden " + type + " in" + groupType.name() + " for the candidates " + candidates.stream().map(String::valueOf).collect(Collectors.joining(", ")))
-                            .removeCandidatesMap(cells.stream().collect(Collectors.toMap(ICell::getPos, c -> candidatesToRemove)))
+                            .removeCandidatesMap(cells.stream().collect(Collectors.toMap(ICell::getPos, _ -> candidatesToRemove)))
                             .colorings(List.of(
                                     TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.GREEN, combination),
                                     TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToRemove),

@@ -147,7 +147,7 @@ public class RectangleTechnique {
                             .name("Unique Rectangle")
                             .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5}, so value {2} cannot appear in the cells {6} since it sees both {0} and {1}",
                                     cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), affectedPos))
-                            .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, pos -> extraCandidates)))
+                            .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, _ -> extraCandidates)))
                             .colorings(List.of(
                                     TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
                                     TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, extraCandidates),
@@ -222,7 +222,7 @@ public class RectangleTechnique {
                         if(cell != cell1 && cell != cell2){
                             for(int candidate : extraCandidates){
                                 if(cell.getCandidates().contains(candidate)){
-                                    candidateMap.computeIfAbsent(cell.getPos(), pos -> new HashSet<>()).add(candidate);
+                                    candidateMap.computeIfAbsent(cell.getPos(), _ -> new HashSet<>()).add(candidate);
                                 }
                             }
                         }
@@ -271,7 +271,7 @@ public class RectangleTechnique {
                             .name("Unique Rectangle")
                             .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5}, so {0} and {1} form a pointing pair and a Box/Line Reduction with value {2} for the cells {6}",
                                     cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), affectedPos))
-                            .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, pos -> extraCandidates)))
+                            .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, _ -> extraCandidates)))
                             .colorings(List.of(
                                     TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
                                     TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, extraCandidates),
@@ -396,12 +396,12 @@ public class RectangleTechnique {
                 .filter(c-> c.getCandidates().equals(extraCandidates))
                 .toList();
         if(matchingCellList.size() == 1){
-            ICell matchingCell = matchingCellList.get(0);
+            ICell matchingCell = matchingCellList.getFirst();
             for (ICell cell : groupCells){
                 if(cell != matchingCell){
                     for(int candidate : extraCandidates){
                         if(cell.getCandidates().contains(candidate)){
-                            candidatesMap.computeIfAbsent(cell.getPos(), pos -> new HashSet<>()).add(candidate);
+                            candidatesMap.computeIfAbsent(cell.getPos(), _ -> new HashSet<>()).add(candidate);
                         }
                     }
                 }
