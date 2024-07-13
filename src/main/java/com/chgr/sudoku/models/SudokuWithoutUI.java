@@ -57,6 +57,11 @@ public class SudokuWithoutUI implements ISudoku {
     }
 
     @Override
+    public Set<ICell> getNonEmptyCells() {
+        return Arrays.stream(cells).flatMap(Arrays::stream).filter(cell -> cell.getValue() != Cell.EMPTY).collect(Collectors.toSet());
+    }
+
+    @Override
     public ICell getCell(int x, int y) {
         return cells[x][y];
     }

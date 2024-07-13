@@ -178,6 +178,10 @@ public class Sudoku extends Pane implements ISudoku {
         return Arrays.stream(cells).flatMap(Arrays::stream).filter(cell -> cell.getValue() == Cell.EMPTY).collect(Collectors.toSet());
     }
 
+    public Set<ICell> getNonEmptyCells() {
+        return Arrays.stream(cells).flatMap(Arrays::stream).filter(cell -> cell.getValue() != Cell.EMPTY).collect(Collectors.toSet());
+    }
+
     public void reRender() {
         Platform.runLater(() ->{
             for (int i = 0; i < SUDOKU_SIZE; i++) {

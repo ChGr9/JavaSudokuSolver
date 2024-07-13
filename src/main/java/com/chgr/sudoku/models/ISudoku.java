@@ -22,6 +22,8 @@ public interface ISudoku {
 
     Set<ICell> getEmptyCells();
 
+    Set<ICell> getNonEmptyCells();
+
     ICell getCell(int x, int y);
 
     Set<Integer> getRowValue(int y);
