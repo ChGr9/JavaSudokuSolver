@@ -58,14 +58,14 @@ public class ChainTechnique {
             // Color chains alternately
             List<ICell> keys = new ArrayList<>(linkMap.keySet());
             while(!keys.isEmpty()) {
-                ICell current = keys.get(0);
+                ICell current = keys.getFirst();
                 keys.remove(current);
                 List<ICell> openCells = new ArrayList<>();
                 openCells.add(current);
                 Map<ICell, Integer> coloring = new HashMap<>();
                 coloring.put(current, 0);
                 while (!openCells.isEmpty()) {
-                    ICell cell = openCells.get(0);
+                    ICell cell = openCells.getFirst();
                     openCells.remove(cell);
                     for (ICell link : linkMap.get(cell)) {
                         if (!coloring.containsKey(link)) {
@@ -122,7 +122,7 @@ public class ChainTechnique {
                 }
                 if(cell.getCandidates().size() == 2){
                     int otherNum = cell.getCandidates().stream().filter(n -> n != num).findFirst().orElseThrow(() -> new RuntimeException("Expected two candidates in cell, but found only one"));
-                    linkMap.computeIfAbsent(new CellNumPair(cell, num), k -> new HashSet<>()).add(new CellNumPair(cell, otherNum));
+                    linkMap.computeIfAbsent(new CellNumPair(cell, num), _ -> new HashSet<>()).add(new CellNumPair(cell, otherNum));
                 }
             }
         }
@@ -132,14 +132,14 @@ public class ChainTechnique {
         // Color chains alternately
         List<CellNumPair> keys = new ArrayList<>(linkMap.keySet());
         while (!keys.isEmpty()) {
-            CellNumPair current = keys.get(0);
+            CellNumPair current = keys.getFirst();
             keys.remove(current);
             List<CellNumPair> openCells = new ArrayList<>();
             openCells.add(current);
             Map<CellNumPair, Integer> coloring = new HashMap<>();
             coloring.put(current, 0);
             while (!openCells.isEmpty()) {
-                CellNumPair cell = openCells.get(0);
+                CellNumPair cell = openCells.getFirst();
                 openCells.remove(cell);
                 for (CellNumPair link : linkMap.get(cell)) {
                     if (!coloring.containsKey(link)) {
@@ -452,12 +452,12 @@ public class ChainTechnique {
     }
 
     private static boolean findCycle(ISudoku sudoku, ICell current, List<Link> cycle, int num, Set<ICell> visited, Set<List<ICell>> strongLinks) {
-        if(cycle.get(0).start == current)
+        if(cycle.getFirst().start == current)
             return true;
-        if(areConnected(current, cycle.get(0).start) && cycle.size() > 2){
+        if(areConnected(current, cycle.getFirst().start) && cycle.size() > 2){
             // Cycle found
             // Check for contradictions and make deductions
-            cycle.add(new Link(current, cycle.get(0).start, LinkType.WEAK));
+            cycle.add(new Link(current, cycle.getFirst().start, LinkType.WEAK));
             return true;
         }
 
@@ -486,23 +486,23 @@ public class ChainTechnique {
             if(findCycle(sudoku, possibleLink.end, cycle, num, visited, strongLinks)){
                 return true;
             }
-            cycle.remove(cycle.size()-1);
-            cycle.remove(cycle.size()-1);
+            cycle.removeLast();
+            cycle.removeLast();
             visited.remove(possibleLink.start);
             visited.remove(possibleLink.end);
         }
-        Set<ICell> commonPeers = getPeers(sudoku, cycle.get(0).start);
+        Set<ICell> commonPeers = getPeers(sudoku, cycle.getFirst().start);
         commonPeers.retainAll(getPeers(sudoku, current));
         commonPeers = commonPeers.stream().filter(c -> c.getCandidates().contains(num)).collect(Collectors.toSet());
         if(!commonPeers.isEmpty()){
             ICell commonPeer = commonPeers.iterator().next();
             if(strongLinks.stream().anyMatch(l ->
                     (l.contains(current) && l.contains(commonPeer))
-                            || (l.contains(cycle.get(0).start) && l.contains(commonPeer))
+                            || (l.contains(cycle.getFirst().start) && l.contains(commonPeer))
             ))
                 return false;
             cycle.add(new Link(current, commonPeer, LinkType.WEAK));
-            cycle.add(0, new Link(commonPeer, cycle.get(0).start, LinkType.WEAK));
+            cycle.addFirst(new Link(commonPeer, cycle.getFirst().start, LinkType.WEAK));
             return true;
         }
         return false;
@@ -532,8 +532,8 @@ public class ChainTechnique {
         Set<Pos> col2 = cycle.stream().filter(l -> l.type == LinkType.STRONG).map(l -> l.end.getPos()).collect(Collectors.toSet());
         List<Pair<Pos, Pos>> weakLinks = cycle.stream().filter(l -> l.type == LinkType.WEAK).map(l -> Pair.create(l.start.getPos(), l.end.getPos())).toList();
         List<Pair<Pos, Pos>> strongLinks = cycle.stream().filter(l -> l.type == LinkType.STRONG).map(l -> Pair.create(l.start.getPos(), l.end.getPos())).toList();
-        Link startLink = cycle.get(0);
-        Link endLink = cycle.get(cycle.size() - 1);
+        Link startLink = cycle.getFirst();
+        Link endLink = cycle.getLast();
         if(startLink.type == endLink.type){
             // Discontinuous cycle
             if(startLink.type == LinkType.STRONG){
@@ -584,7 +584,7 @@ public class ChainTechnique {
                 return Optional.of(TechniqueAction.builder()
                         .name("X-Cycle")
                         .description("Eliminate " + num + " from common peers")
-                        .removeCandidatesMap(affectedCells.stream().collect(Collectors.toMap(ICell::getPos, c -> Set.of(num))))
+                        .removeCandidatesMap(affectedCells.stream().collect(Collectors.toMap(ICell::getPos, _ -> Set.of(num))))
                         .colorings(List.of(
                                 TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
                                 TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
@@ -622,7 +622,7 @@ public class ChainTechnique {
 
     private static Optional<TechniqueAction> handleXYChain(ISudoku sudoku, List<ICell> chain, int otherCandidate) {
         List<Pair<Integer, Pair<Pos, Pos>>> weakLinks = new ArrayList<>();
-        int currentCandidate = chain.get(0).getCandidates().stream()
+        int currentCandidate = chain.getFirst().getCandidates().stream()
                 .filter(c -> c != otherCandidate)
                 .findFirst().orElseThrow( () -> new IllegalStateException("Expected other candidate not found"));
         for(int i=0; i<chain.size()-1; i++){
@@ -632,8 +632,8 @@ public class ChainTechnique {
                     .filter(c -> c != finalCurrentCandidate)
                     .findFirst().orElseThrow( () -> new IllegalStateException("Expected other candidate not found"));
         }
-        ICell start = chain.get(0);
-        ICell end = chain.get(chain.size()-1);
+        ICell start = chain.getFirst();
+        ICell end = chain.getLast();
         Set<ICell> commonPeers = getPeers(sudoku, start);
         commonPeers.retainAll(getPeers(sudoku, end));
         commonPeers = commonPeers.stream().filter(c -> c.getCandidates().contains(otherCandidate)).collect(Collectors.toSet());
@@ -648,7 +648,7 @@ public class ChainTechnique {
             return Optional.of(TechniqueAction.builder()
                     .name("XY-Chain")
                     .description("Eliminate " + otherCandidate + " from common peers of " + start.getPos() + " and " + end.getPos())
-                    .removeCandidatesMap(commonPeers.stream().collect(Collectors.toMap(ICell::getPos, c -> Set.of(otherCandidate))))
+                    .removeCandidatesMap(commonPeers.stream().collect(Collectors.toMap(ICell::getPos, _ -> Set.of(otherCandidate))))
                     .colorings(coloringList).build());
         }
         return Optional.empty();
@@ -678,7 +678,7 @@ public class ChainTechnique {
 
             chain.add(peer);
             findXyChainsRecursive(sudoku, peer, nextCandidate, otherCandidate, chain, allChains);
-            chain.remove(chain.size()-1);
+            chain.removeLast();
         }
     }
 

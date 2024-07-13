@@ -22,9 +22,9 @@ public class TechniqueAction extends BaseAction {
 
         Collection<Pos> pos;
         List<Pair<Pos, Pos>> linePos;
-        Color color;
+        final Color color;
         Collection<Integer> candidates;
-        ColoringType type;
+        final ColoringType type;
 
         public static CellColoring candidatesColoring(Collection<Pos> pos, Color color, Collection<Integer> candidates) {
             return new CellColoring(pos, color, candidates);
