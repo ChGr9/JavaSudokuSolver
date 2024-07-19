@@ -5,17 +5,21 @@ import com.chgr.sudoku.models.ISudoku;
 import com.chgr.sudoku.models.Pos;
 import com.chgr.sudoku.models.TechniqueAction;
 import javafx.scene.paint.Color;
+import org.apache.commons.math3.util.Combinations;
 import org.apache.commons.math3.util.Pair;
 
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.chgr.sudoku.utils.CellUtils.getPeers;
 import static com.chgr.sudoku.utils.CellUtils.isPeer;
 
 public class RectangleTechnique {
 
+    //https://www.sudokuwiki.org/Unique_Rectangles
+    //Unique Rectangles
     public static Optional<TechniqueAction> uniqueRectangle(ISudoku sudoku) {
         Map<Set<Integer>, List<ICell>> biValueMap = sudoku.getEmptyCells().stream()
                 .filter(c -> c.getCandidates().size() == 2)
@@ -456,6 +460,8 @@ public class RectangleTechnique {
         return extraCandidates;
     }
 
+    //https://www.sudokuwiki.org/Rectangle_Elimination
+    //Rectangle Elimination
     public static Optional<TechniqueAction> rectangleElimination(ISudoku sudoku) {
         for (int i = 0; i < ISudoku.SUDOKU_SIZE; i++) {
             Optional<TechniqueAction> result = checkRectangle(sudoku, i, ISudoku.GroupType.ROW);
@@ -534,5 +540,143 @@ public class RectangleTechnique {
             }
         }
         return Optional.empty();
+    }
+
+    //https://www.sudokuwiki.org/Extended_Unique_Rectangles
+    //Extended Unique Rectangles
+    public static Optional<TechniqueAction> extendedUniqueRectangle(ISudoku sudoku) {
+        for (int i = 0; i < ISudoku.SUDOKU_SIZE - 3; i++) {
+            Optional<TechniqueAction> result = checkExtendedRectangle(sudoku, i, ISudoku.GroupType.ROW);
+            if (result.isPresent())
+                return result;
+            result = checkExtendedRectangle(sudoku, i, ISudoku.GroupType.COLUMN);
+            if (result.isPresent())
+                return result;
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> checkExtendedRectangle(ISudoku sudoku, int index, ISudoku.GroupType groupType) {
+        ICell[] group = switch (groupType) {
+            case ROW -> sudoku.getRow(index);
+            case COLUMN -> sudoku.getColumn(index);
+            case SQUARE -> throw new RuntimeException("Square not supported");
+        };
+        for(int i = 0; i < 3; i++){
+            int finalI = i;
+            List<ICell> group1 = Arrays.stream(group)
+                    .filter(c -> groupType == ISudoku.GroupType.ROW ? c.getX() / 3 == finalI : c.getY() / 3 == finalI)
+                    .filter(c -> c.getValue() == ICell.EMPTY && c.getCandidates().size() <= 3)
+                    .toList();
+            if(group1.size() < 2)
+                continue;
+            Combinations combinations = new Combinations(group1.size(), 2);
+            for (int[] combination : combinations) {
+                ICell cell1 = group1.get(combination[0]);
+                ICell cell2 = group1.get(combination[1]);
+                Set<Integer> candidates = new HashSet<>(cell1.getCandidates());
+                candidates.addAll(cell2.getCandidates());
+                if(candidates.size() > 3)
+                    continue;
+                for(int index2 = (index/3+1)*3; index2 < ISudoku.SUDOKU_SIZE; index2 ++){
+                    ICell cell3, cell4 = switch (groupType) {
+                        case ROW -> {
+                            cell3 = sudoku.getCell(cell1.getX(), index2);
+                            yield sudoku.getCell(cell2.getX(), index2);
+                        }
+                        case COLUMN -> {
+                            cell3 = sudoku.getCell(index2, cell1.getY());
+                            yield sudoku.getCell(index2, cell2.getY());
+                        }
+                        case SQUARE -> throw new RuntimeException("Square not supported");
+                    };
+                    if(cell3.getValue() != ICell.EMPTY || cell4.getValue() != ICell.EMPTY)
+                        continue;
+                    Set<Integer> candidatesWithGroup2 = new HashSet<>(candidates);
+                    candidatesWithGroup2.addAll(cell3.getCandidates());
+                    candidatesWithGroup2.addAll(cell4.getCandidates());
+                    if(candidatesWithGroup2.size() > 3)
+                        continue;
+                    Optional<TechniqueAction> result = checkExtendedRectangle(sudoku, List.of(cell1, cell2, cell3, cell4), index, index2, candidatesWithGroup2, groupType);
+                    if(result.isPresent())
+                        return result;
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> checkExtendedRectangle(ISudoku sudoku, List<ICell> cells, int index, int index2, Set<Integer> candidates, ISudoku.GroupType groupType) {
+        int baseIndex3 = IntStream.range(0, 3).filter(i -> i != index/3 && i != index2/3).findFirst().orElseThrow(() -> new RuntimeException("No base index"));
+        for(int i = 0; i < 3; i ++){
+            ICell cell5, cell6 = switch (groupType) {
+                case ROW -> {
+                    cell5 = sudoku.getCell(cells.get(0).getX(), baseIndex3*3 + i);
+                    yield sudoku.getCell(cells.get(1).getX(), baseIndex3*3 + i);
+                }
+                case COLUMN -> {
+                    cell5 = sudoku.getCell(baseIndex3*3 + i, cells.get(0).getY());
+                    yield sudoku.getCell(baseIndex3*3 + i, cells.get(1).getY());
+                }
+                case SQUARE -> throw new RuntimeException("Square not supported");
+            };
+            if(cell5.getValue() != ICell.EMPTY || cell6.getValue() != ICell.EMPTY)
+                continue;
+            //Type 1
+            Optional<TechniqueAction> result = checkForTypeOne(cells, cell5, cell6, candidates);
+            if(result.isPresent())
+                return result;
+            result = checkForTypeOne(cells, cell6, cell5, candidates);
+            if(result.isPresent())
+                return result;
+            //Type 2
+            Set<Integer> extraCandidates = new HashSet<>(cell5.getCandidates());
+            extraCandidates.addAll(cell6.getCandidates());
+            extraCandidates.removeAll(candidates);
+            if(extraCandidates.size() == 1){
+                int extraCandidate = extraCandidates.stream().findFirst().orElseThrow(() -> new RuntimeException("No extra candidate"));
+                Set<ICell> affectedCells = getPeers(sudoku, cell5);
+                affectedCells.retainAll(getPeers(sudoku, cell6));
+                affectedCells.removeIf(c -> c.getValue() != ICell.EMPTY || !c.getCandidates().contains(extraCandidate));
+                if(!affectedCells.isEmpty()){
+                    return Optional.of(TechniqueAction.builder()
+                            .name("Extended Unique Rectangle")
+                            .description(MessageFormat.format("If neither cell {0} and {1} are not {2} then there is no way to disambiguate the values {3} for the cells {4}, {5}, {6}, {7}, {0} and {1}",
+                                    cell5.getPos(), cell6.getX(), extraCandidate, candidates, cells.get(0).getPos(), cells.get(1).getPos(), cells.get(2).getPos(), cells.get(3).getPos()))
+                            .removeCandidatesMap(affectedCells.stream().collect(Collectors.toMap(ICell::getPos, _ -> extraCandidates)))
+                            .colorings(List.of(
+                                    TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, extraCandidates),
+                                    TechniqueAction.CellColoring.candidatesColoring(List.of(cell5.getPos(), cell6.getPos()), Color.ORANGE, extraCandidates),
+                                    TechniqueAction.CellColoring.candidatesColoring(List.of(cell5.getPos(), cell6.getPos()), Color.YELLOW, candidates),
+                                    TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.YELLOW, candidates)
+                            )).build());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> checkForTypeOne(List<ICell> cells, ICell additionalCell, ICell extraCell, Set<Integer> candidates) {
+        if(!candidates.containsAll(additionalCell.getCandidates()))
+            return Optional.empty();
+
+        Set<Integer> candidatesToBeRemoved = new HashSet<>(extraCell.getCandidates());
+        candidatesToBeRemoved.retainAll(candidates);
+        if(candidatesToBeRemoved.isEmpty())
+            return Optional.empty();
+        Set<Integer> extraCandidates = new HashSet<>(extraCell.getCandidates());
+        extraCandidates.removeAll(candidatesToBeRemoved);
+
+        return Optional.of(TechniqueAction.builder()
+                .name("Extended Unique Rectangle")
+                .description(MessageFormat.format("If cell {0} is not {1} then there is no way to disambiguate the values {2} for the cells {3}, {4}, {5}, {6} and {7}",
+                        extraCell.getPos(), extraCandidates, candidates, cells.get(0).getPos(), cells.get(1).getPos(), cells.get(2).getPos(), cells.get(3).getPos(), additionalCell.getPos()))
+                .removeCandidatesMap(Map.of(extraCell.getPos(), candidatesToBeRemoved))
+                .colorings(List.of(
+                        TechniqueAction.CellColoring.candidatesColoring(List.of(extraCell.getPos()), Color.RED, candidatesToBeRemoved),
+                        TechniqueAction.CellColoring.candidatesColoring(List.of(extraCell.getPos()), Color.YELLOW, extraCandidates),
+                        TechniqueAction.CellColoring.candidatesColoring(List.of(additionalCell.getPos()), Color.YELLOW, candidates),
+                        TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.YELLOW, candidates)
+                )).build());
     }
 }

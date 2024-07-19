@@ -683,8 +683,9 @@ public class ChainTechnique {
             chain.removeLast();
         }
     }
-
-    public static Optional<TechniqueAction> SKLoop(ISudoku sudoku) {
+    //https://www.sudokuwiki.org/SK_Loops
+    //SK Loops
+    public static Optional<TechniqueAction> skLoop(ISudoku sudoku) {
         Set<Pos> nonEmptyPosSet = sudoku.getNonEmptyCells().stream().map(ICell::getPos).collect(Collectors.toSet());
         Iterator<Pos> posIterator = nonEmptyPosSet.iterator();
         while (posIterator.hasNext()) {
