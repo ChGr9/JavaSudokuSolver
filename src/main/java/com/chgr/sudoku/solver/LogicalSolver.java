@@ -56,7 +56,8 @@ public class LogicalSolver extends Task<Boolean> {
             WingTechnique::jellyfish,
             RectangleTechnique::uniqueRectangle,
             IntersectionTechnique::firework,
-            ChainTechnique::SKLoop
+            ChainTechnique::skLoop,
+            RectangleTechnique::extendedUniqueRectangle
     );
 
     public boolean solve(){

@@ -88,7 +88,7 @@ public class ChainTechniqueTest extends BaseTechniqueTest{
         loadSudoku(technique);
 
         for (int i = 0; i < technique.repetitions; i++) {
-            Optional<TechniqueAction> result = ChainTechnique.SKLoop(sudoku);
+            Optional<TechniqueAction> result = ChainTechnique.skLoop(sudoku);
             assertTrue(result.isPresent());
             result.get().apply(sudoku);
         }
