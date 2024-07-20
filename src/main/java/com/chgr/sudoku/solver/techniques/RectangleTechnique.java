@@ -27,25 +27,45 @@ public class RectangleTechnique {
         for(Set<Integer> candidates : biValueMap.keySet()) {
             List<ICell> cells = biValueMap.get(candidates);
             if(cells.size() >= 2) {
-                for(int i=0; i< cells.size() - 1; i++){
-                    ICell cell1 = cells.get(i);
-                    for(int j=i+1; j < cells.size(); j++){
-                        ICell cell2 = cells.get(j);
-                        if(cell1.getX() == cell2.getX()) {
-                            Optional<TechniqueAction> techniqueAction = checkFloor(sudoku, cells, cell1, cell2, false);
-                            if(techniqueAction.isPresent())
-                                return techniqueAction;
-                        } else if (cell1.getY() == cell2.getY()) {
-                            Optional<TechniqueAction> techniqueAction = checkFloor(sudoku, cells, cell1, cell2, true);
-                            if(techniqueAction.isPresent())
-                                return techniqueAction;
-                        }
-                        else {
-                            Optional<TechniqueAction> techniqueAction = checkForDiagonal(sudoku, cell1, cell2);
-                            if(techniqueAction.isPresent())
-                                return techniqueAction;
-                        }
-                    }
+                Optional<TechniqueAction> techniqueAction = CheckLinearPairs(sudoku, cells);
+                if (techniqueAction.isPresent())
+                    return techniqueAction;
+                techniqueAction = CheckDiagonalPairs(sudoku, cells);
+                if (techniqueAction.isPresent())
+                    return techniqueAction;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> CheckLinearPairs(ISudoku sudoku, List<ICell> cells) {
+        for(int i = 0; i< cells.size() - 1; i++){
+            ICell cell1 = cells.get(i);
+            for(int j = i+1; j < cells.size(); j++){
+                ICell cell2 = cells.get(j);
+                if(cell1.getX() == cell2.getX()) {
+                    Optional<TechniqueAction> techniqueAction = checkFloor(sudoku, cells, cell1, cell2, false);
+                    if(techniqueAction.isPresent())
+                        return techniqueAction;
+                } else if (cell1.getY() == cell2.getY()) {
+                    Optional<TechniqueAction> techniqueAction = checkFloor(sudoku, cells, cell1, cell2, true);
+                    if(techniqueAction.isPresent())
+                        return techniqueAction;
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> CheckDiagonalPairs(ISudoku sudoku, List<ICell> cells){
+        for(int i = 0; i< cells.size() - 1; i++){
+            ICell cell1 = cells.get(i);
+            for(int j = i+1; j < cells.size(); j++) {
+                ICell cell2 = cells.get(j);
+                if (cell1.getX() != cell2.getX() && cell1.getY() != cell2.getY()) {
+                    Optional<TechniqueAction> techniqueAction = checkForDiagonal(sudoku, cell1, cell2);
+                    if (techniqueAction.isPresent())
+                        return techniqueAction;
                 }
             }
         }
@@ -59,6 +79,24 @@ public class RectangleTechnique {
         ICell cell4 = sudoku.getCell(cell2.getX(), cell1.getY());
         if(cell4.getValue() != ICell.EMPTY || !cell4.getCandidates().containsAll(cell1.getCandidates()))
             return Optional.empty();
+        Set<Integer> extraCandidates = extractExtraCandidates(cell1.getCandidates(), cell3, cell4);
+        //Type 2C
+        if(extraCandidates.size() == 1){
+            Set<ICell> commonPeers = getPeers(sudoku, cell3);
+            commonPeers.retainAll(getPeers(sudoku, cell4));
+            Map<Pos, Set<Integer>> removeCandidatesMap = commonPeers.stream().map(cell -> Map.entry(cell.getPos(), cell.getCandidates().stream().filter(extraCandidates::contains).collect(Collectors.toSet())))
+                    .filter(entry -> !entry.getValue().isEmpty())
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            return Optional.of(TechniqueAction.builder()
+                    .name("Unique Rectangle")
+                    .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5}, so value {2} cannot appear in the cells {6} since they see both {0} and {1}",
+                            cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), removeCandidatesMap.keySet()))
+                    .removeCandidatesMap(removeCandidatesMap)
+                    .colorings(List.of(
+                            TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
+                            TechniqueAction.CellColoring.candidatesColoring(removeCandidatesMap.keySet(), Color.RED, extraCandidates)
+                    )).build());
+        }
         //Type 5
         for(int candidate : cell1.getCandidates()){
             if(Arrays.stream(sudoku.getRow(cell1.getY())).filter(c -> c.getCandidates().contains(candidate)).count() == 2 &&
@@ -78,24 +116,6 @@ public class RectangleTechnique {
                                 TechniqueAction.CellColoring.lineColoring(List.of(Pair.create(cell1.getPos(), cell2.getPos())), Color.BLUE, candidate)
                         )).build());
             }
-        }
-        Set<Integer> extraCandidates = extractExtraCandidates(cell1.getCandidates(), cell3, cell4);
-        //Type 2C
-        if(extraCandidates.size() == 1){
-            Set<ICell> commonPeers = getPeers(sudoku, cell3);
-            commonPeers.retainAll(getPeers(sudoku, cell4));
-            Map<Pos, Set<Integer>> removeCandidatesMap = commonPeers.stream().map(cell -> Map.entry(cell.getPos(), cell.getCandidates().stream().filter(extraCandidates::contains).collect(Collectors.toSet())))
-                    .filter(entry -> !entry.getValue().isEmpty())
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            return Optional.of(TechniqueAction.builder()
-                    .name("Unique Rectangle")
-                    .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5}, so value {2} cannot appear in the cells {6} since they see both {0} and {1}",
-                            cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), removeCandidatesMap.keySet()))
-                    .removeCandidatesMap(removeCandidatesMap)
-                    .colorings(List.of(
-                            TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
-                            TechniqueAction.CellColoring.candidatesColoring(removeCandidatesMap.keySet(), Color.RED, extraCandidates)
-                    )).build());
         }
         return Optional.empty();
     }
