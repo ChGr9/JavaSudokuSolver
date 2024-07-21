@@ -200,7 +200,7 @@ public class Sudoku extends Pane implements ISudoku {
                 Cell.SIZE * (second.x() - first.x() + 1),
                 Cell.SIZE * (second.y() - first.y() + 1));
         rect.setFill(color);
-        rect.setOpacity(0.25);
+        rect.setOpacity(0.4);
         this.getChildren().add(rect);
 
     }

@@ -57,7 +57,8 @@ public class LogicalSolver extends Task<Boolean> {
             RectangleTechnique::uniqueRectangle,
             IntersectionTechnique::firework,
             ChainTechnique::skLoop,
-            RectangleTechnique::extendedUniqueRectangle
+            RectangleTechnique::extendedUniqueRectangle,
+            RectangleTechnique::hiddenUniqueRectangle
     );
 
     public boolean solve(){
