@@ -72,4 +72,24 @@ class RectangleTechniqueTest extends BaseTechniqueTest {
         }
         assertChecksMatch(sudoku, technique.checks);
     }
+
+    @ValueSource(ints = {1, 2, 3, 4})
+    @ParameterizedTest
+    void hiddenUniqueRectangle(int fileNumber) throws IOException {
+        URL url = IntersectionTechniqueTest.class.getResource(String.format("/techniques/hiddenUniqueRectangle%d.yml", fileNumber));
+        assertNotNull(url);
+
+        TechniqueEntity technique = mapper.readValue(url, TechniqueEntity.class);
+        assertNotNull(technique);
+        assertNotNull(technique.grid);
+
+        loadSudoku(technique);
+
+        for (int i = 0; i < technique.repetitions; i++) {
+            Optional<TechniqueAction> result = RectangleTechnique.hiddenUniqueRectangle(sudoku);
+            assertTrue(result.isPresent());
+            result.get().apply(sudoku);
+        }
+        assertChecksMatch(sudoku, technique.checks);
+    }
 }

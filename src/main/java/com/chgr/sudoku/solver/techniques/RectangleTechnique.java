@@ -699,4 +699,98 @@ public class RectangleTechnique {
                         TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.YELLOW, candidates)
                 )).build());
     }
+
+    public static Optional<TechniqueAction> hiddenUniqueRectangle(ISudoku sudoku) {
+        for(int i = 0; i < ISudoku.SUDOKU_SIZE; i++){
+            Optional<TechniqueAction> result = checkHiddenRectangle(sudoku, i, ISudoku.GroupType.ROW);
+            if(result.isPresent())
+                return result;
+            result = checkHiddenRectangle(sudoku, i, ISudoku.GroupType.COLUMN);
+            if(result.isPresent())
+                return result;
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> checkHiddenRectangle(ISudoku sudoku, int index, ISudoku.GroupType groupType) {
+        ICell[] group = switch (groupType) {
+            case ROW -> sudoku.getRow(index);
+            case COLUMN -> sudoku.getColumn(index);
+            case SQUARE -> throw new RuntimeException("Square not supported");
+        };
+        for (int digit : ICell.DIGITS) {
+            List<ICell> cellsWithDigit = Arrays.stream(group)
+                    .filter(c -> c.getCandidates().contains(digit))
+                    .toList();
+            if (cellsWithDigit.size() != 2)
+                continue;
+            for (ICell mainCell : cellsWithDigit.stream().filter(c -> c.getCandidates().size() == 2).toList()) {
+                ICell cell2 = cellsWithDigit.stream().filter(c -> c != mainCell).findFirst().orElseThrow(() -> new RuntimeException("No secondary cell"));
+                if (!cell2.getCandidates().containsAll(mainCell.getCandidates()))
+                    continue;
+                ICell[] cell3Group = switch (groupType) {
+                    case ROW -> sudoku.getColumn(mainCell.getX());
+                    case COLUMN -> sudoku.getRow(mainCell.getY());
+                    case SQUARE -> throw new RuntimeException("Square not supported");
+                };
+                List<ICell> cells3WithDigit = Arrays.stream(cell3Group)
+                        .filter(c -> c != mainCell && c.getCandidates().contains(digit))
+                        .toList();
+                if (cells3WithDigit.size() != 1)
+                    continue;
+                ICell cell3 = cells3WithDigit.getFirst();
+                if (!cell3.getCandidates().containsAll(mainCell.getCandidates()))
+                    continue;
+                boolean areAnyCellsInSameSquare = switch (groupType) {
+                    case ROW -> cell3.getX() / 3 == mainCell.getX() / 3 || cell2.getY() / 3 == mainCell.getY() / 3;
+                    case COLUMN -> cell3.getY() / 3 == mainCell.getY() / 3 || cell2.getX() / 3 == mainCell.getX() / 3;
+                    case SQUARE -> throw new RuntimeException("Square not supported");
+                };
+                if (!areAnyCellsInSameSquare)
+                    continue;
+                ICell cell4 = switch (groupType) {
+                    case ROW -> sudoku.getCell(cell2.getX(), cell3.getY());
+                    case COLUMN -> sudoku.getCell(cell3.getX(), cell2.getY());
+                    case SQUARE -> throw new RuntimeException("Square not supported");
+                };
+                if (!cell4.getCandidates().containsAll(mainCell.getCandidates()))
+                    continue;
+                //Check for type 2
+                if (cell3.getCandidates().equals(mainCell.getCandidates()) || cell2.getCandidates().equals(mainCell.getCandidates()))
+                    return buildHiddenUniqueRectangleResult(mainCell, cell2, cell3, cell4, digit);
+                //Check for type 1
+                ICell[] commonCells24 = switch (groupType) {
+                    case ROW -> sudoku.getColumn(cell2.getX());
+                    case COLUMN -> sudoku.getRow(cell2.getY());
+                    case SQUARE -> throw new RuntimeException("Square not supported");
+                };
+                ICell[] commonCells34 = switch (groupType) {
+                    case ROW -> sudoku.getRow(cell3.getY());
+                    case COLUMN -> sudoku.getColumn(cell3.getX());
+                    case SQUARE -> throw new RuntimeException("Square not supported");
+                };
+                if (Arrays.stream(commonCells24).noneMatch(c -> c != cell2 && c != cell4 && c.getCandidates().contains(digit))
+                        && Arrays.stream(commonCells34).noneMatch(c -> c != cell3 && c != cell4 && c.getCandidates().contains(digit)))
+                    return buildHiddenUniqueRectangleResult(mainCell, cell2, cell3, cell4, digit);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> buildHiddenUniqueRectangleResult(ICell mainCell, ICell cell2, ICell cell3, ICell cell4, int digit) {
+        int otherCandidate = mainCell.getCandidates().stream().filter(c -> c != digit).findFirst().orElseThrow(() -> new RuntimeException("No other candidate"));
+        return Optional.of(TechniqueAction.builder()
+                .name("Hidden Unique Rectangle")
+                .description(MessageFormat.format("If cell {0} is {1} then cells {2} and {3} are {4} and cell {5} is {1}. And this will form a deadly rectangle in the cells {0} {2} {3} {5} since by swapping the values {1} and {6} will result in a second solution",
+                        cell4.getPos(), otherCandidate, cell2.getPos(), cell3.getPos(), digit, mainCell.getPos(), otherCandidate))
+                .removeCandidatesMap(Map.of(cell4.getPos(), Set.of(otherCandidate)))
+                .colorings(List.of(
+                        TechniqueAction.CellColoring.candidatesColoring(List.of(cell4.getPos()), Color.RED, Set.of(otherCandidate)),
+                        TechniqueAction.CellColoring.groupColoring(List.of(
+                                Pair.create(cell2.getPos(), cell2.getPos()),
+                                Pair.create(cell3.getPos(), cell3.getPos())
+                        ), Color.ORANGE),
+                        TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(mainCell.getPos(), mainCell.getPos())), Color.YELLOW)
+                )).build());
+    }
 }
