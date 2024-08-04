@@ -6,11 +6,13 @@ import com.chgr.sudoku.models.Pos;
 import com.chgr.sudoku.models.TechniqueAction;
 import javafx.scene.paint.Color;
 import lombok.Getter;
+import org.apache.commons.math3.util.Combinations;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class WingTechnique {
 
@@ -63,7 +65,7 @@ public class WingTechnique {
                     possibleWing.cellIndices = cellsContainingCandidate.stream()
                             .map(cell -> isRow ? cell.getX() : cell.getY())
                             .collect(Collectors.toList());
-                    map.computeIfAbsent(j, k -> new ArrayList<>()).add(possibleWing);
+                    map.computeIfAbsent(j, _ -> new ArrayList<>()).add(possibleWing);
                 }
             }
         }
@@ -118,7 +120,7 @@ public class WingTechnique {
                                     .description("Cells: " + finCells.stream().map(Pos::toString).collect(Collectors.joining(", "))
                                             + " form a " + name + " on " + (isRow? "rows " : "columns ")
                                             + combinationIndices.stream().map(String::valueOf).collect(Collectors.joining(", ")))
-                                    .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, pos -> Set.of(entry.getKey()))))
+                                    .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, _ -> Set.of(entry.getKey()))))
                                     .colorings(List.of(
                                             TechniqueAction.CellColoring.candidatesColoring(finCells, Color.GREEN, Set.of(entry.getKey())),
                                             TechniqueAction.CellColoring.groupColoring(combinationIndices.stream().map(index -> isRow ?
@@ -187,7 +189,7 @@ public class WingTechnique {
                                                 .name("Y-Wing")
                                                 .description("Cells: " + pivot.getPos() + ", " + wing1.getPos() + ", " + wing2.getPos()
                                                         + " form a Y-Wing on candidates " + A + ", " + B + ", " + C)
-                                                .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, pos -> Set.of(C))))
+                                                .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, _ -> Set.of(C))))
                                                 .colorings(List.of(
                                                         TechniqueAction.CellColoring.candidatesColoring(Set.of(pivot.getPos(), wing1.getPos(), wing2.getPos()), Color.GREEN, Set.of(A, B, C)),
                                                         TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, Set.of(C))
@@ -245,7 +247,7 @@ public class WingTechnique {
                                             .name("XYZ-Wing")
                                             .description("Cells: " + pivot.getPos() + ", " + wing1.getPos() + ", " + wing2.getPos()
                                                     + " form a XYZ-Wing on candidates " + allCommonCandidates.iterator().next())
-                                            .removeCandidatesMap(toRemove.stream().collect(Collectors.toMap(pos -> pos, pos -> Set.of(candidateToRemove))))
+                                            .removeCandidatesMap(toRemove.stream().collect(Collectors.toMap(pos -> pos, _ -> Set.of(candidateToRemove))))
                                             .colorings(List.of(
                                                     TechniqueAction.CellColoring.candidatesColoring(Set.of(pivot.getPos()), Color.YELLOW, allCommonCandidates),
                                                     TechniqueAction.CellColoring.candidatesColoring(Set.of(wing1.getPos(), wing2.getPos()), Color.GREEN, allCommonCandidates),
@@ -259,6 +261,145 @@ public class WingTechnique {
             }
         }
         return Optional.empty();
+    }
+
+    public static Optional<TechniqueAction> wxyzWing(ISudoku sudoku) {
+        for(int i = 0; i<ISudoku.SUDOKU_SIZE; i++){
+            Optional<TechniqueAction> techniqueAction = checkwxyzWing(sudoku, i, ISudoku.GroupType.ROW);
+            if(techniqueAction.isPresent())
+                return techniqueAction;
+            techniqueAction = checkwxyzWing(sudoku, i, ISudoku.GroupType.COLUMN);
+            if(techniqueAction.isPresent())
+                return techniqueAction;
+            techniqueAction = checkwxyzWing(sudoku, i, ISudoku.GroupType.SQUARE);
+            if(techniqueAction.isPresent())
+                return techniqueAction;
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> checkwxyzWing(ISudoku sudoku, int index, ISudoku.GroupType groupType) {
+        List<ICell> group = Arrays.stream(switch (groupType) {
+                    case ROW -> sudoku.getRow(index);
+                    case COLUMN -> sudoku.getColumn(index);
+                    case SQUARE -> sudoku.getSquare(index);
+                })
+                .filter(cell -> cell.getValue() == ICell.EMPTY)
+                .toList();
+        if (group.size() < 3)
+            return Optional.empty();
+        Combinations combinations = new Combinations(group.size(), 3);
+        for (int[] combination : combinations) {
+            ICell cell1 = group.get(combination[0]);
+            ICell cell2 = group.get(combination[1]);
+            ICell cell3 = group.get(combination[2]);
+
+            Set<Integer> candidates = new HashSet<>(cell1.getCandidates());
+            candidates.addAll(cell2.getCandidates());
+            candidates.addAll(cell3.getCandidates());
+
+            if (candidates.size() == 4) {
+                Pair<List<ICell>, List<ICell>> groups = groupCells(cell1, cell2, cell3, groupType);
+                if (groups == null)
+                    continue;
+                Optional<TechniqueAction> techniqueAction = checkwxyzWing(sudoku, groups.getFirst(), groups.getSecond(), candidates, groupType);
+                if (techniqueAction.isPresent())
+                    return techniqueAction;
+                techniqueAction = checkwxyzWing(sudoku, groups.getSecond(), groups.getFirst(), candidates, groupType);
+                if (techniqueAction.isPresent())
+                    return techniqueAction;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Pair<List<ICell>, List<ICell>> groupCells(ICell cell1, ICell cell2, ICell cell3, ISudoku.GroupType groupType) {
+        switch (groupType) {
+            case ROW:
+                return groupCells(cell1, cell2, cell3, true);
+            case COLUMN:
+                return groupCells(cell1, cell2, cell3, false);
+            case SQUARE:
+                Pair<List<ICell>, List<ICell>> groups = groupCells(cell1, cell2, cell3, true, 1);
+                if (groups != null)
+                    return groups;
+                return groupCells(cell1, cell2, cell3, false, 1);
+            default:
+                throw new RuntimeException("Invalid group type");
+        }
+    }
+
+    private static Pair<List<ICell>, List<ICell>> groupCells(ICell cell1, ICell cell2, ICell cell3, boolean isRow){
+        return groupCells(cell1, cell2, cell3, isRow, 3);
+    }
+
+    private static Pair<List<ICell>, List<ICell>> groupCells(ICell cell1, ICell cell2, ICell cell3, boolean isRow, int divisor){
+        List<Integer> squareIndices = Stream.of(cell1, cell2, cell3)
+                .map(cell -> isRow ? cell.getX() / divisor : cell.getY() / divisor)
+                .distinct()
+                .toList();
+        if (squareIndices.size() != 2)
+            return null;
+        List<ICell> square1 = Stream.of(cell1, cell2, cell3)
+                .filter(cell -> isRow ? cell.getX() / divisor == squareIndices.getFirst() : cell.getY() / divisor == squareIndices.getFirst())
+                .toList();
+        List<ICell> square2 = Stream.of(cell1, cell2, cell3)
+                .filter(cell -> isRow ? cell.getX() / divisor == squareIndices.getLast() : cell.getY() / divisor == squareIndices.getLast())
+                .toList();
+        return Pair.create(square1, square2);
+    }
+
+    private static Optional<TechniqueAction> checkwxyzWing(ISudoku sudoku, List<ICell> pivotGroup, List<ICell> wingGroup, Set<Integer> candidates, ISudoku.GroupType groupType) {
+        if(groupType == ISudoku.GroupType.SQUARE && pivotGroup.size() == 2)
+            //If we try and use a pivot group of size 2, for a square search, we will end up with a WXYZ-Wing with a WXYZ-Wing which would have found via the row or column search (which is slightly easier to understand and implement)
+            return Optional.empty();
+        Set<Integer> uniqueCandidates = pivotGroup.stream()
+                .flatMap(cell -> cell.getCandidates().stream())
+                .filter(candidate -> wingGroup.stream().noneMatch(cell -> cell.getCandidates().contains(candidate)))
+                .collect(Collectors.toSet());
+        for (int uniqueCandidate : uniqueCandidates) {
+            Stream<ICell> groupStream = switch (groupType) {
+                case ROW, COLUMN -> Arrays.stream(sudoku.getSquare(pivotGroup.getFirst().getSquare()));
+                case SQUARE -> Stream.concat(Arrays.stream(sudoku.getRow(pivotGroup.getFirst().getY())), Arrays.stream(sudoku.getColumn(pivotGroup.getFirst().getX())))
+                        .filter(cell -> cell.getSquare() != pivotGroup.getFirst().getSquare());
+            };
+            List<ICell> possibleCell4 = groupStream
+                    .filter(iCell -> !pivotGroup.contains(iCell))
+                    .filter(cell -> cell.getCandidates().contains(uniqueCandidate) && cell.getCandidates().size() == 2 && candidates.containsAll(cell.getCandidates()))
+                    .toList();
+            if (possibleCell4.isEmpty())
+                continue;
+            for (ICell cell4 : possibleCell4) {
+                Integer candidateToRemove = cell4.getCandidates().stream().filter(candidate -> uniqueCandidate != candidate).findFirst().orElseThrow(() -> new RuntimeException("Invalid state"));
+                Set<ICell> allWingCells = Stream.concat(Stream.concat(pivotGroup.stream(), wingGroup.stream()), Stream.of(cell4)).collect(Collectors.toSet());
+                Set<ICell> cellsWithCandidatToRemove = allWingCells.stream()
+                        .filter(cell -> cell.getCandidates().contains(candidateToRemove))
+                        .collect(Collectors.toSet());
+                Iterator<ICell> iterator = cellsWithCandidatToRemove.iterator();
+                Set<ICell> affectedCells = getPeers(sudoku, iterator.next());
+                while (iterator.hasNext()) {
+                    affectedCells.retainAll(getPeers(sudoku, iterator.next()));
+                }
+                affectedCells.removeIf(cell -> !cell.getCandidates().contains(candidateToRemove));
+                if (affectedCells.isEmpty())
+                    continue;
+                return Optional.of(TechniqueAction.builder()
+                        .name("WXYZ-Wing")
+                        .description("Cells: " + allWingCells.stream().map(ICell::getPos).map(Pos::toString).collect(Collectors.joining(", "))
+                                + " form a WXYZ-Wing on candidates " + candidateToRemove)
+                        .removeCandidatesMap(affectedCells.stream().map(ICell::getPos).collect(Collectors.toMap(pos -> pos, _ -> Set.of(candidateToRemove))))
+                        .colorings(List.of(
+                                TechniqueAction.CellColoring.candidatesColoring(allWingCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.YELLOW, candidates),
+                                TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(candidateToRemove))
+                        ))
+                        .build());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Set<ICell> getPeers(ISudoku sudoku, ICell cell) {
+        return getPeers(sudoku, cell.getY(), cell.getX());
     }
 
     private static Set<ICell> getPeers(ISudoku sudoku, int row, int col) {

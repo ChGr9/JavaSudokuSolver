@@ -113,4 +113,24 @@ class WingTechniqueTest extends BaseTechniqueTest {
         }
         assertChecksMatch(sudoku, technique.checks);
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1", "2", "3", "4a", "4b"})
+    void wxyzWing(String filenames) throws Exception {
+        URL url = WingTechniqueTest.class.getResource(String.format("/techniques/wxyzWing%s.yml", filenames));
+        assertNotNull(url);
+
+        TechniqueEntity technique = mapper.readValue(url, TechniqueEntity.class);
+        assertNotNull(technique);
+        assertNotNull(technique.grid);
+
+        loadSudoku(technique);
+
+        for (int i = 0; i < technique.repetitions; i++) {
+            Optional<TechniqueAction> result = WingTechnique.wxyzWing(sudoku);
+            assertTrue(result.isPresent());
+            result.get().apply(sudoku);
+        }
+        assertChecksMatch(sudoku, technique.checks);
+    }
 }
