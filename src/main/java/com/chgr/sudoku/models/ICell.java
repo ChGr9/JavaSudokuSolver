@@ -38,4 +38,6 @@ public interface ICell {
     default void clearColorCandidates(Collection<Integer> candidates) {}
 
     default void reRender(boolean fromUser) {}
+
+    int getSquare();
 }

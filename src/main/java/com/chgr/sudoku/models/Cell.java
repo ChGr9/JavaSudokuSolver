@@ -88,7 +88,7 @@ public class Cell extends StackPane implements ICell {
         this.candidates = new HashSet<>();
         this.value = EMPTY;
 
-        this.setOnMouseClicked(event -> this.requestFocus());
+        this.setOnMouseClicked(_ -> this.requestFocus());
         this.setOnKeyPressed(this::onKeyPress);
     }
 
@@ -218,5 +218,9 @@ public class Cell extends StackPane implements ICell {
                 }
             }
         }
+    }
+
+    public int getSquare() {
+        return x / 3 + y / 3 * 3;
     }
 }

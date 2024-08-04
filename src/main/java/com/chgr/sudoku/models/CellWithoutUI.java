@@ -79,4 +79,9 @@ public class CellWithoutUI implements ICell {
     public Pos getPos() {
         return new Pos(x, y);
     }
+
+    @Override
+    public int getSquare() {
+        return x / 3 + y / 3 * 3;
+    }
 }
