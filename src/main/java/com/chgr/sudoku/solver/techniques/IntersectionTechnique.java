@@ -304,7 +304,7 @@ public class IntersectionTechnique {
     }
 
     private static Set<Set<Integer>> getRestrictedCandidates(Set<ICell> commonPeers) {
-        Set<Set<Integer>> restrictedCandidates = new HashSet<>(commonPeers.stream().map(ICell::getCandidates).filter(candidates -> candidates.size() == 2).collect(Collectors.toSet()));
+        Set<Set<Integer>> restrictedCandidates = commonPeers.stream().map(ICell::getCandidates).filter(candidates -> candidates.size() == 2).collect(Collectors.toSet());
         Set<Integer> rows = commonPeers.stream().collect(Collectors.groupingBy(ICell::getY, Collectors.counting())).entrySet().stream().filter(entry -> entry.getValue() == 2).map(Map.Entry::getKey).collect(Collectors.toSet());
         for(int row : rows){
             List<ICell> rowCells = commonPeers.stream().filter(cell -> cell.getY() == row).toList();
