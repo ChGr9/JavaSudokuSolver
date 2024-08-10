@@ -46,12 +46,12 @@ public class LogicalSolver extends Task<Boolean> {
             IntersectionTechnique::boxLineReduction,
             WingTechnique::xWing,
             ChainTechnique::simpleColoring,
-            WingTechnique::yWing,
+            //WingTechnique::yWing,
             RectangleTechnique::rectangleElimination,
             WingTechnique::swordfish,
-            WingTechnique::xyzWing,
+            //WingTechnique::xyzWing,
             ChainTechnique::xCycle,
-            ChainTechnique::xyChain,
+            //ChainTechnique::xyChain,
             ChainTechnique::medusa3D,
             WingTechnique::jellyfish,
             RectangleTechnique::uniqueRectangle,
@@ -59,7 +59,8 @@ public class LogicalSolver extends Task<Boolean> {
             ChainTechnique::skLoop,
             RectangleTechnique::extendedUniqueRectangle,
             RectangleTechnique::hiddenUniqueRectangle,
-            WingTechnique::wxyzWing
+            //WingTechnique::wxyzWing,
+            IntersectionTechnique::alignedPairExclusion
     );
 
     public boolean solve(){

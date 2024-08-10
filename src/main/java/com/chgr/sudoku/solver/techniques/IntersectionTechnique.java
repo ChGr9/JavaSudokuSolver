@@ -1,6 +1,7 @@
 package com.chgr.sudoku.solver.techniques;
 
 import com.chgr.sudoku.models.*;
+import com.chgr.sudoku.utils.CellUtils;
 import javafx.scene.paint.Color;
 import org.apache.commons.math3.util.Combinations;
 import org.apache.commons.math3.util.Pair;
@@ -246,5 +247,92 @@ public class IntersectionTechnique {
         }
         ranges.add(Pair.create(start, end));
         return ranges;
+    }
+
+    //https://www.sudokuwiki.org/Aligned_Pair_Exclusion
+    //Section: Aligned Pair Exclusion
+    //Note no tests were written for this method as it triggers for several cells and it is hard to test since each execution can have different but correct results
+    public static Optional<TechniqueAction> alignedPairExclusion(ISudoku sudoku) {
+        Set<ICell> emptyCells = sudoku.getEmptyCells();
+        for (ICell cell : emptyCells) {
+            Set<ICell> cellPeers = CellUtils.getPeers(sudoku, cell);
+            for (ICell otherCell : emptyCells) {
+                if (cell == otherCell)
+                    continue;
+                Set<ICell> commonPeers = CellUtils.getPeers(sudoku, otherCell).stream().filter(cellPeers::contains).filter(c -> c.getValue() == ICell.EMPTY).collect(Collectors.toSet());
+                Set<Set<Integer>> restrictedCandidates = getRestrictedCandidates(commonPeers);
+                List<Pair<Integer, Integer>> pairs = cell.getCandidates().stream()
+                        .flatMap(candidate -> otherCell.getCandidates().stream().map(otherCandidate -> Pair.create(candidate, otherCandidate)))
+                        .filter(pair -> {
+                            if(pair.getFirst().equals(pair.getSecond()))
+                                return !CellUtils.isPeer(cell, otherCell);
+                            else
+                                return restrictedCandidates.stream()
+                                        .noneMatch(set -> set.contains(pair.getFirst()) && set.contains(pair.getSecond()));
+                        })
+                        .toList();
+                List<Integer> candidatesToRemoveFromCell = cell.getCandidates().stream()
+                        .filter(candidate -> pairs.stream().noneMatch(pair -> pair.getFirst().equals(candidate)))
+                        .toList();
+                if (!candidatesToRemoveFromCell.isEmpty())
+                    return buildAlignedPairExclusionAction(cell, otherCell, commonPeers, candidatesToRemoveFromCell);
+                List<Integer> candidatesToRemoveFromOtherCell = otherCell.getCandidates().stream()
+                        .filter(candidate -> pairs.stream().noneMatch(pair -> pair.getSecond().equals(candidate)))
+                        .toList();
+                if (!candidatesToRemoveFromOtherCell.isEmpty())
+                    return buildAlignedPairExclusionAction(otherCell, cell, commonPeers, candidatesToRemoveFromOtherCell);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> buildAlignedPairExclusionAction(ICell mainCell, ICell otherCell, Set<ICell> commonPeers, List<Integer> candidatesToRemove) {
+        return Optional.of(TechniqueAction.builder()
+                .name("Aligned pair exclusion")
+                .description(MessageFormat.format("Cells {0} and {1} have the candidates {2} and {3} respectively, they share the peers {4} and the candidates {5} cannot be the value for cell {0} cause all combinations with cell {1} will cause a peer cell to have no value",
+                        mainCell.getPos(), otherCell.getPos(),
+                        mainCell.getCandidates(), otherCell.getCandidates(),
+                        commonPeers.stream().map(ICell::getPos),
+                        candidatesToRemove))
+                .removeCandidatesMap(Map.of(mainCell.getPos(), new HashSet<>(candidatesToRemove)))
+                .colorings(List.of(
+                        TechniqueAction.CellColoring.candidatesColoring(List.of(mainCell.getPos()), Color.RED, candidatesToRemove),
+                        TechniqueAction.CellColoring.groupColoring(commonPeers.stream().map(ICell::getPos).map(pos -> Pair.create(pos, pos)).toList(), Color.YELLOW),
+                        TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(mainCell.getPos(), mainCell.getPos()), Pair.create(otherCell.getPos(), otherCell.getPos())), Color.GREY)
+                ))
+                .build());
+    }
+
+    private static Set<Set<Integer>> getRestrictedCandidates(Set<ICell> commonPeers) {
+        Set<Set<Integer>> restrictedCandidates = new HashSet<>(commonPeers.stream().map(ICell::getCandidates).filter(candidates -> candidates.size() == 2).collect(Collectors.toSet()));
+        Set<Integer> rows = commonPeers.stream().collect(Collectors.groupingBy(ICell::getY, Collectors.counting())).entrySet().stream().filter(entry -> entry.getValue() == 2).map(Map.Entry::getKey).collect(Collectors.toSet());
+        for(int row : rows){
+            List<ICell> rowCells = commonPeers.stream().filter(cell -> cell.getY() == row).toList();
+            restrictedCandidates.addAll(getRestrictedCandidatesFromPeerCells(rowCells));
+        }
+        Set<Integer> columns = commonPeers.stream().collect(Collectors.groupingBy(ICell::getX, Collectors.counting())).entrySet().stream().filter(entry -> entry.getValue() == 2).map(Map.Entry::getKey).collect(Collectors.toSet());
+        for(int column : columns){
+            List<ICell> columnCells = commonPeers.stream().filter(cell -> cell.getX() == column).toList();
+            restrictedCandidates.addAll(getRestrictedCandidatesFromPeerCells(columnCells));
+        }
+        Set<Integer> squares = commonPeers.stream().collect(Collectors.groupingBy(ICell::getSquare, Collectors.counting())).entrySet().stream().filter(entry -> entry.getValue() == 2).map(Map.Entry::getKey).collect(Collectors.toSet());
+        for(int square : squares){
+            List<ICell> squareCells = commonPeers.stream().filter(cell -> cell.getSquare() == square).toList();
+            restrictedCandidates.addAll(getRestrictedCandidatesFromPeerCells(squareCells));
+        }
+        return restrictedCandidates;
+    }
+
+    private static Collection<? extends Set<Integer>> getRestrictedCandidatesFromPeerCells(List<ICell> cells) {
+        Set<Set<Integer>> restrictedCandidates = new HashSet<>();
+        for(int i = 2; i <= cells.size(); i++){
+            Combinations combinations = new Combinations(cells.size(), i);
+            for(int[] combination : combinations){
+                Set<Integer> candidates = Arrays.stream(combination).mapToObj(cells::get).flatMap(cell -> cell.getCandidates().stream()).collect(Collectors.toSet());
+                if(candidates.size() == i+1)
+                    restrictedCandidates.add(candidates);
+            }
+        }
+        return restrictedCandidates;
     }
 }
