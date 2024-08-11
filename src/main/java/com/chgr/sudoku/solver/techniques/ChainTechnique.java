@@ -4,6 +4,7 @@ import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
 import com.chgr.sudoku.models.Pos;
 import com.chgr.sudoku.models.TechniqueAction;
+import com.chgr.sudoku.utils.CellUtils;
 import javafx.scene.paint.Color;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -11,11 +12,10 @@ import lombok.Getter;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-import static com.chgr.sudoku.utils.CellUtils.getPeers;
 
 public class ChainTechnique {
 
@@ -397,7 +397,7 @@ public class ChainTechnique {
             for (int color = 0; color <= 1; color++) {
                 int finalColor = color;
                 Set<CellNumPair> neighboringColorGroup = coloring.entrySet().stream()
-                        .filter(entry -> entry.getValue() == finalColor && areConnected(uncoloredCell, entry.getKey().getCell()))
+                        .filter(entry -> entry.getValue() == finalColor && CellUtils.isPeer(uncoloredCell, entry.getKey().getCell()))
                         .map(Map.Entry::getKey)
                         .collect(Collectors.toSet());
                 if (uncoloredCell.getCandidates().stream().allMatch(candidate ->
@@ -428,22 +428,22 @@ public class ChainTechnique {
     // X-Cycles
     public static Optional<TechniqueAction> xCycle(ISudoku sudoku) {
         for(int num =1; num <= ISudoku.SUDOKU_SIZE; num ++){
-            Set<List<ICell>> strongLinks = generateStrongLinks(sudoku, num);
-            for(List<ICell> strongLink: strongLinks){
+            Set<Pair<ICell, ICell>> strongLinks = generateStrongLinks(sudoku, num);
+            for(Pair<ICell, ICell> strongLink: strongLinks){
                 List<Link> cycle = new ArrayList<>();
                 Set<ICell> visited = new HashSet<>();
-                cycle.add(new Link(strongLink.get(0), strongLink.get(1), LinkType.STRONG));
-                visited.add(strongLink.get(1));
-                if(findCycle(sudoku, strongLink.get(1), cycle, num, visited, strongLinks)){
+                cycle.add(new Link(strongLink.getFirst(), strongLink.getSecond(), LinkType.STRONG));
+                visited.add(strongLink.getFirst());
+                if(findCycle(sudoku, strongLink.getSecond(), cycle, num, visited, strongLinks)){
                     Optional<TechniqueAction> techniqueAction = handleCycle(sudoku, cycle, num);
                     if(techniqueAction.isPresent())
                         return techniqueAction;
                 }
                 cycle = new ArrayList<>();
                 visited = new HashSet<>();
-                cycle.add(new Link(strongLink.get(1), strongLink.get(0), LinkType.STRONG));
-                visited.add(strongLink.get(0));
-                if(findCycle(sudoku, strongLink.get(0), cycle, num, visited, strongLinks)){
+                cycle.add(new Link(strongLink.getSecond(), strongLink.getFirst(), LinkType.STRONG));
+                visited.add(strongLink.getFirst());
+                if(findCycle(sudoku, strongLink.getFirst(), cycle, num, visited, strongLinks)){
                     Optional<TechniqueAction> techniqueAction = handleCycle(sudoku, cycle, num);
                     if(techniqueAction.isPresent())
                         return techniqueAction;
@@ -453,10 +453,10 @@ public class ChainTechnique {
         return Optional.empty();
     }
 
-    private static boolean findCycle(ISudoku sudoku, ICell current, List<Link> cycle, int num, Set<ICell> visited, Set<List<ICell>> strongLinks) {
+    private static boolean findCycle(ISudoku sudoku, ICell current, List<Link> cycle, int num, Set<ICell> visited, Set<Pair<ICell, ICell>> strongLinks) {
         if(cycle.getFirst().start == current)
             return true;
-        if(areConnected(current, cycle.getFirst().start) && cycle.size() > 2){
+        if(CellUtils.isPeer(current, cycle.getFirst().start) && cycle.size() > 2){
             // Cycle found
             // Check for contradictions and make deductions
             cycle.add(new Link(current, cycle.getFirst().start, LinkType.WEAK));
@@ -465,21 +465,21 @@ public class ChainTechnique {
 
         // Find links from current cell
         List<Link> possibleLinks = new ArrayList<>();
-        for(List<ICell> strongLink : strongLinks){
-            ICell first = strongLink.get(0);
-            ICell second = strongLink.get(1);
+        for(Pair<ICell, ICell> strongLink : strongLinks){
+            ICell first = strongLink.getFirst();
+            ICell second = strongLink.getSecond();
             if(visited.contains(first) || visited.contains(second))
                 continue;
-            if(areConnected(current, first)){
+            if(CellUtils.isPeer(current, first)){
                 possibleLinks.add(new Link(first, second, LinkType.STRONG));
             }
-            if(areConnected(current, second)){
+            if(CellUtils.isPeer(current, second)){
                 possibleLinks.add(new Link(second, first, LinkType.STRONG));
             }
         }
 
         for (Link possibleLink: possibleLinks){
-            if(strongLinks.stream().anyMatch(l -> l.contains(current) && l.contains(possibleLink.start)))
+            if(strongLinks.stream().map(l -> List.of(l.getFirst(), l.getSecond())).anyMatch(l -> l.contains(current) && l.contains(possibleLink.start)))
                 continue;
             cycle.add(new Link(current, possibleLink.start, LinkType.WEAK));
             cycle.add(possibleLink);
@@ -493,12 +493,11 @@ public class ChainTechnique {
             visited.remove(possibleLink.start);
             visited.remove(possibleLink.end);
         }
-        Set<ICell> commonPeers = getPeers(sudoku, cycle.getFirst().start);
-        commonPeers.retainAll(getPeers(sudoku, current));
+        Set<ICell> commonPeers = getCommonPeers(sudoku, List.of(cycle.getFirst().start, current));
         commonPeers = commonPeers.stream().filter(c -> c.getCandidates().contains(num)).collect(Collectors.toSet());
         if(!commonPeers.isEmpty()){
             ICell commonPeer = commonPeers.iterator().next();
-            if(strongLinks.stream().anyMatch(l ->
+            if(strongLinks.stream().map(l-> List.of(l.getFirst(), l.getSecond())).anyMatch(l ->
                     (l.contains(current) && l.contains(commonPeer))
                             || (l.contains(cycle.getFirst().start) && l.contains(commonPeer))
             ))
@@ -510,20 +509,20 @@ public class ChainTechnique {
         return false;
     }
 
-    private static Set<List<ICell>> generateStrongLinks(ISudoku sudoku, int num) {
-        Set<List<ICell>> strongLinks = new HashSet<>();
+    private static Set<Pair<ICell, ICell>> generateStrongLinks(ISudoku sudoku, int num) {
+        Set<Pair<ICell, ICell>> strongLinks = new HashSet<>();
         for(int i=0; i<ISudoku.SUDOKU_SIZE;i++){
             List<ICell> row = Arrays.stream(sudoku.getRow(i)).filter(c -> c.getCandidates().contains(num)).toList();
             if(row.size() == 2){
-                strongLinks.add(row);
+                strongLinks.add(Pair.create(row.getFirst(), row.getLast()));
             }
             List<ICell> col = Arrays.stream(sudoku.getColumn(i)).filter(c -> c.getCandidates().contains(num)).toList();
             if(col.size() == 2){
-                strongLinks.add(col);
+                strongLinks.add(Pair.create(col.getFirst(), col.getLast()));
             }
             List<ICell> square = Arrays.stream(sudoku.getSquare(i)).filter(c -> c.getCandidates().contains(num)).toList();
             if(square.size() == 2){
-                strongLinks.add(square);
+                strongLinks.add(Pair.create(square.getFirst(), square.getLast()));
             }
         }
         return strongLinks;
@@ -545,10 +544,10 @@ public class ChainTechnique {
                         .setValueMap(Map.of(startLink.start.getPos(), num))
                         .colorings(List.of(
                                 TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
-                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
+                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.BLUE, Set.of(num)),
                                 TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
                                 TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(startLink.start.getPos()), Color.BLUE, Set.of(num))
+                                TechniqueAction.CellColoring.candidatesColoring(List.of(startLink.start.getPos()), Color.GREEN, Set.of(num))
                         )).build());
             }
             else{
@@ -636,8 +635,8 @@ public class ChainTechnique {
         }
         ICell start = chain.getFirst();
         ICell end = chain.getLast();
-        Set<ICell> commonPeers = getPeers(sudoku, start);
-        commonPeers.retainAll(getPeers(sudoku, end));
+        Set<ICell> commonPeers = CellUtils.getPeers(sudoku, start);
+        commonPeers.retainAll(CellUtils.getPeers(sudoku, end));
         commonPeers = commonPeers.stream().filter(c -> c.getCandidates().contains(otherCandidate)).collect(Collectors.toSet());
         if(!commonPeers.isEmpty()){
             List<TechniqueAction.CellColoring> coloringList = weakLinks.stream().map(link -> TechniqueAction.CellColoring.lineColoring(List.of(link.getSecond()), Color.BLUE, link.getFirst())).collect(Collectors.toList());
@@ -667,7 +666,7 @@ public class ChainTechnique {
         if(currentCandidate == otherCandidate)
             allChains.add(new ArrayList<>(chain));
 
-        List<ICell> peers = getPeers(sudoku, cell).stream()
+        List<ICell> peers = CellUtils.getPeers(sudoku, cell).stream()
                 .filter(c -> c.getCandidates().contains(currentCandidate) && c.getCandidates().size() == 2)
                 .toList();
 
@@ -890,8 +889,8 @@ public class ChainTechnique {
             common.addAll(List.of(sudoku.getColumn(start.getX())));
             groupType = ISudoku.GroupType.COLUMN;
         }
-        else if (start.getX() / 3 == end.getX() / 3 && start.getY() / 3 == end.getY() / 3) {
-            common.addAll(List.of(sudoku.getSquare(start.getX(), start.getY())));
+        else if (start.getSquare() == end.getSquare()) {
+            common.addAll(List.of(sudoku.getSquare(start.getSquare())));
             groupType = ISudoku.GroupType.SQUARE;
         }
         else
@@ -919,22 +918,16 @@ public class ChainTechnique {
     }
 
     private static boolean hasConnection(ICell cell, Collection<ICell> chain) {
-        return chain.stream().anyMatch(c -> areConnected(cell, c));
+        return chain.stream().anyMatch(c -> CellUtils.isPeer(cell, c));
     }
 
-    private static boolean areConnected(ICell cell1, ICell cell2) {
-        return areInSameRow(cell1, cell2) || areInSameColumn(cell1, cell2) || areInSameSquare(cell1, cell2);
-    }
-
-    private static boolean areInSameRow(ICell cell1, ICell cell2) {
-        return cell1.getY() == cell2.getY();
-    }
-
-    private static boolean areInSameColumn(ICell cell1, ICell cell2) {
-        return cell1.getX() == cell2.getX();
-    }
-
-    private static boolean areInSameSquare(ICell cell1, ICell cell2) {
-        return cell1.getX() / 3 == cell2.getX() / 3 && cell1.getY() / 3 == cell2.getY() / 3;
+    private static Set<ICell> getCommonPeers(ISudoku sudoku, List<ICell> cells) {
+        return cells.stream()
+                .flatMap(c -> CellUtils.getPeers(sudoku, c).stream())
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream()
+                .filter(e -> e.getValue() == cells.size())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
     }
 }

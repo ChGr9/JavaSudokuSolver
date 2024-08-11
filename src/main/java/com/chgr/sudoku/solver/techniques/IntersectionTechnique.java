@@ -305,17 +305,17 @@ public class IntersectionTechnique {
 
     private static Set<Set<Integer>> getRestrictedCandidates(Set<ICell> commonPeers) {
         Set<Set<Integer>> restrictedCandidates = commonPeers.stream().map(ICell::getCandidates).filter(candidates -> candidates.size() == 2).collect(Collectors.toSet());
-        Set<Integer> rows = commonPeers.stream().collect(Collectors.groupingBy(ICell::getY, Collectors.counting())).entrySet().stream().filter(entry -> entry.getValue() == 2).map(Map.Entry::getKey).collect(Collectors.toSet());
+        Set<Integer> rows = commonPeers.stream().collect(Collectors.groupingBy(ICell::getY, Collectors.counting())).entrySet().stream().filter(entry -> entry.getValue() >= 2).map(Map.Entry::getKey).collect(Collectors.toSet());
         for(int row : rows){
             List<ICell> rowCells = commonPeers.stream().filter(cell -> cell.getY() == row).toList();
             restrictedCandidates.addAll(getRestrictedCandidatesFromPeerCells(rowCells));
         }
-        Set<Integer> columns = commonPeers.stream().collect(Collectors.groupingBy(ICell::getX, Collectors.counting())).entrySet().stream().filter(entry -> entry.getValue() == 2).map(Map.Entry::getKey).collect(Collectors.toSet());
+        Set<Integer> columns = commonPeers.stream().collect(Collectors.groupingBy(ICell::getX, Collectors.counting())).entrySet().stream().filter(entry -> entry.getValue() >= 2).map(Map.Entry::getKey).collect(Collectors.toSet());
         for(int column : columns){
             List<ICell> columnCells = commonPeers.stream().filter(cell -> cell.getX() == column).toList();
             restrictedCandidates.addAll(getRestrictedCandidatesFromPeerCells(columnCells));
         }
-        Set<Integer> squares = commonPeers.stream().collect(Collectors.groupingBy(ICell::getSquare, Collectors.counting())).entrySet().stream().filter(entry -> entry.getValue() == 2).map(Map.Entry::getKey).collect(Collectors.toSet());
+        Set<Integer> squares = commonPeers.stream().collect(Collectors.groupingBy(ICell::getSquare, Collectors.counting())).entrySet().stream().filter(entry -> entry.getValue() >= 2).map(Map.Entry::getKey).collect(Collectors.toSet());
         for(int square : squares){
             List<ICell> squareCells = commonPeers.stream().filter(cell -> cell.getSquare() == square).toList();
             restrictedCandidates.addAll(getRestrictedCandidatesFromPeerCells(squareCells));
