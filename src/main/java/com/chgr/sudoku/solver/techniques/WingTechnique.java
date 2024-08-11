@@ -263,6 +263,8 @@ public class WingTechnique {
         return Optional.empty();
     }
 
+    //https://www.sudokuwiki.org/WXYZ_Wing
+    //Section: WXYZ-Wing
     public static Optional<TechniqueAction> wxyzWing(ISudoku sudoku) {
         for(int i = 0; i<ISudoku.SUDOKU_SIZE; i++){
             Optional<TechniqueAction> techniqueAction = checkwxyzWing(sudoku, i, ISudoku.GroupType.ROW);
