@@ -50,6 +50,14 @@ public interface ISudoku {
 
     ICell getCell(Pos key);
 
+    default ICell[] getCells(GroupType type, int index) {
+        return switch (type) {
+            case ROW -> getRow(index);
+            case COLUMN -> getColumn(index);
+            case SQUARE -> getSquare(index);
+        };
+    }
+
     default void colorGroup(Pos first, Pos second, Color color) {}
 
     default void clearColorGroup() {}
