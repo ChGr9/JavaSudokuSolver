@@ -24,12 +24,11 @@ public class ChainTechnique {
         WEAK
     }
 
-    @AllArgsConstructor
-    private static class Link {
-        ICell start;
-        ICell end;
-        LinkType type;
-    }
+    private record Link (ICell start, ICell end, LinkType type){}
+
+    private record GroupLink(GroupCell start, GroupCell end, LinkType type){}
+
+    private record GroupCell(List<ICell> cells, List<Pair<ISudoku.GroupType, Integer>> allowedConnections){}
 
     @AllArgsConstructor
     @Getter
@@ -550,19 +549,18 @@ public class ChainTechnique {
                                 TechniqueAction.CellColoring.candidatesColoring(List.of(startLink.start.getPos()), Color.GREEN, Set.of(num))
                         )).build());
             }
-            else{
-                if(startLink.start.getCandidates().contains(num))
-                    return Optional.of(TechniqueAction.builder()
-                            .name("X-Cycle")
-                            .description("Eliminate " + num + " from " + startLink.start.getPos())
-                            .removeCandidatesMap(Map.of(startLink.start.getPos(), Set.of(num)))
-                            .colorings(List.of(
-                                    TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
-                                    TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
-                                    TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
-                                    TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
-                                    TechniqueAction.CellColoring.candidatesColoring(List.of(startLink.start.getPos()), Color.RED, Set.of(num))
-                            )).build());
+            else {
+                return Optional.of(TechniqueAction.builder()
+                        .name("X-Cycle")
+                        .description("Eliminate " + num + " from " + startLink.start.getPos())
+                        .removeCandidatesMap(Map.of(startLink.start.getPos(), Set.of(num)))
+                        .colorings(List.of(
+                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
+                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
+                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
+                                TechniqueAction.CellColoring.candidatesColoring(List.of(startLink.start.getPos()), Color.RED, Set.of(num))
+                        )).build());
             }
         }
         else {
@@ -876,6 +874,344 @@ public class ChainTechnique {
                     .collect(Collectors.toSet());
     }
 
+    // https://www.sudokuwiki.org/Grouped_X-Cycles
+    // Grouped X-Cycles
+    public static Optional<TechniqueAction> GroupedXCycle(ISudoku sudoku) {
+        for(int num = 1; num <= ISudoku.SUDOKU_SIZE; num++) {
+            Set<Pair<GroupCell, GroupCell>> strongLinks = generateGroupedStrongLinks(sudoku, num);
+            for(Pair<GroupCell, GroupCell> strongLink: strongLinks){
+                List<GroupLink> cycle = new ArrayList<>();
+                cycle.add(new GroupLink(strongLink.getFirst(), strongLink.getSecond(), LinkType.STRONG));
+                if(findGroupCycle(sudoku, strongLink.getSecond(), cycle, num, strongLinks)){
+                    Optional<TechniqueAction> techniqueAction = handleGroupCycle(sudoku, cycle, num);
+                    if(techniqueAction.isPresent())
+                        return techniqueAction;
+                }
+                cycle = new ArrayList<>();
+                cycle.add(new GroupLink(strongLink.getSecond(), strongLink.getFirst(), LinkType.STRONG));
+                if(findGroupCycle(sudoku, strongLink.getFirst(), cycle, num, strongLinks)){
+                    Optional<TechniqueAction> techniqueAction = handleGroupCycle(sudoku, cycle, num);
+                    if(techniqueAction.isPresent())
+                        return techniqueAction;
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<TechniqueAction> handleGroupCycle(ISudoku sudoku, List<GroupLink> cycle, int num) {
+        Set<Pos> col1 = cycle.stream().filter(l -> l.type == LinkType.STRONG).flatMap(l -> l.start.cells().stream().map(ICell::getPos)).collect(Collectors.toSet());
+        Set<Pos> col2 = cycle.stream().filter(l -> l.type == LinkType.STRONG).flatMap(l -> l.end.cells().stream().map(ICell::getPos)).collect(Collectors.toSet());
+        List<Pair<Pos, Pos>> weakLinks = cycle.stream().filter(l -> l.type == LinkType.WEAK).map(l -> Pair.create(l.start.cells().getFirst().getPos(), l.end.cells().getFirst().getPos())).toList();
+        List<Pair<Pos, Pos>> strongLinks = cycle.stream().filter(l -> l.type == LinkType.STRONG).map(l -> Pair.create(l.start.cells().getFirst().getPos(), l.end.cells().getFirst().getPos())).toList();
+        GroupLink startLink = cycle.getFirst();
+        GroupLink endLink = cycle.getLast();
+        if(startLink.type == endLink.type){
+            // Disconnect cycle
+            if(startLink.type == LinkType.STRONG) {
+                List<ICell> peers = getCommonPeers(sudoku, startLink.start.cells()).stream().filter(c -> c.getCandidates().contains(num)).toList();
+                return Optional.of(TechniqueAction.builder()
+                        .name("Grouped X-Cycle")
+                        .description("One of the cells " + startLink.start.cells().getFirst().getPos() + " has to be " + num)
+                        .removeCandidatesMap(peers.stream().collect(Collectors.toMap(ICell::getPos, _ -> Set.of(num))))
+                        .colorings(List.of(
+                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.BLUE, Set.of(num)),
+                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
+                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
+                                TechniqueAction.CellColoring.candidatesColoring(peers.stream().map(ICell::getPos).toList(), Color.RED, Set.of(num))
+                        )).build());
+            }
+            else {
+                return Optional.of(TechniqueAction.builder()
+                        .name("Grouped X-Cycle")
+                        .description("Eliminate " + num + " from " + startLink.start.cells().stream().map(ICell::getPos))
+                        .removeCandidatesMap(startLink.start.cells().stream().collect(Collectors.toMap(ICell::getPos, _ -> Set.of(num))))
+                        .colorings(List.of(
+                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
+                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
+                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
+                                TechniqueAction.CellColoring.candidatesColoring(startLink.start.cells().stream().map(ICell::getPos).toList(), Color.RED, Set.of(num))
+                        )).build());
+            }
+        }
+        else {
+            // Continues cycle
+            List<ICell> affectedCells = new ArrayList<>();
+            List<Pair<Pos, Pos>> groupColoring = new ArrayList<>();
+            for (GroupLink link : cycle.stream().filter(l -> l.type == LinkType.WEAK).toList()) {
+                Pair<List<ICell>, ISudoku.GroupType> result = findCommon(sudoku, link.start, link.end);
+                List<ICell> common = result.getFirst().stream().filter(c -> c.getCandidates().contains(num)).toList();
+                if(!common.isEmpty()){
+                    affectedCells.addAll(common);
+                    groupColoring.add(switch (result.getSecond()) {
+                        case ROW -> Pair.create(new Pos(0, link.start.cells().getFirst().getY()), new Pos(8, link.start.cells().getFirst().getY()));
+                        case COLUMN -> Pair.create(new Pos(link.start.cells().getFirst().getX(), 0), new Pos(link.start.cells().getFirst().getX(), 8));
+                        case SQUARE -> Pair.create(new Pos((link.start.cells().getFirst().getX() / 3) * 3, (link.start.cells().getFirst().getY() / 3) * 3), new Pos((link.start.cells().getFirst().getX() / 3) * 3 + 2, (link.start.cells().getFirst().getY() / 3) * 3 + 2));
+                    });
+                }
+            }
+            if(!affectedCells.isEmpty())
+                return Optional.of(TechniqueAction.builder()
+                        .name("Grouped X-Cycle")
+                        .description("Eliminate " + num + " from common peers")
+                        .removeCandidatesMap(affectedCells.stream().collect(Collectors.toMap(ICell::getPos, _ -> Set.of(num))))
+                        .colorings(List.of(
+                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
+                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
+                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
+                                TechniqueAction.CellColoring.groupColoring(groupColoring, Color.YELLOW),
+                                TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(num))
+                        )).build());
+        }
+        return Optional.empty();
+    }
+
+    private static boolean findGroupCycle(ISudoku sudoku, GroupCell current, List<GroupLink> cycle, int num, Set<Pair<GroupCell, GroupCell>> strongLinks) {
+        if (cycle.getFirst().start == current)
+            return true;
+        if(current.allowedConnections().stream().anyMatch(c -> cycle.getFirst().start.allowedConnections.contains(c)) && cycle.size() > 2){
+            // Cycle found
+            // Check for contradictions and make deductions
+            cycle.add(new GroupLink(current, cycle.getFirst().start, LinkType.WEAK));
+            return true;
+        }
+
+        // Find links from current cell
+        List<GroupLink> possibleLinks = new ArrayList<>();
+        List<ICell> visited = cycle.stream().flatMap(l -> Stream.of(l.start.cells(), l.end.cells())).flatMap(Collection::stream).toList();
+        for(Pair<GroupCell, GroupCell> strongLink : strongLinks){
+            GroupCell first = strongLink.getFirst();
+            GroupCell second = strongLink.getSecond();
+            if(first.cells().stream().anyMatch(visited::contains) || second.cells().stream().anyMatch(visited::contains))
+                continue;
+            if (first.allowedConnections.stream()
+                    .anyMatch(pair1 -> current.allowedConnections.stream()
+                            .anyMatch(pair2 -> pair1.getFirst() == pair2.getFirst() && pair1.getSecond().equals(pair2.getSecond())))) {
+                possibleLinks.add(new GroupLink(first, second, LinkType.STRONG));
+            }
+            if (second.allowedConnections.stream()
+                    .anyMatch(pair1 -> current.allowedConnections.stream()
+                            .anyMatch(pair2 -> pair1.getFirst() == pair2.getFirst() && pair1.getSecond().equals(pair2.getSecond())))) {
+                possibleLinks.add(new GroupLink(second, first, LinkType.STRONG));
+            }
+        }
+
+        for(GroupLink possibleLink: possibleLinks){
+            if(strongLinks.stream().map(l -> List.of(l.getFirst().cells(), l.getSecond().cells())).anyMatch(l -> l.contains(current.cells()) && l.contains(possibleLink.start.cells())))
+//            if(strongLinks.stream().anyMatch(l ->
+//                    (l.getFirst().cells().stream().anyMatch(current.cells()::contains) && l.getSecond().cells.stream().anyMatch(possibleLink.start.cells::contains))
+//                    || (l.getFirst().cells().stream().anyMatch(possibleLink.start.cells::contains) && l.getSecond().cells.stream().anyMatch(current.cells()::contains))
+//            ))
+                continue;
+            if(current.cells().stream().anyMatch(possibleLink.start.cells()::contains))
+                continue;
+            cycle.add(new GroupLink(current, possibleLink.start, LinkType.WEAK));
+            cycle.add(possibleLink);
+            if(findGroupCycle(sudoku, possibleLink.end, cycle, num, strongLinks)){
+                return true;
+            }
+            cycle.removeLast();
+            cycle.removeLast();
+        }
+        Set<ICell> commonPeers = getCommonPeers(sudoku, cycle.getFirst().start, current);
+        commonPeers = commonPeers.stream().filter(c -> c.getCandidates().contains(num)).collect(Collectors.toSet());
+        if(!commonPeers.isEmpty()){
+            ICell commonPeer = commonPeers.iterator().next();
+            if(strongLinks.stream().map(l-> List.of(l.getFirst().cells(), l.getSecond().cells())).anyMatch(l ->
+                    (l.contains(current.cells()) && l.contains(List.of(commonPeer)))
+                            || (l.contains(cycle.getFirst().start.cells()) && l.contains(List.of(commonPeer)))
+            ))
+//            if(strongLinks.stream().flatMap(l-> Stream.of(l.getFirst(), l.getSecond())).map(GroupCell::cells)
+//                    .anyMatch(l ->
+//                            (l.stream().anyMatch(current.cells()::contains) && l.contains(commonPeer))
+//                                    || (l.stream().anyMatch(cycle.getFirst().start.cells()::contains) && l.contains(commonPeer))
+//            ))
+                return false;
+            GroupCell commonGroupCell = new GroupCell(List.of(commonPeer), List.of());
+            cycle.add(new GroupLink(current, commonGroupCell, LinkType.WEAK));
+            cycle.addFirst(new GroupLink(commonGroupCell, cycle.getFirst().start, LinkType.WEAK));
+            return true;
+        }
+        return false;
+    }
+
+    private static Set<Pair<GroupCell, GroupCell>> generateGroupedStrongLinks(ISudoku sudoku, int num) {
+        Set<Pair<GroupCell, GroupCell>> strongLinks = new HashSet<>();
+        for(int i=0; i<ISudoku.SUDOKU_SIZE;i++){
+            List<ICell> row = Arrays.stream(sudoku.getRow(i)).filter(c -> c.getCandidates().contains(num)).toList();
+            if(row.size() == 2){
+                strongLinks.add(Pair.create(
+                        new GroupCell(
+                                List.of(row.getFirst()),
+                                List.of(Pair.create(ISudoku.GroupType.COLUMN, row.getFirst().getX()), Pair.create(ISudoku.GroupType.SQUARE, row.getFirst().getSquare()))),
+                        new GroupCell(
+                                List.of(row.getLast()),
+                                List.of(Pair.create(ISudoku.GroupType.COLUMN, row.getLast().getX()), Pair.create(ISudoku.GroupType.SQUARE, row.getLast().getSquare())
+                        ))
+                ));
+            }
+            else if(row.size() > 2) {
+                List<List<ICell>> rowGroupedBySquare = row.stream().collect(Collectors.groupingBy(ICell::getSquare)).values().stream().toList();
+                if(rowGroupedBySquare.size() == 2){
+                    strongLinks.add(Pair.create(
+                            new GroupCell(
+                                    rowGroupedBySquare.getFirst(),
+                                    rowGroupedBySquare.getFirst().size() == 1?
+                                            List.of(
+                                                    Pair.create(ISudoku.GroupType.COLUMN, rowGroupedBySquare.getFirst().getFirst().getX()),
+                                                    Pair.create(ISudoku.GroupType.SQUARE, rowGroupedBySquare.getFirst().getFirst().getSquare())
+                                            ):
+                                            List.of(Pair.create(ISudoku.GroupType.SQUARE, rowGroupedBySquare.getFirst().getFirst().getSquare()))
+                            ),
+                            new GroupCell(
+                                    rowGroupedBySquare.getLast(),
+                                    rowGroupedBySquare.getLast().size() == 1?
+                                            List.of(
+                                                    Pair.create(ISudoku.GroupType.COLUMN, rowGroupedBySquare.getLast().getFirst().getX()),
+                                                    Pair.create(ISudoku.GroupType.SQUARE, rowGroupedBySquare.getLast().getFirst().getSquare())
+                                            ):
+                                            List.of(Pair.create(ISudoku.GroupType.SQUARE, rowGroupedBySquare.getLast().getFirst().getSquare()))
+                            )
+                    ));
+                }
+            }
+            List<ICell> col = Arrays.stream(sudoku.getColumn(i)).filter(c -> c.getCandidates().contains(num)).toList();
+            if(col.size() == 2){
+                strongLinks.add(Pair.create(
+                        new GroupCell(
+                                List.of(col.getFirst()),
+                                List.of(Pair.create(ISudoku.GroupType.ROW, col.getFirst().getY()), Pair.create(ISudoku.GroupType.SQUARE, col.getFirst().getSquare()))),
+                        new GroupCell(
+                                List.of(col.getLast()),
+                                List.of(Pair.create(ISudoku.GroupType.ROW, col.getLast().getY()), Pair.create(ISudoku.GroupType.SQUARE, col.getLast().getSquare())
+                        ))
+                ));
+            }
+            else if(col.size() > 2){
+                List<List<ICell>> colGroupedBySquare = col.stream().collect(Collectors.groupingBy(ICell::getSquare)).values().stream().toList();
+                if(colGroupedBySquare.size() == 2){
+                    strongLinks.add(Pair.create(
+                            new GroupCell(
+                                    colGroupedBySquare.getFirst(),
+                                    colGroupedBySquare.getFirst().size() == 1?
+                                            List.of(
+                                                    Pair.create(ISudoku.GroupType.ROW, colGroupedBySquare.getFirst().getFirst().getY()),
+                                                    Pair.create(ISudoku.GroupType.SQUARE, colGroupedBySquare.getFirst().getFirst().getSquare())
+                                            ):
+                                            List.of(Pair.create(ISudoku.GroupType.SQUARE, colGroupedBySquare.getFirst().getFirst().getSquare()))
+                            ),
+                            new GroupCell(
+                                    colGroupedBySquare.getLast(),
+                                    colGroupedBySquare.getLast().size() == 1?
+                                            List.of(
+                                                    Pair.create(ISudoku.GroupType.ROW, colGroupedBySquare.getLast().getFirst().getY()),
+                                                    Pair.create(ISudoku.GroupType.SQUARE, colGroupedBySquare.getLast().getFirst().getSquare())
+                                            ):
+                                            List.of(Pair.create(ISudoku.GroupType.SQUARE, colGroupedBySquare.getLast().getFirst().getSquare()))
+                            )
+                    ));
+                }
+            }
+            List<ICell> square = Arrays.stream(sudoku.getSquare(i)).filter(c -> c.getCandidates().contains(num)).toList();
+            if(square.size() == 2){
+                strongLinks.add(Pair.create(
+                        new GroupCell(
+                                List.of(square.getFirst()),
+                                List.of(Pair.create(ISudoku.GroupType.ROW, square.getFirst().getY()), Pair.create(ISudoku.GroupType.COLUMN, square.getFirst().getX()))),
+                        new GroupCell(
+                                List.of(square.getLast()),
+                                List.of(Pair.create(ISudoku.GroupType.ROW, square.getLast().getY()), Pair.create(ISudoku.GroupType.COLUMN, square.getLast().getX())
+                        ))
+                ));
+            } else if (square.size() > 2) {
+                List<List<ICell>> squareGroupedByRow = square.stream().collect(Collectors.groupingBy(ICell::getY)).values().stream().toList();
+                if(squareGroupedByRow.size() == 2){
+                    strongLinks.add(Pair.create(
+                            new GroupCell(
+                                    squareGroupedByRow.getFirst(),
+                                    squareGroupedByRow.getFirst().size() == 1?
+                                            List.of(
+                                                    Pair.create(ISudoku.GroupType.ROW, squareGroupedByRow.getFirst().getFirst().getY()),
+                                                    Pair.create(ISudoku.GroupType.COLUMN, squareGroupedByRow.getFirst().getFirst().getX())
+                                            ):
+                                            List.of(Pair.create(ISudoku.GroupType.ROW, squareGroupedByRow.getFirst().getFirst().getY()))
+                            ),
+                            new GroupCell(
+                                    squareGroupedByRow.getLast(),
+                                    squareGroupedByRow.getLast().size() == 1?
+                                            List.of(
+                                                    Pair.create(ISudoku.GroupType.ROW, squareGroupedByRow.getLast().getFirst().getY()),
+                                                    Pair.create(ISudoku.GroupType.COLUMN, squareGroupedByRow.getLast().getFirst().getX())
+                                            ):
+                                            List.of(Pair.create(ISudoku.GroupType.ROW, squareGroupedByRow.getLast().getFirst().getY()))
+                            )
+                    ));
+                } else if (squareGroupedByRow.size() == 3) {
+                    List<List<ICell>> squareGroupedByRowPairList = squareGroupedByRow.stream().filter(l -> l.size() == 2).toList();
+                    for (List<ICell> squareGroupedByRowPair: squareGroupedByRowPairList){
+                        List<ICell> otherCells = squareGroupedByRow.stream().flatMap(List::stream).filter(c -> !squareGroupedByRowPair.contains(c)).toList();
+                        if(otherCells.stream().map(ICell::getX).distinct().count() == 1){
+                            strongLinks.add(Pair.create(
+                                    new GroupCell(
+                                            squareGroupedByRowPair,
+                                            List.of(Pair.create(ISudoku.GroupType.ROW, squareGroupedByRowPair.getFirst().getY()))
+                                    ),
+                                    new GroupCell(
+                                            otherCells,
+                                            List.of(Pair.create(ISudoku.GroupType.COLUMN, otherCells.getFirst().getX()))
+                                    )
+                            ));
+                        }
+                    }
+                }
+                List<List<ICell>> squareGroupedByCol = square.stream().collect(Collectors.groupingBy(ICell::getX)).values().stream().toList();
+                if(squareGroupedByCol.size() == 2){
+                    strongLinks.add(Pair.create(
+                            new GroupCell(
+                                    squareGroupedByCol.getFirst(),
+                                    squareGroupedByCol.getFirst().size() == 1?
+                                            List.of(
+                                                    Pair.create(ISudoku.GroupType.ROW, squareGroupedByCol.getFirst().getFirst().getY()),
+                                                    Pair.create(ISudoku.GroupType.COLUMN, squareGroupedByCol.getFirst().getFirst().getX())
+                                            ):
+                                            List.of(Pair.create(ISudoku.GroupType.COLUMN, squareGroupedByCol.getFirst().getFirst().getX()))
+                            ),
+                            new GroupCell(
+                                    squareGroupedByCol.getLast(),
+                                    squareGroupedByCol.getLast().size() == 1?
+                                            List.of(
+                                                    Pair.create(ISudoku.GroupType.ROW, squareGroupedByCol.getLast().getFirst().getY()),
+                                                    Pair.create(ISudoku.GroupType.COLUMN, squareGroupedByCol.getLast().getFirst().getX())
+                                            ):
+                                            List.of(Pair.create(ISudoku.GroupType.COLUMN, squareGroupedByCol.getLast().getFirst().getX()))
+                            )
+                    ));
+                } else if (squareGroupedByCol.size() == 3) {
+                    List<List<ICell>> squareGroupedByColPairList = squareGroupedByCol.stream().filter(l -> l.size() == 2).toList();
+                    for (List<ICell> squareGroupedByColPair: squareGroupedByColPairList){
+                        List<ICell> otherCells = squareGroupedByCol.stream().flatMap(List::stream).filter(c -> !squareGroupedByColPair.contains(c)).toList();
+                        if(otherCells.stream().map(ICell::getY).distinct().count() == 1){
+                            strongLinks.add(Pair.create(
+                                    new GroupCell(
+                                            otherCells,
+                                            List.of(Pair.create(ISudoku.GroupType.ROW, otherCells.getFirst().getY()))
+                                    ),
+                                    new GroupCell(
+                                            squareGroupedByColPair,
+                                            List.of(Pair.create(ISudoku.GroupType.COLUMN, squareGroupedByColPair.getFirst().getX()))
+                                    )
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+        return strongLinks;
+    }
+
     // Helper function to determine if a cell is connected to any cell in a chain
 
     private static Pair<List<ICell>, ISudoku.GroupType> findCommon(ISudoku sudoku, ICell start, ICell end) {
@@ -898,6 +1234,34 @@ public class ChainTechnique {
         common.remove(start);
         common.remove(end);
         return Pair.create(common, groupType);
+    }
+
+
+    private static Pair<List<ICell>, ISudoku.GroupType> findCommon(ISudoku sudoku, GroupCell start, GroupCell end) {
+        List<ICell> common = new ArrayList<>();
+        ISudoku.GroupType groupType = null;
+        for(ISudoku.GroupType type: ISudoku.GroupType.values()) {
+            List<Integer> distinct = getDistinct(Stream.of(start.cells(), end.cells()).flatMap(List::stream).toList(), type);
+            if (distinct.size() == 1) {
+                common.addAll(Arrays.stream(sudoku.getCells(type, distinct.getFirst())).toList());
+                groupType = type;
+                break;
+            }
+        }
+        if (groupType == null)
+            throw new IllegalArgumentException("Cells are not connected");
+
+        common.remove(start.cells().getFirst());
+        common.remove(end.cells().getFirst());
+        return Pair.create(common, groupType);
+    }
+
+    private static List<Integer> getDistinct(List<ICell> list, ISudoku.GroupType type) {
+        return switch (type) {
+            case ROW -> list.stream().map(ICell::getY).distinct().toList();
+            case COLUMN -> list.stream().map(ICell::getX).distinct().toList();
+            case SQUARE -> list.stream().map(ICell::getSquare).distinct().toList();
+        };
     }
 
     private static Set<ICell> findLinks(ISudoku sudoku, ICell cell, int num) {
@@ -929,5 +1293,22 @@ public class ChainTechnique {
                 .filter(e -> e.getValue() == cells.size())
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
+    }
+
+
+    private static Set<ICell> getCommonPeers(ISudoku sudoku, GroupCell group1, GroupCell group2) {
+        Set<ICell> commonPeers = new HashSet<>();
+        for(Pair<ISudoku.GroupType, Integer> connection1: group1.allowedConnections()){
+            for(Pair<ISudoku.GroupType, Integer> connection2: group2.allowedConnections()){
+                Set<ICell> connectionIntersection = Arrays.stream(sudoku.getCells(connection1.getFirst(), connection1.getSecond())).collect(Collectors.toSet());
+                connectionIntersection.retainAll(Arrays.stream(sudoku.getCells(connection2.getFirst(), connection2.getSecond())).collect(Collectors.toSet()));
+                if(!connectionIntersection.isEmpty()){
+                    commonPeers.addAll(connectionIntersection);
+                }
+            }
+        }
+        group1.cells().forEach(commonPeers::remove);
+        group2.cells().forEach(commonPeers::remove);
+        return commonPeers;
     }
 }
