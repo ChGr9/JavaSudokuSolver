@@ -25,11 +25,14 @@ class RectangleTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for(int i=0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = RectangleTechnique.uniqueRectangle(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -45,11 +48,14 @@ class RectangleTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for (int i = 0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = RectangleTechnique.rectangleElimination(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -65,11 +71,14 @@ class RectangleTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for (int i = 0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = RectangleTechnique.extendedUniqueRectangle(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -85,11 +94,14 @@ class RectangleTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for (int i = 0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = RectangleTechnique.hiddenUniqueRectangle(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 }

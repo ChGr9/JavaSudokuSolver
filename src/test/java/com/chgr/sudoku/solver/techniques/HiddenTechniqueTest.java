@@ -26,10 +26,14 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        Optional<TechniqueAction> result = HiddenTechnique.hiddenSingle(sudoku);
-
-        assertTrue(result.isPresent());
-        result.get().apply(sudoku);
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
+            Optional<TechniqueAction> result = HiddenTechnique.hiddenSingle(sudoku);
+            if (result.isEmpty())
+                break;
+            result.get().apply(sudoku);
+        }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -45,11 +49,14 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for(int i=0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = HiddenTechnique.hiddenPair(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -64,11 +71,14 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for(int i=0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = HiddenTechnique.hiddenTriple(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -83,11 +93,14 @@ public class HiddenTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for(int i=0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = HiddenTechnique.hiddenQuad(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 }

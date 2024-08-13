@@ -876,7 +876,7 @@ public class ChainTechnique {
 
     // https://www.sudokuwiki.org/Grouped_X-Cycles
     // Grouped X-Cycles
-    public static Optional<TechniqueAction> GroupedXCycle(ISudoku sudoku) {
+    public static Optional<TechniqueAction> groupedXCycle(ISudoku sudoku) {
         for(int num = 1; num <= ISudoku.SUDOKU_SIZE; num++) {
             Set<Pair<GroupCell, GroupCell>> strongLinks = generateGroupedStrongLinks(sudoku, num);
             for(Pair<GroupCell, GroupCell> strongLink: strongLinks){
@@ -902,8 +902,32 @@ public class ChainTechnique {
     private static Optional<TechniqueAction> handleGroupCycle(ISudoku sudoku, List<GroupLink> cycle, int num) {
         Set<Pos> col1 = cycle.stream().filter(l -> l.type == LinkType.STRONG).flatMap(l -> l.start.cells().stream().map(ICell::getPos)).collect(Collectors.toSet());
         Set<Pos> col2 = cycle.stream().filter(l -> l.type == LinkType.STRONG).flatMap(l -> l.end.cells().stream().map(ICell::getPos)).collect(Collectors.toSet());
-        List<Pair<Pos, Pos>> weakLinks = cycle.stream().filter(l -> l.type == LinkType.WEAK).map(l -> Pair.create(l.start.cells().getFirst().getPos(), l.end.cells().getFirst().getPos())).toList();
-        List<Pair<Pos, Pos>> strongLinks = cycle.stream().filter(l -> l.type == LinkType.STRONG).map(l -> Pair.create(l.start.cells().getFirst().getPos(), l.end.cells().getFirst().getPos())).toList();
+        List<Pair<Pos, Pos>> weakLinks = cycle.stream().filter(l -> l.type == LinkType.WEAK)
+                .map(l -> {
+                    List<Pos> startPositions = l.start.cells().stream().map(ICell::getPos).toList();
+                    List<Pos> endPositions = l.end.cells().stream().map(ICell::getPos).toList();
+
+                    return startPositions.stream()
+                            .flatMap(startPos -> endPositions.stream()
+                                    .map(endPos -> Pair.create(startPos, endPos)))
+                            .min(Comparator.comparingDouble(pair -> Math.sqrt(Math.pow(pair.getFirst().x() - pair.getSecond().x(), 2) + Math.pow(pair.getFirst().y() - pair.getSecond().y(), 2))))
+                            .orElse(null);
+                })
+                .filter(Objects::nonNull)
+                .toList();
+        List<Pair<Pos, Pos>> strongLinks = cycle.stream().filter(l -> l.type == LinkType.STRONG)
+                .map(l -> {
+                    List<Pos> startPositions = l.start.cells().stream().map(ICell::getPos).toList();
+                    List<Pos> endPositions = l.end.cells().stream().map(ICell::getPos).toList();
+
+                    return startPositions.stream()
+                            .flatMap(startPos -> endPositions.stream()
+                                    .map(endPos -> Pair.create(startPos, endPos)))
+                            .min(Comparator.comparingDouble(pair -> Math.sqrt(Math.pow(pair.getFirst().x() - pair.getSecond().x(), 2) + Math.pow(pair.getFirst().y() - pair.getSecond().y(), 2))))
+                            .orElse(null);
+                })
+                .filter(Objects::nonNull)
+                .toList();
         GroupLink startLink = cycle.getFirst();
         GroupLink endLink = cycle.getLast();
         if(startLink.type == endLink.type){
@@ -938,7 +962,7 @@ public class ChainTechnique {
         }
         else {
             // Continues cycle
-            List<ICell> affectedCells = new ArrayList<>();
+            Set<ICell> affectedCells = new HashSet<>();
             List<Pair<Pos, Pos>> groupColoring = new ArrayList<>();
             for (GroupLink link : cycle.stream().filter(l -> l.type == LinkType.WEAK).toList()) {
                 Pair<List<ICell>, ISudoku.GroupType> result = findCommon(sudoku, link.start, link.end);
@@ -1251,8 +1275,8 @@ public class ChainTechnique {
         if (groupType == null)
             throw new IllegalArgumentException("Cells are not connected");
 
-        common.remove(start.cells().getFirst());
-        common.remove(end.cells().getFirst());
+        common.removeAll(start.cells());
+        common.removeAll(end.cells());
         return Pair.create(common, groupType);
     }
 
