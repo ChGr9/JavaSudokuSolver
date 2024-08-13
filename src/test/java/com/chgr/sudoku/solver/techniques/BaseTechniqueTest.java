@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Setter;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.platform.commons.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,7 +27,7 @@ public abstract class BaseTechniqueTest {
     }
     protected static class TechniqueEntity{
         @Setter
-        public List<List<Integer>> grid;
+        public String grid;
         @Setter
         public List<Check> checks;
         @Setter
@@ -52,6 +54,7 @@ public abstract class BaseTechniqueTest {
     protected SudokuWithoutUI sudoku;
 
     protected ObjectMapper mapper;
+    private static final Pattern PATTERN = Pattern.compile("[0-9]{81}");
 
     @BeforeEach
     void setUp() {
@@ -73,12 +76,14 @@ public abstract class BaseTechniqueTest {
     }
 
     protected void loadSudoku(TechniqueEntity technique) {
+        if(StringUtils.isBlank(technique.grid))
+            throw new IllegalArgumentException("Grid is required");
+        if(!PATTERN.matcher(technique.grid.trim()).matches()) {
+            throw new IllegalArgumentException("Invalid grid '" + technique.grid + "'");
+        }
         for (int i = 0; i < 9; i++) {
-            List<Integer> row = technique.grid.get(i);
-            assertNotNull(row);
             for (int j = 0; j < 9; j++) {
-                Integer value = row.get(j);
-                assertNotNull(value);
+                int value = Character.getNumericValue(technique.grid.charAt(i * 9 + j));
                 sudoku.getCell(j, i).setValue(value);
             }
         }

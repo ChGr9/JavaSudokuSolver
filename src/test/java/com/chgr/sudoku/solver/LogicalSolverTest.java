@@ -13,16 +13,18 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class LogicalSolverTest{
 
-    private record SudokuMap (List<List<Integer>> unsolved, List<List<Integer>> solved) {
+    private record SudokuMap (String unsolved, String solved) {
     }
     private SudokuWithoutUI sudoku;
     private ObjectMapper mapper;
+    private static final Pattern PATTERN = Pattern.compile("[0-9]{81}");
 
     @BeforeEach
     void setUp() {
@@ -47,14 +49,12 @@ class LogicalSolverTest{
         assertNotNull(sudokuMap);
         assertNotNull(sudokuMap.unsolved);
         assertNotNull(sudokuMap.solved);
-        assertEquals(9, sudokuMap.unsolved.size());
-        assertEquals(9, sudokuMap.solved.size());
+        assertTrue(PATTERN.matcher(sudokuMap.unsolved).matches());
+        assertTrue(PATTERN.matcher(sudokuMap.solved).matches());
 
         for(int i = 0; i<9; i++){
-            List<Integer> unsolvedRow = sudokuMap.unsolved.get(i);
-            assertEquals(9, unsolvedRow.size());
             for(int j = 0; j<9; j++){
-                Integer value = unsolvedRow.get(j);
+                int value = Character.getNumericValue(sudokuMap.unsolved.charAt(i*9 + j));
                 if(value != 0){
                     sudoku.getCell(j, i).setValue(value);
                 }
@@ -65,6 +65,6 @@ class LogicalSolverTest{
 
         assertTrue(solver.solve());
         solver.getSteps().forEach(step -> step.apply(sudoku));
-        assertEquals(sudokuMap.solved, sudoku.toIntList());
+        assertEquals(sudokuMap.solved, sudoku.toString());
     }
 }
