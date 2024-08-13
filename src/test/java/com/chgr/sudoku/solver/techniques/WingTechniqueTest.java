@@ -26,11 +26,14 @@ class WingTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for(int i=0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = WingTechnique.xWing(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -46,11 +49,14 @@ class WingTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for(int i=0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = WingTechnique.swordfish(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -66,11 +72,14 @@ class WingTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for(int i=0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = WingTechnique.jellyfish(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -86,11 +95,14 @@ class WingTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for(int i=0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = WingTechnique.yWing(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -106,11 +118,14 @@ class WingTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for(int i=0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = WingTechnique.xyzWing(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -126,11 +141,14 @@ class WingTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for (int i = 0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = WingTechnique.wxyzWing(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 }

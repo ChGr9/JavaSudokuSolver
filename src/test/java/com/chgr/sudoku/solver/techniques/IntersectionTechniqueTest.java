@@ -24,11 +24,14 @@ class IntersectionTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for(int i=0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = IntersectionTechnique.pointingTuple(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -44,11 +47,14 @@ class IntersectionTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for(int i=0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = IntersectionTechnique.boxLineReduction(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 
@@ -64,11 +70,14 @@ class IntersectionTechniqueTest extends BaseTechniqueTest {
 
         loadSudoku(technique);
 
-        for (int i = 0; i < technique.repetitions; i++) {
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = IntersectionTechnique.firework(sudoku);
-            assertTrue(result.isPresent());
+            if (result.isEmpty())
+                break;
             result.get().apply(sudoku);
         }
+        assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
 }

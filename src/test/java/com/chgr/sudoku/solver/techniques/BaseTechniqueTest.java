@@ -7,8 +7,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Setter;
 import org.junit.jupiter.api.BeforeEach;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -21,12 +23,30 @@ public abstract class BaseTechniqueTest {
     }
     protected record CandidatePos(int x, int y, Set<Integer> candidates) {
     }
-    @Setter
     protected static class TechniqueEntity{
+        @Setter
         public List<List<Integer>> grid;
+        @Setter
         public List<Check> checks;
+        @Setter
         public List<CandidatePos> override;
-        public Integer repetitions = 1;
+        public List<Integer> repetitions = List.of(1);
+        public int maxRepetitions = 1;
+
+        public void setRepetitions(String repetitions) {
+            try {
+                if (repetitions.contains("-")) {
+                    String[] split = repetitions.split("-");
+                    this.repetitions = IntStream.rangeClosed(Integer.parseInt(split[0]), Integer.parseInt(split[1])).boxed().toList();
+                } else if (repetitions.contains(",")) {
+                    this.repetitions = Arrays.stream(repetitions.split(",")).map(Integer::parseInt).toList();
+                } else
+                    this.repetitions = List.of(Integer.parseInt(repetitions));
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid repetitions: " + repetitions);
+            }
+            this.maxRepetitions = this.repetitions.stream().max(Integer::compareTo).orElse(0);
+        }
     }
 
     protected SudokuWithoutUI sudoku;
