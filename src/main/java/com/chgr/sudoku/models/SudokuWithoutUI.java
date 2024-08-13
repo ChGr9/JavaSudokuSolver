@@ -168,11 +168,13 @@ public class SudokuWithoutUI implements ISudoku {
         return square;
     }
 
-    public List<List<Integer>> toIntList() {
+    @Override
+    public String toString() {
         return IntStream.range(0, SUDOKU_SIZE)
                 .mapToObj(i -> Arrays.stream(cells)
                         .map(row -> row[i].getValue())
-                        .collect(Collectors.toList()))
-                .collect(Collectors.toList());
+                        .map(String::valueOf)
+                        .collect(Collectors.joining()))
+                .collect(Collectors.joining());
     }
 }
