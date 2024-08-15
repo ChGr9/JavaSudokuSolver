@@ -62,7 +62,8 @@ public class LogicalSolver extends Task<Boolean> {
             WingTechnique::wxyzWing,
             IntersectionTechnique::alignedPairExclusion,
             ChainTechnique::groupedXCycle,
-            WingTechnique::finnedXWing
+            WingTechnique::finnedXWing,
+            WingTechnique::finnedSwordfish
     );
 
     public boolean solve(){

@@ -14,8 +14,8 @@ import java.util.stream.IntStream;
 
 public class HiddenTechnique {
 
-    //https://www.sudokuwiki.org/Getting_Started
-    //Sections: Last Remaining Cell in a Box & Last Remaining Cell in a Row (or Column)
+    // https://www.sudokuwiki.org/Getting_Started
+    // Sections: Last Remaining Cell in a Box & Last Remaining Cell in a Row (or Column)
     public static Optional<TechniqueAction> hiddenSingle(ISudoku sudoku){
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
             TechniqueAction techniqueAction = checkHiddenSingle(sudoku, i, ISudoku.GroupType.ROW);
@@ -65,8 +65,8 @@ public class HiddenTechnique {
         return null;
     }
 
-    //https://www.sudokuwiki.org/Hidden_Candidates#HP
-    //Section: Hidden Pairs
+    // https://www.sudokuwiki.org/Hidden_Candidates#HP
+    // Section: Hidden Pairs
     public static Optional<TechniqueAction> hiddenPair(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
             TechniqueAction techniqueAction = checkHiddenTuple(sudoku, 2, i, ISudoku.GroupType.ROW);
@@ -82,8 +82,8 @@ public class HiddenTechnique {
         return Optional.empty();
     }
 
-    //https://www.sudokuwiki.org/Hidden_Candidates#HT
-    //Section: Hidden Triples
+    // https://www.sudokuwiki.org/Hidden_Candidates#HT
+    // Section: Hidden Triples
     public static Optional<TechniqueAction> hiddenTriple(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
             TechniqueAction techniqueAction = checkHiddenTuple(sudoku, 3, i, ISudoku.GroupType.ROW);
@@ -99,8 +99,8 @@ public class HiddenTechnique {
         return Optional.empty();
     }
 
-    //https://www.sudokuwiki.org/Hidden_Candidates#HQ
-    //Section: Hidden Quads
+    // https://www.sudokuwiki.org/Hidden_Candidates#HQ
+    // Section: Hidden Quads
     public static Optional<TechniqueAction> hiddenQuad(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
             TechniqueAction techniqueAction = checkHiddenTuple(sudoku, 4, i, ISudoku.GroupType.ROW);

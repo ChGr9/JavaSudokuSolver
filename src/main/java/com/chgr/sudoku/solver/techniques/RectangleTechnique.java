@@ -18,8 +18,8 @@ import static com.chgr.sudoku.utils.CellUtils.isPeer;
 
 public class RectangleTechnique {
 
-    //https://www.sudokuwiki.org/Unique_Rectangles
-    //Section: Unique Rectangles
+    // https://www.sudokuwiki.org/Unique_Rectangles
+    // Unique Rectangles
     public static Optional<TechniqueAction> uniqueRectangle(ISudoku sudoku) {
         Map<Set<Integer>, List<ICell>> biValueMap = sudoku.getEmptyCells().stream()
                 .filter(c -> c.getCandidates().size() == 2)
@@ -480,8 +480,8 @@ public class RectangleTechnique {
         return extraCandidates;
     }
 
-    //https://www.sudokuwiki.org/Rectangle_Elimination
-    //Section: Rectangle Elimination
+    // https://www.sudokuwiki.org/Rectangle_Elimination
+    // Rectangle Elimination
     public static Optional<TechniqueAction> rectangleElimination(ISudoku sudoku) {
         for (int i = 0; i < ISudoku.SUDOKU_SIZE; i++) {
             Optional<TechniqueAction> result = checkRectangle(sudoku, i, ISudoku.GroupType.ROW);
@@ -562,8 +562,8 @@ public class RectangleTechnique {
         return Optional.empty();
     }
 
-    //https://www.sudokuwiki.org/Extended_Unique_Rectangles
-    //Section: Extended Unique Rectangles
+    // https://www.sudokuwiki.org/Extended_Unique_Rectangles
+    // Extended Unique Rectangles
     public static Optional<TechniqueAction> extendedUniqueRectangle(ISudoku sudoku) {
         for (int i = 0; i < ISudoku.SUDOKU_SIZE - 3; i++) {
             Optional<TechniqueAction> result = checkExtendedRectangle(sudoku, i, ISudoku.GroupType.ROW);
@@ -700,8 +700,8 @@ public class RectangleTechnique {
                 )).build());
     }
 
-    //https://www.sudokuwiki.org/Hidden_Unique_Rectangles
-    //Section: Hidden Unique Rectangles
+    // https://www.sudokuwiki.org/Hidden_Unique_Rectangles
+    // Hidden Unique Rectangles
     public static Optional<TechniqueAction> hiddenUniqueRectangle(ISudoku sudoku) {
         for(int i = 0; i < ISudoku.SUDOKU_SIZE; i++){
             Optional<TechniqueAction> result = checkHiddenRectangle(sudoku, i, ISudoku.GroupType.ROW);

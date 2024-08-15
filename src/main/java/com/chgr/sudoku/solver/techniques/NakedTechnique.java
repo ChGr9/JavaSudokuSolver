@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class NakedTechnique {
-    //https://www.sudokuwiki.org/Getting_Started
-    //Section: The Last Possible Number
+    // https://www.sudokuwiki.org/Getting_Started
+    // Section: The Last Possible Number
     public static Optional<TechniqueAction> nakedSingle(ISudoku sudoku) {
         Optional<ICell> oCell = Arrays.stream(sudoku.getAllCells()).filter(c -> c.getCandidates().size() == 1).findFirst();
         if (oCell.isPresent()) {
@@ -33,8 +33,8 @@ public class NakedTechnique {
         return Optional.empty();
     }
 
-    //https://www.sudokuwiki.org/Naked_Candidates#NP
-    //Section: Naked Pairs
+    // https://www.sudokuwiki.org/Naked_Candidates#NP
+    // Section: Naked Pairs
     public static Optional<TechniqueAction> nakedPair(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
             TechniqueAction techniqueAction = checkNakedTuple(sudoku, 2, i, ISudoku.GroupType.ROW);
@@ -50,8 +50,8 @@ public class NakedTechnique {
         return Optional.empty();
     }
 
-    //https://www.sudokuwiki.org/Naked_Candidates#NP
-    //Section: Naked Triples
+    // https://www.sudokuwiki.org/Naked_Candidates#NP
+    // Section: Naked Triples
     public static Optional<TechniqueAction> nakedTriple(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
             TechniqueAction techniqueAction = checkNakedTuple(sudoku, 3, i, ISudoku.GroupType.ROW);
@@ -67,8 +67,8 @@ public class NakedTechnique {
         return Optional.empty();
     }
 
-    //https://www.sudokuwiki.org/Naked_Candidates#NP
-    //Section: Naked Quads
+    // https://www.sudokuwiki.org/Naked_Candidates#NP
+    // Section: Naked Quads
     public static Optional<TechniqueAction> nakedQuad(ISudoku sudoku) {
         for(int i=0;i<ISudoku.SUDOKU_SIZE; i++){
             TechniqueAction techniqueAction = checkNakedTuple(sudoku, 4, i, ISudoku.GroupType.ROW);
