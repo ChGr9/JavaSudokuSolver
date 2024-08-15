@@ -22,20 +22,20 @@ public class WingTechnique {
         List<Integer> cellIndices;
     }
 
-    //https://www.sudokuwiki.org/X_Wing_Strategy
-    //Section: X-Wing
+    // https://www.sudokuwiki.org/X_Wing_Strategy
+    // X-Wing
     public static Optional<TechniqueAction> xWing(ISudoku sudoku) {
         return checkFishStructure(sudoku, 2);
     }
 
-    //https://www.sudokuwiki.org/Sword_Fish_Strategy
-    //Section: Swordfish
+    // https://www.sudokuwiki.org/Sword_Fish_Strategy
+    // Swordfish
     public static Optional<TechniqueAction> swordfish(ISudoku sudoku) {
         return checkFishStructure(sudoku, 3);
     }
 
-    //https://www.sudokuwiki.org/Jelly_Fish_Strategy
-    //Section: Jellyfish
+    // https://www.sudokuwiki.org/Jelly_Fish_Strategy
+    // Jellyfish
     public static Optional<TechniqueAction> jellyfish(ISudoku sudoku) {
         return checkFishStructure(sudoku, 4);
     }
@@ -146,8 +146,8 @@ public class WingTechnique {
         return map;
     }
 
-    //https://www.sudokuwiki.org/Y_Wing_Strategy
-    //Section: Y-Wing
+    // https://www.sudokuwiki.org/Y_Wing_Strategy
+    // Y-Wing
     public static Optional<TechniqueAction> yWing(ISudoku sudoku) {
         Map<ICell, Set<ICell>> peerMap = new HashMap<>();
 
@@ -202,8 +202,8 @@ public class WingTechnique {
     }
 
 
-    //https://www.sudokuwiki.org/XYZ_Wing
-    //Section: XYZ-Wing
+    // https://www.sudokuwiki.org/XYZ_Wing
+    // XYZ-Wing
     public static Optional<TechniqueAction> xyzWing(ISudoku sudoku){
         Map<ICell, Set<ICell>> peerMap = new HashMap<>();
 
@@ -258,8 +258,8 @@ public class WingTechnique {
         return Optional.empty();
     }
 
-    //https://www.sudokuwiki.org/WXYZ_Wing
-    //Section: WXYZ-Wing
+    // https://www.sudokuwiki.org/WXYZ_Wing
+    // WXYZ-Wing
     public static Optional<TechniqueAction> wxyzWing(ISudoku sudoku) {
         for(int i = 0; i<ISudoku.SUDOKU_SIZE; i++){
             Optional<TechniqueAction> techniqueAction = checkwxyzWing(sudoku, i, ISudoku.GroupType.ROW);
@@ -396,7 +396,7 @@ public class WingTechnique {
     }
 
     // https://www.sudokuwiki.org/Finned_X_Wing
-    // Section: Finned X-Wing
+    // Finned X-Wing
     public static Optional<TechniqueAction> finnedXWing(ISudoku sudoku) {
         return checkFinStructure(sudoku, 2);
     }

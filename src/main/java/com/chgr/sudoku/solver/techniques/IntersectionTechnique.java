@@ -14,8 +14,8 @@ import java.util.stream.Stream;
 
 public class IntersectionTechnique {
 
-    //https://www.sudokuwiki.org/Intersection_Removal#IR
-    //Section: Pointing Pairs, Pointing Triples
+    // https://www.sudokuwiki.org/Intersection_Removal#IR
+    // Section: Pointing Pairs, Pointing Triples
     public static Optional<TechniqueAction> pointingTuple(ISudoku sudoku) {
 
         for (int squareIndex = 0; squareIndex < ISudoku.SUDOKU_SIZE; squareIndex++) {
@@ -110,8 +110,8 @@ public class IntersectionTechnique {
                 .collect(Collectors.toSet());
     }
 
-    //https://www.sudokuwiki.org/Intersection_Removal#IR
-    //Section: Box Line Reduction
+    // https://www.sudokuwiki.org/Intersection_Removal#IR
+    // Section: Box Line Reduction
     public static Optional<TechniqueAction> boxLineReduction(ISudoku sudoku) {
         for (int i = 0; i < Sudoku.SUDOKU_SIZE; i++) {
             TechniqueAction techniqueAction = checkBoxLineReduction(sudoku, i, true);
@@ -176,9 +176,9 @@ public class IntersectionTechnique {
                 .build();
     }
 
-    //https://www.sudokuwiki.org/Fireworks
-    //Section: Triple Firework
-    //Did not implement Quadruple Firework as it is a very rare case and implementing wouldn't be worth it since other techniques can be used to substitute it
+    // https://www.sudokuwiki.org/Fireworks
+    // Section: Triple Firework
+    // Did not implement Quadruple Firework as it is a very rare case and implementing wouldn't be worth it since other techniques can be used to substitute it
     public static Optional<TechniqueAction> firework(ISudoku sudoku) {
         List<ICell> possibleCells = sudoku.getEmptyCells().stream()
                 .filter(cell -> cell.getCandidates().size() >= 3)
@@ -249,9 +249,9 @@ public class IntersectionTechnique {
         return ranges;
     }
 
-    //https://www.sudokuwiki.org/Aligned_Pair_Exclusion
-    //Section: Aligned Pair Exclusion
-    //Note no tests were written for this method as it triggers for several cells and it is hard to test since each execution can have different but correct results
+    // https://www.sudokuwiki.org/Aligned_Pair_Exclusion
+    // Aligned Pair Exclusion
+    // Note no tests were written for this method as it triggers for several cells and it is hard to test since each execution can have different but correct results
     public static Optional<TechniqueAction> alignedPairExclusion(ISudoku sudoku) {
         Set<ICell> emptyCells = sudoku.getEmptyCells();
         for (ICell cell : emptyCells) {
