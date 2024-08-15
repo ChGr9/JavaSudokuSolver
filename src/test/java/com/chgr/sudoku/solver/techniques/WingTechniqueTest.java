@@ -1,6 +1,7 @@
 package com.chgr.sudoku.solver.techniques;
 
 import com.chgr.sudoku.models.TechniqueAction;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -144,6 +145,29 @@ class WingTechniqueTest extends BaseTechniqueTest {
         int i;
         for (i = 0; i < technique.maxRepetitions; i++) {
             Optional<TechniqueAction> result = WingTechnique.wxyzWing(sudoku);
+            if (result.isEmpty())
+                break;
+            result.get().apply(sudoku);
+        }
+        assertTrue(technique.repetitions.contains(i));
+        assertChecksMatch(sudoku, technique.checks);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    void finnedXWing(int fileNumber) throws Exception {
+        URL url = WingTechniqueTest.class.getResource(String.format("/techniques/finnedXWing%d.yml", fileNumber));
+        assertNotNull(url);
+
+        TechniqueEntity technique = mapper.readValue(url, TechniqueEntity.class);
+        assertNotNull(technique);
+        assertNotNull(technique.grid);
+
+        loadSudoku(technique);
+
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
+            Optional<TechniqueAction> result = WingTechnique.finnedXWing(sudoku);
             if (result.isEmpty())
                 break;
             result.get().apply(sudoku);

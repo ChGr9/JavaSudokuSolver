@@ -4,10 +4,10 @@ import com.chgr.sudoku.models.ICell;
 import com.chgr.sudoku.models.ISudoku;
 import com.chgr.sudoku.models.Pos;
 import com.chgr.sudoku.models.TechniqueAction;
+import com.chgr.sudoku.utils.CellUtils;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import org.apache.commons.math3.util.Combinations;
-import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
@@ -25,58 +25,41 @@ public class WingTechnique {
     //https://www.sudokuwiki.org/X_Wing_Strategy
     //Section: X-Wing
     public static Optional<TechniqueAction> xWing(ISudoku sudoku) {
-        return checkFinStructure(sudoku, 2);
+        return checkFishStructure(sudoku, 2);
     }
 
     //https://www.sudokuwiki.org/Sword_Fish_Strategy
     //Section: Swordfish
     public static Optional<TechniqueAction> swordfish(ISudoku sudoku) {
-        return checkFinStructure(sudoku, 3);
+        return checkFishStructure(sudoku, 3);
     }
 
     //https://www.sudokuwiki.org/Jelly_Fish_Strategy
     //Section: Jellyfish
     public static Optional<TechniqueAction> jellyfish(ISudoku sudoku) {
-        return checkFinStructure(sudoku, 4);
+        return checkFishStructure(sudoku, 4);
     }
 
-    private static Optional<TechniqueAction> checkFinStructure(ISudoku sudoku, int combSize) {
-        Optional<TechniqueAction> techniqueAction = checkFin(sudoku, true, combSize);
+    private static Optional<TechniqueAction> checkFishStructure(ISudoku sudoku, int combSize) {
+        Optional<TechniqueAction> techniqueAction = checkFish(sudoku, true, combSize);
         if (techniqueAction.isPresent())
             return techniqueAction;
-        return checkFin(sudoku, false, combSize);
+        return checkFish(sudoku, false, combSize);
     }
 
-    private static Optional<TechniqueAction> checkFin(ISudoku sudoku, boolean isRow, int combSize) {
-        Map<Integer, List<PossibleWing>> map = new HashMap<>();
-
-        for (int i = 0; i < ISudoku.SUDOKU_SIZE; i++) {
-            List<ICell> group = Arrays.stream((isRow ? sudoku.getRow(i) : sudoku.getColumn(i)))
-                    .filter(cell -> cell.getValue() == ICell.EMPTY)
-                    .toList();
-            for (int j = 1; j <= ISudoku.SUDOKU_SIZE; j++) {
-                int finalJ = j;
-                List<ICell> cellsContainingCandidate = group.stream()
-                        .filter(cell -> cell.getCandidates().contains(finalJ))
-                        .toList();
-                if (cellsContainingCandidate.size() >= 2 && cellsContainingCandidate.size() <= combSize) {
-                    PossibleWing possibleWing = new PossibleWing();
-                    possibleWing.rowOrColIndex = i;
-                    possibleWing.cellIndices = cellsContainingCandidate.stream()
-                            .map(cell -> isRow ? cell.getX() : cell.getY())
-                            .collect(Collectors.toList());
-                    map.computeIfAbsent(j, _ -> new ArrayList<>()).add(possibleWing);
-                }
-            }
-        }
+    private static Optional<TechniqueAction> checkFish(ISudoku sudoku, boolean isRow, int combSize) {
+        Map<Integer, List<PossibleWing>> map = generatePossibleWings(sudoku, isRow, combSize);
 
         for (Map.Entry<Integer, List<PossibleWing>> entry : map.entrySet()) {
             List<PossibleWing> possibleWings = entry.getValue();
 
             if (possibleWings.size() >= combSize) {
-                List<List<PossibleWing>> combinations = generateCombinations(possibleWings, combSize);
+                Combinations combinations = new Combinations(possibleWings.size(), combSize);
 
-                for (List<PossibleWing> combination : combinations) {
+                for (int[] comb : combinations) {
+                    List<PossibleWing> combination = Arrays.stream(comb)
+                            .mapToObj(possibleWings::get)
+                            .toList();
                     Set<Integer> groupIndices = combination.stream()
                             .map(PossibleWing::getCellIndices)
                             .flatMap(List::stream)
@@ -106,23 +89,23 @@ public class WingTechnique {
                                 case 2 -> "X-Wing";
                                 case 3 -> "Swordfish";
                                 case 4 -> "Jellyfish";
-                                default -> "Fin";
+                                default -> "Fish";
                             };
 
-                            Set<Pos> finCells = groupIndices.stream()
-                                    .flatMap(index -> combination.stream().map(comb -> isRow ?
-                                            new Pos(index, comb.rowOrColIndex) :
-                                            new Pos(comb.rowOrColIndex, index)
+                            Set<Pos> fishCells = groupIndices.stream()
+                                    .flatMap(index -> combination.stream().map(combin -> isRow ?
+                                            new Pos(index, combin.rowOrColIndex) :
+                                            new Pos(combin.rowOrColIndex, index)
                                     )).collect(Collectors.toSet());
 
                             return Optional.of(TechniqueAction.builder()
                                     .name(name)
-                                    .description("Cells: " + finCells.stream().map(Pos::toString).collect(Collectors.joining(", "))
+                                    .description("Cells: " + fishCells.stream().map(Pos::toString).collect(Collectors.joining(", "))
                                             + " form a " + name + " on " + (isRow? "rows " : "columns ")
                                             + combinationIndices.stream().map(String::valueOf).collect(Collectors.joining(", ")))
                                     .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, _ -> Set.of(entry.getKey()))))
                                     .colorings(List.of(
-                                            TechniqueAction.CellColoring.candidatesColoring(finCells, Color.GREEN, Set.of(entry.getKey())),
+                                            TechniqueAction.CellColoring.candidatesColoring(fishCells, Color.ORANGE, Set.of(entry.getKey())),
                                             TechniqueAction.CellColoring.groupColoring(combinationIndices.stream().map(index -> isRow ?
                                                     Pair.create(new Pos(0, index), new Pos(8, index)) :
                                                     Pair.create(new Pos(index, 0), new Pos(index, 8))
@@ -138,18 +121,30 @@ public class WingTechnique {
         return Optional.empty();
     }
 
-    private static List<List<PossibleWing>> generateCombinations(List<PossibleWing> wings, int combSize) {
-        List<List<PossibleWing>> allCombinations = new ArrayList<>();
+    private static Map<Integer, List<PossibleWing>> generatePossibleWings(ISudoku sudoku, boolean isRow, int combSize) {
+        Map<Integer, List<PossibleWing>> map = new HashMap<>();
 
-        Iterator<int[]> iterator = CombinatoricsUtils.combinationsIterator(wings.size(), combSize);
-        while (iterator.hasNext()) {
-            int[] combinationIndices = iterator.next();
-            allCombinations.add(Arrays.stream(combinationIndices).mapToObj(wings::get).toList());
+        for (int i = 0; i < ISudoku.SUDOKU_SIZE; i++) {
+            List<ICell> group = Arrays.stream((isRow ? sudoku.getRow(i) : sudoku.getColumn(i)))
+                    .filter(cell -> cell.getValue() == ICell.EMPTY)
+                    .toList();
+            for (int j = 1; j <= ISudoku.SUDOKU_SIZE; j++) {
+                int finalJ = j;
+                List<ICell> cellsContainingCandidate = group.stream()
+                        .filter(cell -> cell.getCandidates().contains(finalJ))
+                        .toList();
+                if (cellsContainingCandidate.size() >= 2 && cellsContainingCandidate.size() <= combSize) {
+                    PossibleWing possibleWing = new PossibleWing();
+                    possibleWing.rowOrColIndex = i;
+                    possibleWing.cellIndices = cellsContainingCandidate.stream()
+                            .map(cell -> isRow ? cell.getX() : cell.getY())
+                            .collect(Collectors.toList());
+                    map.computeIfAbsent(j, _ -> new ArrayList<>()).add(possibleWing);
+                }
+            }
         }
-
-        return allCombinations;
+        return map;
     }
-
 
     //https://www.sudokuwiki.org/Y_Wing_Strategy
     //Section: Y-Wing
@@ -157,7 +152,7 @@ public class WingTechnique {
         Map<ICell, Set<ICell>> peerMap = new HashMap<>();
 
         for (ICell cell : sudoku.getEmptyCells()) {
-            peerMap.put(cell, getPeers(sudoku, cell.getY(), cell.getX()));
+            peerMap.put(cell, CellUtils.getPeers(sudoku, cell));
         }
 
         for (ICell pivot : sudoku.getEmptyCells()) {
@@ -213,7 +208,7 @@ public class WingTechnique {
         Map<ICell, Set<ICell>> peerMap = new HashMap<>();
 
         for (ICell cell : sudoku.getEmptyCells()) {
-            peerMap.put(cell, getPeers(sudoku, cell.getY(), cell.getX()));
+            peerMap.put(cell, CellUtils.getPeers(sudoku, cell));
         }
 
         for (ICell pivot : sudoku.getEmptyCells()) {
@@ -374,13 +369,13 @@ public class WingTechnique {
             for (ICell cell4 : possibleCell4) {
                 Integer candidateToRemove = cell4.getCandidates().stream().filter(candidate -> uniqueCandidate != candidate).findFirst().orElseThrow(() -> new RuntimeException("Invalid state"));
                 Set<ICell> allWingCells = Stream.concat(Stream.concat(pivotGroup.stream(), wingGroup.stream()), Stream.of(cell4)).collect(Collectors.toSet());
-                Set<ICell> cellsWithCandidatToRemove = allWingCells.stream()
+                Set<ICell> cellsWithCandidateToRemove = allWingCells.stream()
                         .filter(cell -> cell.getCandidates().contains(candidateToRemove))
                         .collect(Collectors.toSet());
-                Iterator<ICell> iterator = cellsWithCandidatToRemove.iterator();
-                Set<ICell> affectedCells = getPeers(sudoku, iterator.next());
+                Iterator<ICell> iterator = cellsWithCandidateToRemove.iterator();
+                Set<ICell> affectedCells = CellUtils.getPeers(sudoku, iterator.next());
                 while (iterator.hasNext()) {
-                    affectedCells.retainAll(getPeers(sudoku, iterator.next()));
+                    affectedCells.retainAll(CellUtils.getPeers(sudoku, iterator.next()));
                 }
                 affectedCells.removeIf(cell -> !cell.getCandidates().contains(candidateToRemove));
                 if (affectedCells.isEmpty())
@@ -400,17 +395,95 @@ public class WingTechnique {
         return Optional.empty();
     }
 
-    private static Set<ICell> getPeers(ISudoku sudoku, ICell cell) {
-        return getPeers(sudoku, cell.getY(), cell.getX());
+    // https://www.sudokuwiki.org/Finned_X_Wing
+    // Section: Finned X-Wing
+    public static Optional<TechniqueAction> finnedXWing(ISudoku sudoku) {
+        return checkFinStructure(sudoku, 2);
     }
 
-    private static Set<ICell> getPeers(ISudoku sudoku, int row, int col) {
-        Set<ICell> peers = new LinkedHashSet<>();
-        peers.addAll(Set.of(sudoku.getColumn(col)));
-        peers.addAll(Set.of(sudoku.getRow(row)));
-        peers.addAll(Set.of(sudoku.getSquare(col, row)));
-        peers.removeIf(cell -> cell.getX() == col && cell.getY() == row);
-        return peers;
+    private static Optional<TechniqueAction> checkFinStructure(ISudoku sudoku, int combSize) {
+        Optional<TechniqueAction> techniqueAction = checkFin(sudoku, true, combSize);
+        if (techniqueAction.isPresent())
+            return techniqueAction;
+        return checkFin(sudoku, false, combSize);
+    }
+
+    private static Optional<TechniqueAction> checkFin(ISudoku sudoku, boolean isRow, int combSize) {
+        Map<Integer, List<PossibleWing>> map = generatePossibleWings(sudoku, isRow, combSize);
+
+        for (Map.Entry<Integer, List<PossibleWing>> entry : map.entrySet()){
+            List<PossibleWing> possibleWings = entry.getValue();
+
+            if(possibleWings.size() >= combSize - 1){
+                Combinations combinations = new Combinations(possibleWings.size(), combSize - 1);
+
+                for (int[] comb : combinations) {
+                    List<PossibleWing> combination = Arrays.stream(comb)
+                            .mapToObj(possibleWings::get)
+                            .toList();
+                    Set<Integer> groupIndices = combination.stream()
+                            .map(PossibleWing::getCellIndices)
+                            .flatMap(List::stream)
+                            .collect(Collectors.toSet());
+                    Set<Integer> rowOrColIndices = combination.stream()
+                            .map(PossibleWing::getRowOrColIndex)
+                            .collect(Collectors.toSet());
+
+                    if(groupIndices.size() == combSize){
+                        for(int i = 0; i < ISudoku.SUDOKU_SIZE; i++){
+                            List<ICell> group = Arrays.stream((isRow ? sudoku.getRow(i) : sudoku.getColumn(i)))
+                                    .filter(cell -> cell.getValue() != ICell.EMPTY || cell.getCandidates().contains(entry.getKey()))
+                                    .toList();
+
+                            Set<ICell> fishCells = group.stream()
+                                    .filter(cell -> groupIndices.contains(isRow ? cell.getX() : cell.getY()))
+                                    .collect(Collectors.toSet());
+                            if(fishCells.size() == combSize && fishCells.stream().anyMatch(cell -> cell.getCandidates().contains(entry.getKey()))){
+                                List<ICell> finCells = group.stream()
+                                        .filter(cell -> !groupIndices.contains(isRow ? cell.getX() : cell.getY()) && cell.getValue() == ICell.EMPTY)
+                                        .toList();
+                                if(finCells.stream().map(ICell::getSquare).distinct().count() != 1)
+                                    continue;
+                                int finalI = i;
+                                Set<Pos> affectedPos = Arrays.stream(sudoku.getSquare(finCells.getFirst().getSquare()))
+                                        .filter(cell -> groupIndices.contains(isRow ? cell.getX() : cell.getY()) && !rowOrColIndices.contains(isRow ? cell.getY() : cell.getX()) && finalI != (isRow ? cell.getY() : cell.getX()))
+                                        .filter(cell -> cell.getValue() == ICell.EMPTY && cell.getCandidates().contains(entry.getKey()))
+                                        .map(ICell::getPos)
+                                        .collect(Collectors.toSet());
+
+                                if(!affectedPos.isEmpty()) {
+                                    String name = switch (combSize) {
+                                        case 2 -> "Finned X-Wing";
+                                        case 3 -> "Finned Swordfish";
+                                        default -> "Finned Fish";
+                                    };
+
+                                    Set<Pos> fishPos = groupIndices.stream()
+                                            .flatMap(index -> rowOrColIndices.stream().map(rowOrColIndex -> isRow ?
+                                                    new Pos(index, rowOrColIndex) :
+                                                    new Pos(rowOrColIndex, index)
+                                            )).collect(Collectors.toSet());
+                                    fishPos.addAll(fishCells.stream().map(ICell::getPos).collect(Collectors.toSet()));
+
+                                    return Optional.of(TechniqueAction.builder()
+                                            .name(name)
+                                            .description("Cells: " + groupIndices.stream().map(String::valueOf).collect(Collectors.joining(", "))
+                                                    + " form a Finned X-Wing on " + (isRow ? "rows " : "columns ") + rowOrColIndices.stream().map(String::valueOf).collect(Collectors.joining(", ")))
+                                            .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, _ -> Set.of(entry.getKey()))))
+                                            .colorings(List.of(
+                                                    TechniqueAction.CellColoring.candidatesColoring(fishPos, Color.YELLOW, Set.of(entry.getKey())),
+                                                    TechniqueAction.CellColoring.candidatesColoring(finCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.ORANGE, Set.of(entry.getKey())),
+                                                    TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, Set.of(entry.getKey()))
+                                            ))
+                                            .build());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     private static boolean isNotPeer(int x1, int y1, int x2, int y2) {
