@@ -401,6 +401,12 @@ public class WingTechnique {
         return checkFinStructure(sudoku, 2);
     }
 
+    // https://www.sudokuwiki.org/Finned_Swordfish
+    // Finned Swordfish
+    public static Optional<TechniqueAction> finnedSwordfish(ISudoku sudoku) {
+        return checkFinStructure(sudoku, 3);
+    }
+
     private static Optional<TechniqueAction> checkFinStructure(ISudoku sudoku, int combSize) {
         Optional<TechniqueAction> techniqueAction = checkFin(sudoku, true, combSize);
         if (techniqueAction.isPresent())

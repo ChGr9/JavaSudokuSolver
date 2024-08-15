@@ -175,4 +175,27 @@ class WingTechniqueTest extends BaseTechniqueTest {
         assertTrue(technique.repetitions.contains(i));
         assertChecksMatch(sudoku, technique.checks);
     }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3})
+    void finnedSwordfish(int fileNumber) throws Exception {
+        URL url = WingTechniqueTest.class.getResource(String.format("/techniques/finnedSwordfish%d.yml", fileNumber));
+        assertNotNull(url);
+
+        TechniqueEntity technique = mapper.readValue(url, TechniqueEntity.class);
+        assertNotNull(technique);
+        assertNotNull(technique.grid);
+
+        loadSudoku(technique);
+
+        int i;
+        for (i = 0; i < technique.maxRepetitions; i++) {
+            Optional<TechniqueAction> result = WingTechnique.finnedSwordfish(sudoku);
+            if (result.isEmpty())
+                break;
+            result.get().apply(sudoku);
+        }
+        assertTrue(technique.repetitions.contains(i));
+        assertChecksMatch(sudoku, technique.checks);
+    }
 }

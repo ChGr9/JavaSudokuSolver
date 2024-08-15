@@ -150,7 +150,7 @@ public class NakedTechnique {
                 return TechniqueAction.builder()
                         .name("Naked " + type)
                         .description("Cells " + combination.stream().map(ICell::getPos).map(Pos::toString).collect(Collectors.joining(", ")) + " form a naked " + type + " in" + groupType.name() + " for the candidates " + combinedCandidates.stream().map(String::valueOf).collect(Collectors.joining(", ")))
-                        .removeCandidatesMap(affectedCells.stream().collect(Collectors.toMap(ICell::getPos, c -> combinedCandidates)))
+                        .removeCandidatesMap(affectedCells.stream().collect(Collectors.toMap(ICell::getPos, _ -> combinedCandidates)))
                         .colorings(List.of(
                                 TechniqueAction.CellColoring.candidatesColoring(combination.stream().map(ICell::getPos).toList(), Color.GREEN, combinedCandidates),
                                 TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, combinedCandidates)
