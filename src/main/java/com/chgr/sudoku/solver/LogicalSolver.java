@@ -61,7 +61,8 @@ public class LogicalSolver extends Task<Boolean> {
             RectangleTechnique::hiddenUniqueRectangle,
             WingTechnique::wxyzWing,
             IntersectionTechnique::alignedPairExclusion,
-            ChainTechnique::groupedXCycle
+            ChainTechnique::groupedXCycle,
+            WingTechnique::finnedXWing
     );
 
     public boolean solve(){
