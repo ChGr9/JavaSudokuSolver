@@ -209,15 +209,17 @@ public class Sudoku extends Pane implements ISudoku {
         this.getChildren().removeIf(node -> node instanceof Rectangle);
     }
 
-    public void colorLine(Pos first, Pos second, int candidate, Color color, boolean isDoubleLine) {
-        Point2D start = getCenter(first);
-        Point2D end = getCenter(second);
+    public void colorLine(PosCandidate first, PosCandidate second, Color color, boolean isDoubleLine) {
+        Point2D start = getCenter(first.pos());
+        Point2D end = getCenter(second.pos());
 
-        int xOffset = (candidate - 1) % 3 - 1;
-        int yOffset = (candidate - 1) / 3 - 1;
+        int startXOffset = (first.candidate() - 1) % 3 - 1;
+        int startYOffset = (first.candidate() - 1) / 3 - 1;
+        int endXOffset = (second.candidate() - 1) % 3 - 1;
+        int endYOffset = (second.candidate() - 1) / 3 - 1;
 
-        start = start.add(xOffset * Cell.SIZE * 0.6f / 2f, yOffset * Cell.SIZE * 0.6f / 2f);
-        end = end.add(xOffset * Cell.SIZE * 0.6f / 2f, yOffset * Cell.SIZE * 0.6f / 2f);
+        start = start.add(startXOffset * Cell.SIZE * 0.6f / 2f, startYOffset * Cell.SIZE * 0.6f / 2f);
+        end = end.add(endXOffset * Cell.SIZE * 0.6f / 2f, endYOffset * Cell.SIZE * 0.6f / 2f);
 
         Line line = new Line(start.getX(), start.getY(), end.getX(), end.getY());
         line.setStroke(color);

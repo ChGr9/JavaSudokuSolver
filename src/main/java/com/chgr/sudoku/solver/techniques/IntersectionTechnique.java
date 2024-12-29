@@ -90,10 +90,10 @@ public class IntersectionTechnique {
                 .name("Pointing tuple")
                 .description("Cells " + pointingCells.stream().map(Pos::toString).collect(Collectors.joining(", ")) + " are the only cells in square " + squareIndex + " which have the candidate"+(candidatesToBeRemoved.size()==1?"":"s") + distinctCandidates.stream().map(String::valueOf).collect(Collectors.joining(", ")) + " this creates a pointing tuple in " + (isRow ? "row " : "column ") + tupleAxis + " for the candidates " + distinctCandidates.stream().map(String::valueOf).collect(Collectors.joining(", ")))
                 .removeCandidatesMap(affectedCells.stream().map(ICell::getPos).collect(Collectors.toMap(pos -> pos, _ -> candidatesToBeRemoved)))
-                .colorings(List.of(
-                        TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
-                        TechniqueAction.CellColoring.candidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
-                        TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(
+                .cellColorings(List.of(
+                        new TechniqueAction.CandidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
+                        new TechniqueAction.CandidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
+                        new TechniqueAction.GroupColoring(List.of(Pair.create(
                                 new Pos(square[0].getX()/3*3, square[0].getY()/3*3),
                                 new Pos(square[0].getX()/3*3+2, square[0].getY()/3*3+2)
                         )), Color.YELLOW)
@@ -165,10 +165,10 @@ public class IntersectionTechnique {
                 .name("Box line reduction")
                 .description("Cells " + pointingCells.stream().map(Pos::toString).collect(Collectors.joining(", ")) + " are the only cells in " + (isRow ? "row " : "column ") + (isRow ? firstCell.getY() : firstCell.getX()) + " which have the candidate" + (candidatesToBeRemoved.size() == 1 ? "" : "s") + candidatesToBeRemoved.stream().map(String::valueOf).collect(Collectors.joining(", ")) + " this creates a box line reduction in square " + index + " for the candidates " + candidatesToBeRemoved.stream().map(String::valueOf).collect(Collectors.joining(", ")))
                 .removeCandidatesMap(affectedCells.stream().map(ICell::getPos).collect(Collectors.toMap(pos -> pos, _ -> candidatesToBeRemoved)))
-                .colorings(List.of(
-                        TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
-                        TechniqueAction.CellColoring.candidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
-                        TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                .cellColorings(List.of(
+                        new TechniqueAction.CandidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToBeRemoved),
+                        new TechniqueAction.CandidatesColoring(pointingCells, Color.GREEN, candidatesToBeRemoved),
+                        new TechniqueAction.GroupColoring(List.of(isRow ?
                                         Pair.create(new Pos(0, firstCell.getY()), new Pos(8, firstCell.getY())) :
                                         Pair.create(new Pos(firstCell.getX(), 0), new Pos(firstCell.getX(), 8)))
                                 , Color.YELLOW)
@@ -204,13 +204,13 @@ public class IntersectionTechnique {
                 if(otherCandidateMap.isEmpty())
                     continue;
                 List<TechniqueAction.CellColoring> colorings = new ArrayList<>();
-                otherCandidateMap.forEach((pos, otherCandidates) -> colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(pos), Color.RED, otherCandidates)));
-                colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos(), matchingRowCells.getFirst().getPos(), matchingColumnCells.getFirst().getPos()), Color.GREEN, combinationCandidates));
-                colorings.add(TechniqueAction.CellColoring.groupColoring(
+                otherCandidateMap.forEach((pos, otherCandidates) -> colorings.add(new TechniqueAction.CandidatesColoring(List.of(pos), Color.RED, otherCandidates)));
+                colorings.add(new TechniqueAction.CandidatesColoring(List.of(cell.getPos(), matchingRowCells.getFirst().getPos(), matchingColumnCells.getFirst().getPos()), Color.GREEN, combinationCandidates));
+                colorings.add(new TechniqueAction.GroupColoring(
                         getConsecutiveRanges(rowCells.stream().map(ICell::getX).filter(x -> x != matchingRowCells.getFirst().getX()).toList())
                                 .stream().map(pair -> Pair.create(new Pos(pair.getFirst(), cell.getY()), new Pos(pair.getSecond(), cell.getY()))).toList()
                         , Color.BLUE));
-                colorings.add(TechniqueAction.CellColoring.groupColoring(
+                colorings.add(new TechniqueAction.GroupColoring(
                         getConsecutiveRanges(columnCells.stream().map(ICell::getY).filter(y -> y != matchingColumnCells.getFirst().getY()).toList())
                                 .stream().map(pair -> Pair.create(new Pos(cell.getX(), pair.getFirst()), new Pos(cell.getX(), pair.getSecond()))).toList()
                         , Color.BLUE));
@@ -224,7 +224,7 @@ public class IntersectionTechnique {
                                 cell.getPos()
                                 ))
                         .removeCandidatesMap(otherCandidateMap)
-                        .colorings(colorings).build());
+                        .cellColorings(colorings).build());
             }
         }
         return Optional.empty();
@@ -295,10 +295,10 @@ public class IntersectionTechnique {
                         commonPeers.stream().map(ICell::getPos),
                         candidatesToRemove))
                 .removeCandidatesMap(Map.of(mainCell.getPos(), new HashSet<>(candidatesToRemove)))
-                .colorings(List.of(
-                        TechniqueAction.CellColoring.candidatesColoring(List.of(mainCell.getPos()), Color.RED, candidatesToRemove),
-                        TechniqueAction.CellColoring.groupColoring(commonPeers.stream().map(ICell::getPos).map(pos -> Pair.create(pos, pos)).toList(), Color.YELLOW),
-                        TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(mainCell.getPos(), mainCell.getPos()), Pair.create(otherCell.getPos(), otherCell.getPos())), Color.GREY)
+                .cellColorings(List.of(
+                        new TechniqueAction.CandidatesColoring(List.of(mainCell.getPos()), Color.RED, candidatesToRemove),
+                        new TechniqueAction.GroupColoring(commonPeers.stream().map(ICell::getPos).map(pos -> Pair.create(pos, pos)).toList(), Color.YELLOW),
+                        new TechniqueAction.GroupColoring(List.of(Pair.create(mainCell.getPos(), mainCell.getPos()), Pair.create(otherCell.getPos(), otherCell.getPos())), Color.GREY)
                 ))
                 .build());
     }
