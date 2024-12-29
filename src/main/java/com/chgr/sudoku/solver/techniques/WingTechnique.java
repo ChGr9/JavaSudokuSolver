@@ -104,13 +104,13 @@ public class WingTechnique {
                                             + " form a " + name + " on " + (isRow? "rows " : "columns ")
                                             + combinationIndices.stream().map(String::valueOf).collect(Collectors.joining(", ")))
                                     .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, _ -> Set.of(entry.getKey()))))
-                                    .colorings(List.of(
-                                            TechniqueAction.CellColoring.candidatesColoring(fishCells, Color.ORANGE, Set.of(entry.getKey())),
-                                            TechniqueAction.CellColoring.groupColoring(combinationIndices.stream().map(index -> isRow ?
+                                    .cellColorings(List.of(
+                                            new TechniqueAction.CandidatesColoring(fishCells, Color.ORANGE, Set.of(entry.getKey())),
+                                            new TechniqueAction.GroupColoring(combinationIndices.stream().map(index -> isRow ?
                                                     Pair.create(new Pos(0, index), new Pos(8, index)) :
                                                     Pair.create(new Pos(index, 0), new Pos(index, 8))
                                             ).toList(), Color.YELLOW),
-                                            TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, Set.of(entry.getKey()))
+                                            new TechniqueAction.CandidatesColoring(affectedPos, Color.RED, Set.of(entry.getKey()))
                                     ))
                                     .build());
                         }
@@ -185,9 +185,9 @@ public class WingTechnique {
                                                 .description("Cells: " + pivot.getPos() + ", " + wing1.getPos() + ", " + wing2.getPos()
                                                         + " form a Y-Wing on candidates " + A + ", " + B + ", " + C)
                                                 .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, _ -> Set.of(C))))
-                                                .colorings(List.of(
-                                                        TechniqueAction.CellColoring.candidatesColoring(Set.of(pivot.getPos(), wing1.getPos(), wing2.getPos()), Color.GREEN, Set.of(A, B, C)),
-                                                        TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, Set.of(C))
+                                                .cellColorings(List.of(
+                                                        new TechniqueAction.CandidatesColoring(Set.of(pivot.getPos(), wing1.getPos(), wing2.getPos()), Color.GREEN, Set.of(A, B, C)),
+                                                        new TechniqueAction.CandidatesColoring(affectedPos, Color.RED, Set.of(C))
                                                 ))
                                                 .build());
                                     }
@@ -243,10 +243,10 @@ public class WingTechnique {
                                             .description("Cells: " + pivot.getPos() + ", " + wing1.getPos() + ", " + wing2.getPos()
                                                     + " form a XYZ-Wing on candidates " + allCommonCandidates.iterator().next())
                                             .removeCandidatesMap(toRemove.stream().collect(Collectors.toMap(pos -> pos, _ -> Set.of(candidateToRemove))))
-                                            .colorings(List.of(
-                                                    TechniqueAction.CellColoring.candidatesColoring(Set.of(pivot.getPos()), Color.YELLOW, allCommonCandidates),
-                                                    TechniqueAction.CellColoring.candidatesColoring(Set.of(wing1.getPos(), wing2.getPos()), Color.GREEN, allCommonCandidates),
-                                                    TechniqueAction.CellColoring.candidatesColoring(toRemove, Color.RED, Set.of(candidateToRemove))
+                                            .cellColorings(List.of(
+                                                    new TechniqueAction.CandidatesColoring(Set.of(pivot.getPos()), Color.YELLOW, allCommonCandidates),
+                                                    new TechniqueAction.CandidatesColoring(Set.of(wing1.getPos(), wing2.getPos()), Color.GREEN, allCommonCandidates),
+                                                    new TechniqueAction.CandidatesColoring(toRemove, Color.RED, Set.of(candidateToRemove))
                                             )).build());
                                 }
                             }
@@ -385,9 +385,9 @@ public class WingTechnique {
                         .description("Cells: " + allWingCells.stream().map(ICell::getPos).map(Pos::toString).collect(Collectors.joining(", "))
                                 + " form a WXYZ-Wing on candidates " + candidateToRemove)
                         .removeCandidatesMap(affectedCells.stream().map(ICell::getPos).collect(Collectors.toMap(pos -> pos, _ -> Set.of(candidateToRemove))))
-                        .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(allWingCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.YELLOW, candidates),
-                                TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(candidateToRemove))
+                        .cellColorings(List.of(
+                                new TechniqueAction.CandidatesColoring(allWingCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.YELLOW, candidates),
+                                new TechniqueAction.CandidatesColoring(affectedCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(candidateToRemove))
                         ))
                         .build());
             }
@@ -476,10 +476,10 @@ public class WingTechnique {
                                             .description("Cells: " + groupIndices.stream().map(String::valueOf).collect(Collectors.joining(", "))
                                                     + " form a Finned X-Wing on " + (isRow ? "rows " : "columns ") + rowOrColIndices.stream().map(String::valueOf).collect(Collectors.joining(", ")))
                                             .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, _ -> Set.of(entry.getKey()))))
-                                            .colorings(List.of(
-                                                    TechniqueAction.CellColoring.candidatesColoring(fishPos, Color.YELLOW, Set.of(entry.getKey())),
-                                                    TechniqueAction.CellColoring.candidatesColoring(finCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.ORANGE, Set.of(entry.getKey())),
-                                                    TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, Set.of(entry.getKey()))
+                                            .cellColorings(List.of(
+                                                    new TechniqueAction.CandidatesColoring(fishPos, Color.YELLOW, Set.of(entry.getKey())),
+                                                    new TechniqueAction.CandidatesColoring(finCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.ORANGE, Set.of(entry.getKey())),
+                                                    new TechniqueAction.CandidatesColoring(affectedPos, Color.RED, Set.of(entry.getKey()))
                                             ))
                                             .build());
                                 }

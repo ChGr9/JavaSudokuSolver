@@ -83,24 +83,24 @@ public class ChainTechnique {
 
                 Set<ICell> colorGroup0 = coloring.entrySet().stream().filter(e -> e.getValue() == 0).map(Map.Entry::getKey).collect(Collectors.toSet());
                 Set<ICell> colorGroup1 = coloring.entrySet().stream().filter(e -> e.getValue() == 1).map(Map.Entry::getKey).collect(Collectors.toSet());
-                List<TechniqueAction.CellColoring> techniqueColoring = new ArrayList<>();
-                techniqueColoring.add(
-                        TechniqueAction.CellColoring.candidatesColoring(
+                List<TechniqueAction.CellColoring> techniqueCellColoring = new ArrayList<>();
+                techniqueCellColoring.add(
+                        new TechniqueAction.CandidatesColoring(
                                 colorGroup0.stream().map(ICell::getPos).collect(Collectors.toSet()),
                                 Color.YELLOW, Set.of(num))
                 );
-                techniqueColoring.add(
-                        TechniqueAction.CellColoring.candidatesColoring(
+                techniqueCellColoring.add(
+                        new TechniqueAction.CandidatesColoring(
                                 colorGroup1.stream().map(ICell::getPos).collect(Collectors.toSet()),
                                 Color.GREEN, Set.of(num))
                 );
-                techniqueColoring.add(
-                        TechniqueAction.CellColoring.lineColoring(linkList, Color.BLUE, num)
+                techniqueCellColoring.add(
+                        new TechniqueAction.LineColoring(linkList, Color.BLUE, num, false)
                 );
-                Optional<TechniqueAction> techniqueAction = hasDuplicateInUnit(colorGroup0, colorGroup1, num, techniqueColoring, "Simple Coloring");
+                Optional<TechniqueAction> techniqueAction = hasDuplicateInUnit(colorGroup0, colorGroup1, num, techniqueCellColoring, "Simple Coloring");
                 if (techniqueAction.isPresent())
                     return techniqueAction;
-                techniqueAction = eliminateFromOutsideNeighboringCells(emptyCells, num, colorGroup0, colorGroup1, coloring.keySet(), techniqueColoring, "Simple Coloring");
+                techniqueAction = eliminateFromOutsideNeighboringCells(emptyCells, num, colorGroup0, colorGroup1, coloring.keySet(), techniqueCellColoring, "Simple Coloring");
                 if (techniqueAction.isPresent())
                     return techniqueAction;
             }
@@ -157,21 +157,21 @@ public class ChainTechnique {
             }
 
             List<Integer> nums = coloring.keySet().stream().map(CellNumPair::getNum).distinct().toList();
-            List<TechniqueAction.CellColoring> techniqueColoring = new ArrayList<>();
-            techniqueColoring.addAll(
+            List<TechniqueAction.CellColoring> techniqueCellColoring = new ArrayList<>();
+            techniqueCellColoring.addAll(
                     coloring.entrySet().stream()
                             .filter(e -> e.getValue() == 0)
-                            .map(entry -> TechniqueAction.CellColoring.candidatesColoring(Set.of(entry.getKey().getCell().getPos()), Color.YELLOW, Set.of(entry.getKey().getNum()))
+                            .map(entry -> new TechniqueAction.CandidatesColoring(Set.of(entry.getKey().getCell().getPos()), Color.YELLOW, Set.of(entry.getKey().getNum()))
                             ).toList());
-            techniqueColoring.addAll(
+            techniqueCellColoring.addAll(
                     coloring.entrySet().stream()
                             .filter(e -> e.getValue() == 1)
-                            .map(entry -> TechniqueAction.CellColoring.candidatesColoring(Set.of(entry.getKey().getCell().getPos()), Color.GREEN, Set.of(entry.getKey().getNum()))
+                            .map(entry -> new TechniqueAction.CandidatesColoring(Set.of(entry.getKey().getCell().getPos()), Color.GREEN, Set.of(entry.getKey().getNum()))
                             ).toList());
-            techniqueColoring.addAll(
+            techniqueCellColoring.addAll(
                     linkList.stream()
                             .filter(pair -> coloring.keySet().stream().anyMatch(cellNumPair -> cellNumPair.getCell().getPos().equals(pair.getFirst().getFirst()) && cellNumPair.getNum() == pair.getSecond()))
-                            .map(pair -> TechniqueAction.CellColoring.lineColoring(List.of(pair.getFirst()), Color.BLUE, pair.getSecond())
+                            .map(pair -> new TechniqueAction.LineColoring(List.of(pair.getFirst()), Color.BLUE, pair.getSecond(), false)
                             ).toList());
             for (int num : nums) {
                 Set<ICell> colorGroup0 = coloring.entrySet().stream()
@@ -188,27 +188,27 @@ public class ChainTechnique {
                         .filter(pair -> pair.getNum() == num)
                         .map(CellNumPair::getCell)
                         .collect(Collectors.toSet());
-                Optional<TechniqueAction> techniqueAction = hasDuplicateInUnit(colorGroup0, colorGroup1, num, techniqueColoring, "3D Medusa");
+                Optional<TechniqueAction> techniqueAction = hasDuplicateInUnit(colorGroup0, colorGroup1, num, techniqueCellColoring, "3D Medusa");
                 if(techniqueAction.isPresent())
                     return techniqueAction;
-                techniqueAction = eliminateFromOutsideNeighboringCells(emptyCells, num, colorGroup0, colorGroup1, group, techniqueColoring, "3D Medusa");
+                techniqueAction = eliminateFromOutsideNeighboringCells(emptyCells, num, colorGroup0, colorGroup1, group, techniqueCellColoring, "3D Medusa");
                 if(techniqueAction.isPresent())
                     return techniqueAction;
             }
             Set<ICell> cells = coloring.keySet().stream().map(CellNumPair::getCell).collect(Collectors.toSet());
-            Optional<TechniqueAction> techniqueAction = hasColorConflictInCell(coloring, cells, techniqueColoring);
+            Optional<TechniqueAction> techniqueAction = hasColorConflictInCell(coloring, cells, techniqueCellColoring);
             if (techniqueAction.isPresent()) return techniqueAction;
-            techniqueAction = eliminateExtraCandidatesFromBicolorCells(coloring, cells, techniqueColoring);
+            techniqueAction = eliminateExtraCandidatesFromBicolorCells(coloring, cells, techniqueCellColoring);
             if (techniqueAction.isPresent()) return techniqueAction;
-            techniqueAction = removeUncoloredDueToUnitAndCellConflict(coloring, cells, techniqueColoring);
+            techniqueAction = removeUncoloredDueToUnitAndCellConflict(coloring, cells, techniqueCellColoring);
             if (techniqueAction.isPresent()) return techniqueAction;
-            techniqueAction = removeUncoloredDueToAllCandidatesSeeSameColor(sudoku, coloring, cells, techniqueColoring);
+            techniqueAction = removeUncoloredDueToAllCandidatesSeeSameColor(sudoku, coloring, cells, techniqueCellColoring);
             if (techniqueAction.isPresent()) return techniqueAction;
         }
         return Optional.empty();
     }
 
-    private static Optional<TechniqueAction> hasColorConflictInCell(Map<CellNumPair, Integer> coloring, Set<ICell> cells, List<TechniqueAction.CellColoring> techniqueColoring) {
+    private static Optional<TechniqueAction> hasColorConflictInCell(Map<CellNumPair, Integer> coloring, Set<ICell> cells, List<TechniqueAction.CellColoring> techniqueCellColoring) {
         // Rule 1
         // Check for same color appearing twice or more in a cell
         for(int i=0; i<= 1; i++) {
@@ -220,11 +220,11 @@ public class ChainTechnique {
             for(ICell cell : cells) {
                 List<CellNumPair> colorPerCell = color.stream().filter(pair -> pair.getCell() == cell).toList();
                 if(colorPerCell.size() > 1){
-                    techniqueColoring.addAll(
+                    techniqueCellColoring.addAll(
                             colorPerCell.stream()
                                     .collect(Collectors.groupingBy(CellNumPair::getNum))
                                     .entrySet().stream()
-                                    .map(keyValue -> TechniqueAction.CellColoring.candidatesColoring(keyValue.getValue().stream().map(entry -> entry.cell.getPos()).collect(Collectors.toSet()), Color.RED, List.of(keyValue.getKey()))
+                                    .map(keyValue -> new TechniqueAction.CandidatesColoring(keyValue.getValue().stream().map(entry -> entry.cell.getPos()).collect(Collectors.toSet()), Color.RED, List.of(keyValue.getKey()))
                                     ).toList());
                     return Optional.of(TechniqueAction.builder()
                             .name("3D Medusa")
@@ -234,14 +234,14 @@ public class ChainTechnique {
                                             .collect(Collectors.groupingBy(CellNumPair::getCell))
                                             .entrySet().stream()
                                             .collect(Collectors.toMap(entry -> entry.getKey().getPos(), entry -> entry.getValue().stream().map(CellNumPair::getNum).collect(Collectors.toSet())))
-                            ).colorings(techniqueColoring).build());
+                            ).cellColorings(techniqueCellColoring).build());
                 }
             }
         }
         return Optional.empty();
     }
 
-    private static Optional<TechniqueAction> hasDuplicateInUnit(Collection<ICell> colorGroup0, Collection<ICell> colorGroup1, int num, List<TechniqueAction.CellColoring> techniqueColoring, String name) {
+    private static Optional<TechniqueAction> hasDuplicateInUnit(Collection<ICell> colorGroup0, Collection<ICell> colorGroup1, int num, List<TechniqueAction.CellColoring> techniqueCellColoring, String name) {
         // Rule 2
         // Check for color appearing twice in unit [row, column, square]
         for (Collection<ICell> colorGroup : List.of(colorGroup0, colorGroup1)) {
@@ -256,34 +256,34 @@ public class ChainTechnique {
                 ICell squareConflict = squaresSeen.get(pair);
 
                 if (rowConflict != null) {
-                    techniqueColoring.add(
-                            TechniqueAction.CellColoring.candidatesColoring(Set.of(rowConflict.getPos(), cell.getPos()), Color.RED, Set.of(num))
+                    techniqueCellColoring.add(
+                            new TechniqueAction.CandidatesColoring(Set.of(rowConflict.getPos(), cell.getPos()), Color.RED, Set.of(num))
                     );
                     return Optional.of(TechniqueAction.builder()
                             .name(name)
                             .description("In row " + cell.getY() + " both " + rowConflict.getPos() + " and " + cell.getPos() + " get the same color")
                             .removeCandidatesMap(Map.of(rowConflict.getPos(), Set.of(num), cell.getPos(), Set.of(num)))
-                            .colorings(techniqueColoring).build());
+                            .cellColorings(techniqueCellColoring).build());
                 }
                 else if (colConflict != null){
-                    techniqueColoring.add(
-                            TechniqueAction.CellColoring.candidatesColoring(Set.of(colConflict.getPos(), cell.getPos()), Color.RED, Set.of(num))
+                    techniqueCellColoring.add(
+                            new TechniqueAction.CandidatesColoring(Set.of(colConflict.getPos(), cell.getPos()), Color.RED, Set.of(num))
                     );
                     return Optional.of(TechniqueAction.builder()
                             .name(name)
                             .description("In column " + cell.getX() + " both " + colConflict.getPos() + " and " + cell.getPos() + " get the same color")
                             .removeCandidatesMap(Map.of(colConflict.getPos(), Set.of(num), cell.getPos(), Set.of(num)))
-                            .colorings(techniqueColoring).build());
+                            .cellColorings(techniqueCellColoring).build());
                 }
                 else if (squareConflict != null) {
-                    techniqueColoring.add(
-                            TechniqueAction.CellColoring.candidatesColoring(Set.of(squareConflict.getPos(), cell.getPos()), Color.RED, Set.of(num))
+                    techniqueCellColoring.add(
+                            new TechniqueAction.CandidatesColoring(Set.of(squareConflict.getPos(), cell.getPos()), Color.RED, Set.of(num))
                     );
                     return Optional.of(TechniqueAction.builder()
                             .name(name)
                             .description("In square " + pair + " both " + squareConflict.getPos() + " and " + cell.getPos() + " get the same color")
                             .removeCandidatesMap(Map.of(squareConflict.getPos(), Set.of(num), cell.getPos(), Set.of(num)))
-                            .colorings(techniqueColoring).build());
+                            .cellColorings(techniqueCellColoring).build());
                 }
                 rowsSeen.put(cell.getY(), cell);
                 colsSeen.put(cell.getX(), cell);
@@ -294,7 +294,7 @@ public class ChainTechnique {
     }
 
 
-    private static Optional<TechniqueAction> eliminateExtraCandidatesFromBicolorCells(Map<CellNumPair, Integer> coloring, Set<ICell> cells, List<TechniqueAction.CellColoring> techniqueColoring) {
+    private static Optional<TechniqueAction> eliminateExtraCandidatesFromBicolorCells(Map<CellNumPair, Integer> coloring, Set<ICell> cells, List<TechniqueAction.CellColoring> techniqueCellColoring) {
         // Rule 3
         // Check two colors in a cell with two candidates
         for(ICell cell : cells){
@@ -311,34 +311,34 @@ public class ChainTechnique {
             if(color0 != null && color1 != null){
                 if(cell.getCandidates().size() > 2){
                     Set<Integer> otherCandidates = cell.getCandidates().stream().filter(n -> n != color0.getNum() && n != color1.getNum()).collect(Collectors.toSet());
-                    techniqueColoring.add(
-                            TechniqueAction.CellColoring.candidatesColoring(Set.of(cell.getPos()), Color.RED, otherCandidates)
+                    techniqueCellColoring.add(
+                            new TechniqueAction.CandidatesColoring(Set.of(cell.getPos()), Color.RED, otherCandidates)
                     );
                     return Optional.of(TechniqueAction.builder()
                             .name("3D Medusa")
                             .description("Eliminate " + otherCandidates + " from " + cell.getPos() + " due to two colors in a cell with two candidates")
                             .removeCandidatesMap(Map.of(cell.getPos(), otherCandidates))
-                            .colorings(techniqueColoring).build());
+                            .cellColorings(techniqueCellColoring).build());
                 }
             }
         }
         return Optional.empty();
     }
 
-    private static Optional<TechniqueAction> eliminateFromOutsideNeighboringCells(Set<ICell> emptyCells, int num, Collection<ICell> colorGroup0, Collection<ICell> colorGroup1, Set<ICell> group, List<TechniqueAction.CellColoring> techniqueColoring, String name) {
+    private static Optional<TechniqueAction> eliminateFromOutsideNeighboringCells(Set<ICell> emptyCells, int num, Collection<ICell> colorGroup0, Collection<ICell> colorGroup1, Set<ICell> group, List<TechniqueAction.CellColoring> techniqueCellColoring, String name) {
         // Rule 4
         // Check for two colors neighbouring a non-chain cells
         for (ICell cell : emptyCells) {
             if (!group.contains(cell) && cell.getCandidates().contains(num) &&
                     hasConnection(cell, colorGroup0) && hasConnection(cell, colorGroup1)) {
-                techniqueColoring.add(
-                        TechniqueAction.CellColoring.candidatesColoring(Set.of(cell.getPos()), Color.RED, Set.of(num))
+                techniqueCellColoring.add(
+                        new TechniqueAction.CandidatesColoring(Set.of(cell.getPos()), Color.RED, Set.of(num))
                 );
                 return Optional.of(TechniqueAction.builder()
                         .name(name)
                         .description("Eliminate " + num + " from " + cell.getPos() + " due to two colors neighboring a non-chain cell")
                         .removeCandidatesMap(Map.of(cell.getPos(), Set.of(num)))
-                        .colorings(techniqueColoring).build());
+                        .cellColorings(techniqueCellColoring).build());
             }
         }
         return Optional.empty();
@@ -347,7 +347,7 @@ public class ChainTechnique {
     // Rule 5 is not tested cause of complexity of test propagation
     // Rule 5 is causing several cells to be to the 3d chain
     // and causes rule 4 to be triggered almost after every rule 5
-    private static Optional<TechniqueAction> removeUncoloredDueToUnitAndCellConflict(Map<CellNumPair, Integer> coloring, Set<ICell> cells, List<TechniqueAction.CellColoring> techniqueColoring) {
+    private static Optional<TechniqueAction> removeUncoloredDueToUnitAndCellConflict(Map<CellNumPair, Integer> coloring, Set<ICell> cells, List<TechniqueAction.CellColoring> techniqueCellColoring) {
         // Rule 5
         // Check for uncolored candidate in a colored cell with a peer with the same candidate colored
 
@@ -372,14 +372,14 @@ public class ChainTechnique {
                         .collect(Collectors.toSet());
 
                 if (hasConnection(cell, otherColorGroup)) {
-                    techniqueColoring.add(
-                            TechniqueAction.CellColoring.candidatesColoring(Set.of(cell.getPos()), Color.RED, Set.of(otherCandidate))
+                    techniqueCellColoring.add(
+                            new TechniqueAction.CandidatesColoring(Set.of(cell.getPos()), Color.RED, Set.of(otherCandidate))
                     );
                     return Optional.of(TechniqueAction.builder()
                             .name("3D Medusa")
                             .description("Eliminate " + otherCandidate + " from " + cell.getPos() + " due to uncolored candidate in a colored cell with a peer with the same candidate colored")
                             .removeCandidatesMap(Map.of(cell.getPos(), Set.of(otherCandidate)))
-                            .colorings(techniqueColoring).build());
+                            .cellColorings(techniqueCellColoring).build());
                 }
             }
         }
@@ -408,13 +408,13 @@ public class ChainTechnique {
                             .collect(Collectors.groupingBy(pair -> pair.getCell().getPos(), Collectors.mapping(CellNumPair::getNum, Collectors.toSet())));
                     techniqueColoring.addAll(
                             candidatesToRemove.entrySet().stream()
-                                    .map(entry -> TechniqueAction.CellColoring.candidatesColoring(Set.of(entry.getKey()), Color.RED, entry.getValue())
+                                    .map(entry -> new TechniqueAction.CandidatesColoring(Set.of(entry.getKey()), Color.RED, entry.getValue())
                                     ).toList());
                     return Optional.of(TechniqueAction.builder()
                             .name("3D Medusa")
                             .description("Eliminate " + candidatesToRemove.keySet() + " from " + uncoloredCell.getPos() + " due to all candidates seeing the same color")
                             .removeCandidatesMap(candidatesToRemove)
-                            .colorings(techniqueColoring).build());
+                            .cellColorings(techniqueColoring).build());
                 }
             }
         }
@@ -541,12 +541,12 @@ public class ChainTechnique {
                         .name("X-Cycle")
                         .description("Cell " + startLink.start.getPos() + " has to be " + num)
                         .setValueMap(Map.of(startLink.start.getPos(), num))
-                        .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
-                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.BLUE, Set.of(num)),
-                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(startLink.start.getPos()), Color.GREEN, Set.of(num))
+                        .cellColorings(List.of(
+                                new TechniqueAction.CandidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                new TechniqueAction.CandidatesColoring(col2, Color.BLUE, Set.of(num)),
+                                new TechniqueAction.LineColoring(weakLinks, Color.BLUE, num, true),
+                                new TechniqueAction.LineColoring(strongLinks, Color.BLUE, num, false),
+                                new TechniqueAction.CandidatesColoring(List.of(startLink.start.getPos()), Color.GREEN, Set.of(num))
                         )).build());
             }
             else {
@@ -554,12 +554,12 @@ public class ChainTechnique {
                         .name("X-Cycle")
                         .description("Eliminate " + num + " from " + startLink.start.getPos())
                         .removeCandidatesMap(Map.of(startLink.start.getPos(), Set.of(num)))
-                        .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
-                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
-                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(startLink.start.getPos()), Color.RED, Set.of(num))
+                        .cellColorings(List.of(
+                                new TechniqueAction.CandidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                new TechniqueAction.CandidatesColoring(col2, Color.GREEN, Set.of(num)),
+                                new TechniqueAction.LineColoring(weakLinks, Color.BLUE, num, true),
+                                new TechniqueAction.LineColoring(strongLinks, Color.BLUE, num, false),
+                                new TechniqueAction.CandidatesColoring(List.of(startLink.start.getPos()), Color.RED, Set.of(num))
                         )).build());
             }
         }
@@ -584,13 +584,13 @@ public class ChainTechnique {
                         .name("X-Cycle")
                         .description("Eliminate " + num + " from common peers")
                         .removeCandidatesMap(affectedCells.stream().collect(Collectors.toMap(ICell::getPos, _ -> Set.of(num))))
-                        .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
-                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
-                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.groupColoring(groupColoring, Color.YELLOW),
-                                TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(num))
+                        .cellColorings(List.of(
+                                new TechniqueAction.CandidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                new TechniqueAction.CandidatesColoring(col2, Color.GREEN, Set.of(num)),
+                                new TechniqueAction.LineColoring(weakLinks, Color.BLUE, num, true),
+                                new TechniqueAction.LineColoring(strongLinks, Color.BLUE, num, false),
+                                new TechniqueAction.GroupColoring(groupColoring, Color.YELLOW),
+                                new TechniqueAction.CandidatesColoring(affectedCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(num))
                         )).build());
         }
         return Optional.empty();
@@ -637,18 +637,18 @@ public class ChainTechnique {
         commonPeers.retainAll(CellUtils.getPeers(sudoku, end));
         commonPeers = commonPeers.stream().filter(c -> c.getCandidates().contains(otherCandidate)).collect(Collectors.toSet());
         if(!commonPeers.isEmpty()){
-            List<TechniqueAction.CellColoring> coloringList = weakLinks.stream().map(link -> TechniqueAction.CellColoring.lineColoring(List.of(link.getSecond()), Color.BLUE, link.getFirst())).collect(Collectors.toList());
-            coloringList.addAll(weakLinks.stream().map(link -> TechniqueAction.CellColoring.candidatesColoring(Set.of(link.getSecond().getFirst()), Color.BLUE, Set.of(link.getFirst()))).toList());
-            coloringList.addAll(weakLinks.stream().map(link -> TechniqueAction.CellColoring.candidatesColoring(Set.of(link.getSecond().getSecond()), Color.YELLOW, Set.of(link.getFirst()))).toList());
+            List<TechniqueAction.CellColoring> coloringList = weakLinks.stream().map(link -> new TechniqueAction.LineColoring(List.of(link.getSecond()), Color.BLUE, link.getFirst(), true)).collect(Collectors.toList());
+            coloringList.addAll(weakLinks.stream().map(link -> new TechniqueAction.CandidatesColoring(Set.of(link.getSecond().getFirst()), Color.BLUE, Set.of(link.getFirst()))).toList());
+            coloringList.addAll(weakLinks.stream().map(link -> new TechniqueAction.CandidatesColoring(Set.of(link.getSecond().getSecond()), Color.YELLOW, Set.of(link.getFirst()))).toList());
             coloringList.addAll(List.of(
-                    TechniqueAction.CellColoring.candidatesColoring(Set.of(start.getPos()), Color.YELLOW, Set.of(otherCandidate)),
-                    TechniqueAction.CellColoring.candidatesColoring(Set.of(end.getPos()), Color.BLUE, Set.of(otherCandidate)),
-                    TechniqueAction.CellColoring.candidatesColoring(commonPeers.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(otherCandidate))));
+                    new TechniqueAction.CandidatesColoring(Set.of(start.getPos()), Color.YELLOW, Set.of(otherCandidate)),
+                    new TechniqueAction.CandidatesColoring(Set.of(end.getPos()), Color.BLUE, Set.of(otherCandidate)),
+                    new TechniqueAction.CandidatesColoring(commonPeers.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(otherCandidate))));
             return Optional.of(TechniqueAction.builder()
                     .name("XY-Chain")
                     .description("Eliminate " + otherCandidate + " from common peers of " + start.getPos() + " and " + end.getPos())
                     .removeCandidatesMap(commonPeers.stream().collect(Collectors.toMap(ICell::getPos, _ -> Set.of(otherCandidate))))
-                    .colorings(coloringList).build());
+                    .cellColorings(coloringList).build());
         }
         return Optional.empty();
     }
@@ -824,16 +824,16 @@ public class ChainTechnique {
             return Optional.empty();
 
         List<TechniqueAction.CellColoring> colorings = new ArrayList<>();
-        coloring1.forEach((pos, candidates) -> colorings.add(TechniqueAction.CellColoring.candidatesColoring(Set.of(pos), Color.YELLOW, candidates)));
-        coloring2.forEach((pos, candidates) -> colorings.add(TechniqueAction.CellColoring.candidatesColoring(Set.of(pos), Color.BLUE, candidates)));
-        candidatesToRemove.forEach((pos, candidates) -> colorings.add(TechniqueAction.CellColoring.candidatesColoring(Set.of(pos), Color.RED, candidates)));
-        Stream.of(pos1, pos2, pos3, pos4).forEach(pos -> colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(pos, pos)), Color.CYAN)));
+        coloring1.forEach((pos, candidates) -> colorings.add(new TechniqueAction.CandidatesColoring(Set.of(pos), Color.YELLOW, candidates)));
+        coloring2.forEach((pos, candidates) -> colorings.add(new TechniqueAction.CandidatesColoring(Set.of(pos), Color.BLUE, candidates)));
+        candidatesToRemove.forEach((pos, candidates) -> colorings.add(new TechniqueAction.CandidatesColoring(Set.of(pos), Color.RED, candidates)));
+        Stream.of(pos1, pos2, pos3, pos4).forEach(pos -> colorings.add(new TechniqueAction.GroupColoring(List.of(Pair.create(pos, pos)), Color.CYAN)));
 
         return Optional.of(TechniqueAction.builder()
                 .name("SK-Loop")
                 .description("Eliminate candidates from SK-Loop formed by " + pos1 + ", " + pos2 + ", " + pos3 + ", " + pos4)
                 .removeCandidatesMap(candidatesToRemove)
-                .colorings(colorings)
+                .cellColorings(colorings)
                 .build());
     }
 
@@ -938,12 +938,12 @@ public class ChainTechnique {
                         .name("Grouped X-Cycle")
                         .description("One of the cells " + startLink.start.cells().getFirst().getPos() + " has to be " + num)
                         .removeCandidatesMap(peers.stream().collect(Collectors.toMap(ICell::getPos, _ -> Set.of(num))))
-                        .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
-                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.BLUE, Set.of(num)),
-                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.candidatesColoring(peers.stream().map(ICell::getPos).toList(), Color.RED, Set.of(num))
+                        .cellColorings(List.of(
+                                new TechniqueAction.CandidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                new TechniqueAction.CandidatesColoring(col2, Color.BLUE, Set.of(num)),
+                                new TechniqueAction.LineColoring(weakLinks, Color.BLUE, num, true),
+                                new TechniqueAction.LineColoring(strongLinks, Color.BLUE, num, false),
+                                new TechniqueAction.CandidatesColoring(peers.stream().map(ICell::getPos).toList(), Color.RED, Set.of(num))
                         )).build());
             }
             else {
@@ -951,12 +951,12 @@ public class ChainTechnique {
                         .name("Grouped X-Cycle")
                         .description("Eliminate " + num + " from " + startLink.start.cells().stream().map(ICell::getPos))
                         .removeCandidatesMap(startLink.start.cells().stream().collect(Collectors.toMap(ICell::getPos, _ -> Set.of(num))))
-                        .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
-                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
-                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.candidatesColoring(startLink.start.cells().stream().map(ICell::getPos).toList(), Color.RED, Set.of(num))
+                        .cellColorings(List.of(
+                                new TechniqueAction.CandidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                new TechniqueAction.CandidatesColoring(col2, Color.GREEN, Set.of(num)),
+                                new TechniqueAction.LineColoring(weakLinks, Color.BLUE, num, true),
+                                new TechniqueAction.LineColoring(strongLinks, Color.BLUE, num, false),
+                                new TechniqueAction.CandidatesColoring(startLink.start.cells().stream().map(ICell::getPos).toList(), Color.RED, Set.of(num))
                         )).build());
             }
         }
@@ -981,13 +981,13 @@ public class ChainTechnique {
                         .name("Grouped X-Cycle")
                         .description("Eliminate " + num + " from common peers")
                         .removeCandidatesMap(affectedCells.stream().collect(Collectors.toMap(ICell::getPos, _ -> Set.of(num))))
-                        .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(col1, Color.YELLOW, Set.of(num)),
-                                TechniqueAction.CellColoring.candidatesColoring(col2, Color.GREEN, Set.of(num)),
-                                TechniqueAction.CellColoring.doubleLineColoring(weakLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.lineColoring(strongLinks, Color.BLUE, num),
-                                TechniqueAction.CellColoring.groupColoring(groupColoring, Color.YELLOW),
-                                TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(num))
+                        .cellColorings(List.of(
+                                new TechniqueAction.CandidatesColoring(col1, Color.YELLOW, Set.of(num)),
+                                new TechniqueAction.CandidatesColoring(col2, Color.GREEN, Set.of(num)),
+                                new TechniqueAction.LineColoring(weakLinks, Color.BLUE, num, true),
+                                new TechniqueAction.LineColoring(strongLinks, Color.BLUE, num, false),
+                                new TechniqueAction.GroupColoring(groupColoring, Color.YELLOW),
+                                new TechniqueAction.CandidatesColoring(affectedCells.stream().map(ICell::getPos).collect(Collectors.toSet()), Color.RED, Set.of(num))
                         )).build());
         }
         return Optional.empty();

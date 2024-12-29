@@ -92,9 +92,9 @@ public class RectangleTechnique {
                     .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5}, so value {2} cannot appear in the cells {6} since they see both {0} and {1}",
                             cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), removeCandidatesMap.keySet()))
                     .removeCandidatesMap(removeCandidatesMap)
-                    .colorings(List.of(
-                            TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
-                            TechniqueAction.CellColoring.candidatesColoring(removeCandidatesMap.keySet(), Color.RED, extraCandidates)
+                    .cellColorings(List.of(
+                            new TechniqueAction.CandidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
+                            new TechniqueAction.CandidatesColoring(removeCandidatesMap.keySet(), Color.RED, extraCandidates)
                     )).build());
         }
         //Type 5
@@ -109,11 +109,11 @@ public class RectangleTechnique {
                         .description(MessageFormat.format("Cells {0} and {1} are strongly linked meaning they have the same value. They have 2 possibilities, if the value {2} is the value for {0} and {1} then cells {3} and {4} are forced to have the value {5} which is a deadly pattern since we can switch {0}, {1}, {3} and {4}",
                                 cell1, cell2, otherCandidate, cell3, cell4, candidate))
                         .setValueMap(Map.of(cell1.getPos(), candidate, cell2.getPos(), candidate))
-                        .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos()), Color.GREEN, Set.of(candidate)),
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos()), Color.RED, Set.of(otherCandidate)),
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
-                                TechniqueAction.CellColoring.lineColoring(List.of(Pair.create(cell1.getPos(), cell2.getPos())), Color.BLUE, candidate)
+                        .cellColorings(List.of(
+                                new TechniqueAction.CandidatesColoring(List.of(cell1.getPos(), cell2.getPos()), Color.GREEN, Set.of(candidate)),
+                                new TechniqueAction.CandidatesColoring(List.of(cell1.getPos(), cell2.getPos()), Color.RED, Set.of(otherCandidate)),
+                                new TechniqueAction.CandidatesColoring(List.of(cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
+                                new TechniqueAction.LineColoring(List.of(Pair.create(cell1.getPos(), cell2.getPos())), Color.BLUE, candidate, false)
                         )).build());
             }
         }
@@ -172,10 +172,10 @@ public class RectangleTechnique {
                             .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5}, so value {2} cannot appear in the cells {6} since it sees both {0} and {1}",
                                     cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), affectedPos))
                             .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, _ -> extraCandidates)))
-                            .colorings(List.of(
-                                    TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
-                                    TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, extraCandidates),
-                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                            .cellColorings(List.of(
+                                    new TechniqueAction.CandidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
+                                    new TechniqueAction.CandidatesColoring(affectedPos, Color.RED, extraCandidates),
+                                    new TechniqueAction.GroupColoring(List.of(isRow ?
                                                     Pair.create(new Pos(0, i), new Pos(8, i)) :
                                                     Pair.create(new Pos(i, 0), new Pos(i, 8)))
                                             , Color.ORANGE)
@@ -193,11 +193,11 @@ public class RectangleTechnique {
                             .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5}, so {0}, {1} and {6} are the only cells in {7} {8} that can have the values {2} and the cells {9} cannot have the values {2}",
                                     cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), result.getFirst(), isRow? "row" : "column", i, result.getSecond().keySet()))
                             .removeCandidatesMap(result.getSecond())
-                            .colorings(List.of(
-                                    TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
-                                    TechniqueAction.CellColoring.candidatesColoring(result.getSecond().keySet(), Color.RED, extraCandidates),
-                                    TechniqueAction.CellColoring.candidatesColoring(List.of(result.getFirst()), Color.BLUE, extraCandidates),
-                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                            .cellColorings(List.of(
+                                    new TechniqueAction.CandidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
+                                    new TechniqueAction.CandidatesColoring(result.getSecond().keySet(), Color.RED, extraCandidates),
+                                    new TechniqueAction.CandidatesColoring(List.of(result.getFirst()), Color.BLUE, extraCandidates),
+                                    new TechniqueAction.GroupColoring(List.of(isRow ?
                                                     Pair.create(new Pos(0, i), new Pos(8, i)) :
                                                     Pair.create(new Pos(i, 0), new Pos(i, 8)))
                                             , Color.ORANGE)
@@ -211,11 +211,11 @@ public class RectangleTechnique {
                             .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5}, so {0}, {1}, {6} and {7} are the only cells in {8} {9} that can have the values {2} and the cells {10} cannot have the values {2}",
                                     cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), pairResult.getFirst().get(0), pairResult.getFirst().get(1), isRow ? "row" : "column", i, pairResult.getSecond().keySet()))
                             .removeCandidatesMap(pairResult.getSecond())
-                            .colorings(List.of(
-                                    TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
-                                    TechniqueAction.CellColoring.candidatesColoring(pairResult.getSecond().keySet(), Color.RED, extraCandidates),
-                                    TechniqueAction.CellColoring.candidatesColoring(pairResult.getFirst(), Color.BLUE, extraCandidates),
-                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                            .cellColorings(List.of(
+                                    new TechniqueAction.CandidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
+                                    new TechniqueAction.CandidatesColoring(pairResult.getSecond().keySet(), Color.RED, extraCandidates),
+                                    new TechniqueAction.CandidatesColoring(pairResult.getFirst(), Color.BLUE, extraCandidates),
+                                    new TechniqueAction.GroupColoring(List.of(isRow ?
                                                     Pair.create(new Pos(0, i), new Pos(8, i)) :
                                                     Pair.create(new Pos(i, 0), new Pos(i, 8)))
                                             , Color.ORANGE)
@@ -296,10 +296,10 @@ public class RectangleTechnique {
                             .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5}, so {0} and {1} form a pointing pair and a Box/Line Reduction with value {2} for the cells {6}",
                                     cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), affectedPos))
                             .removeCandidatesMap(affectedPos.stream().collect(Collectors.toMap(pos -> pos, _ -> extraCandidates)))
-                            .colorings(List.of(
-                                    TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
-                                    TechniqueAction.CellColoring.candidatesColoring(affectedPos, Color.RED, extraCandidates),
-                                    TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                            .cellColorings(List.of(
+                                    new TechniqueAction.CandidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()),
+                                    new TechniqueAction.CandidatesColoring(affectedPos, Color.RED, extraCandidates),
+                                    new TechniqueAction.GroupColoring(List.of(isRow ?
                                                     Pair.create(new Pos(0, i), new Pos(8, i)) :
                                                     Pair.create(new Pos(i, 0), new Pos(i, 8)))
                                             , Color.ORANGE)
@@ -325,11 +325,11 @@ public class RectangleTechnique {
                 if(!removeCandidateMap.isEmpty()){
                     List<String> descriptionEndList = new ArrayList<>();
                     List<TechniqueAction.CellColoring> colorings = new ArrayList<>();
-                    colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()));
-                    colorings.add(TechniqueAction.CellColoring.candidatesColoring(removeCandidateMap.keySet().stream().toList(), Color.RED, extraCandidates));
+                    colorings.add(new TechniqueAction.CandidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()));
+                    colorings.add(new TechniqueAction.CandidatesColoring(removeCandidateMap.keySet().stream().toList(), Color.RED, extraCandidates));
                     if(groupResult != null){
-                        colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(groupResult.getFirst()), Color.BLUE, extraCandidates));
-                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                        colorings.add(new TechniqueAction.CandidatesColoring(List.of(groupResult.getFirst()), Color.BLUE, extraCandidates));
+                        colorings.add(new TechniqueAction.GroupColoring(List.of(isRow ?
                                         Pair.create(new Pos(0, i), new Pos(8, i)) :
                                         Pair.create(new Pos(i, 0), new Pos(i, 8)))
                                 , Color.ORANGE));
@@ -337,8 +337,8 @@ public class RectangleTechnique {
                                 cell3.getPos(), cell4.getPos(), groupResult.getFirst(), extraCandidates, groupResult.getSecond().keySet()));
                     }
                     if(squareResult != null){
-                        colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(squareResult.getFirst()), Color.BLUE, extraCandidates));
-                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(new Pos(cell3.getX()/3*3, cell3.getY()/3*3), new Pos(cell3.getX()/3*3+2, cell3.getY()/3*3+2))), Color.ORANGE));
+                        colorings.add(new TechniqueAction.CandidatesColoring(List.of(squareResult.getFirst()), Color.BLUE, extraCandidates));
+                        colorings.add(new TechniqueAction.GroupColoring(List.of(Pair.create(new Pos(cell3.getX()/3*3, cell3.getY()/3*3), new Pos(cell3.getX()/3*3+2, cell3.getY()/3*3+2))), Color.ORANGE));
                         descriptionEndList.add(MessageFormat.format("so cells {0} and {1} form a Box/Line reduction with cell {2} with values {3} for the cells {4}",
                                 cell3.getPos(), cell4.getPos(), squareResult.getFirst(), extraCandidates, squareResult.getSecond().keySet()));
                     }
@@ -347,7 +347,7 @@ public class RectangleTechnique {
                             .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5},{6}",
                                     cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), String.join(" and ", descriptionEndList)))
                             .removeCandidatesMap(removeCandidateMap)
-                            .colorings(colorings).build());
+                            .cellColorings(colorings).build());
                 }
 
                 //Type 3b with Triple Pseudo-Cells
@@ -360,11 +360,11 @@ public class RectangleTechnique {
                 if(!removeCandidateMap.isEmpty()){
                     List<String> descriptionEndList = new ArrayList<>();
                     List<TechniqueAction.CellColoring> colorings = new ArrayList<>();
-                    colorings.add(TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()));
-                    colorings.add(TechniqueAction.CellColoring.candidatesColoring(removeCandidateMap.keySet().stream().toList(), Color.RED, extraCandidates));
+                    colorings.add(new TechniqueAction.CandidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos(), cell4.getPos()), Color.YELLOW, cell1.getCandidates()));
+                    colorings.add(new TechniqueAction.CandidatesColoring(removeCandidateMap.keySet().stream().toList(), Color.RED, extraCandidates));
                     if(groupPairResult != null){
-                        colorings.add(TechniqueAction.CellColoring.candidatesColoring(groupPairResult.getFirst(), Color.BLUE, extraCandidates));
-                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(isRow ?
+                        colorings.add(new TechniqueAction.CandidatesColoring(groupPairResult.getFirst(), Color.BLUE, extraCandidates));
+                        colorings.add(new TechniqueAction.GroupColoring(List.of(isRow ?
                                         Pair.create(new Pos(0, cell3.getY()), new Pos(8, cell3.getY())) :
                                         Pair.create(new Pos(cell3.getX(), 0), new Pos(cell3.getX(), 8)))
                                 , Color.ORANGE));
@@ -372,8 +372,8 @@ public class RectangleTechnique {
                                 cell3.getPos(), cell4.getPos(), groupPairResult.getFirst().get(0), groupPairResult.getFirst().get(1), extraCandidates, groupPairResult.getSecond().keySet()));
                     }
                     if(squarePairResult != null){
-                        colorings.add(TechniqueAction.CellColoring.candidatesColoring(squarePairResult.getFirst(), Color.BLUE, extraCandidates));
-                        colorings.add(TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(new Pos(cell3.getX()/3*3, cell3.getY()/3*3), new Pos(cell3.getX()/3*3+2, cell3.getY()/3*3+2))), Color.ORANGE));
+                        colorings.add(new TechniqueAction.CandidatesColoring(squarePairResult.getFirst(), Color.BLUE, extraCandidates));
+                        colorings.add(new TechniqueAction.GroupColoring(List.of(Pair.create(new Pos(cell3.getX()/3*3, cell3.getY()/3*3), new Pos(cell3.getX()/3*3+2, cell3.getY()/3*3+2))), Color.ORANGE));
                         descriptionEndList.add(MessageFormat.format("so cells {0} and {1} form a Box/Line reduction with cells {2} and {3} with values {4} for the cells {5}",
                                 cell3.getPos(), cell4.getPos(), squarePairResult.getFirst().get(0), squarePairResult.getFirst().get(1), extraCandidates, squarePairResult.getSecond().keySet()));
                     }
@@ -382,7 +382,7 @@ public class RectangleTechnique {
                             .description(MessageFormat.format("If cell {0} or {1} is not {2} then there is no way to disambiguate the values {3} for the cells {0}, {1}, {4} and {5},{6}",
                                     cell3.getPos(), cell4.getPos(), extraCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), String.join(" and ", descriptionEndList)))
                             .removeCandidatesMap(removeCandidateMap)
-                            .colorings(colorings).build());
+                            .cellColorings(colorings).build());
                 }
             }
             //Type 4 for same square
@@ -407,10 +407,10 @@ public class RectangleTechnique {
                         groupType == ISudoku.GroupType.SQUARE ? pos3.y() / 3 * 3 + pos3.x() / 3 : groupType == ISudoku.GroupType.ROW ? pos3.y() : pos3.x(),
                         otherCandidate, pos1, pos2))
                 .removeCandidatesMap(Map.of(pos3, Set.of(otherCandidate), pos4, Set.of(otherCandidate)))
-                .colorings(List.of(
-                        TechniqueAction.CellColoring.candidatesColoring(List.of(pos3, pos4), Color.RED, Set.of(otherCandidate)),
-                        TechniqueAction.CellColoring.candidatesColoring(List.of(pos3, pos4), Color.YELLOW, Set.of(candidate)),
-                        TechniqueAction.CellColoring.candidatesColoring(List.of(pos1, pos2), Color.YELLOW, Set.of(otherCandidate, candidate))
+                .cellColorings(List.of(
+                        new TechniqueAction.CandidatesColoring(List.of(pos3, pos4), Color.RED, Set.of(otherCandidate)),
+                        new TechniqueAction.CandidatesColoring(List.of(pos3, pos4), Color.YELLOW, Set.of(candidate)),
+                        new TechniqueAction.CandidatesColoring(List.of(pos1, pos2), Color.YELLOW, Set.of(otherCandidate, candidate))
                 )).build());
     }
 
@@ -460,9 +460,9 @@ public class RectangleTechnique {
                         .description(MessageFormat.format("If cell {0} is not {1} then there is no way to disambiguate the values {2} for the cells {0}, {3}, {4} and {5}",
                                 cell4.getPos(), otherCandidates, cell1.getCandidates(), cell1.getPos(), cell2.getPos(), cell3.getPos()))
                         .removeCandidatesMap(Map.of(cell4.getPos(), cell1.getCandidates()))
-                        .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell4.getPos()), Color.RED, cell1.getCandidates()),
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos()), Color.YELLOW, cell1.getCandidates())
+                        .cellColorings(List.of(
+                                new TechniqueAction.CandidatesColoring(List.of(cell4.getPos()), Color.RED, cell1.getCandidates()),
+                                new TechniqueAction.CandidatesColoring(List.of(cell1.getPos(), cell2.getPos(), cell3.getPos()), Color.YELLOW, cell1.getCandidates())
                         )).build());
             }
         }
@@ -546,15 +546,15 @@ public class RectangleTechnique {
                         .description(MessageFormat.format("If cell {0} is {1} then cell {2} cannot be {1} and cell {3} has to be {1}. Making it impossible to place {1} in square {4}",
                                 peer.getPos(), num, cell1.getPos(), cell2.getPos(), squareNumber))
                         .removeCandidatesMap(Map.of(peer.getPos(), Set.of(num)))
-                        .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(peer.getPos()), Color.RED, List.of(num)),
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell1.getPos()), Color.GREEN, List.of(num)),
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell2.getPos()), Color.YELLOW, List.of(num)),
-                                TechniqueAction.CellColoring.candidatesColoring(affectedPeerSquareCells.stream().map(ICell::getPos).toList(), Color.ORANGE, List.of(num)),
-                                TechniqueAction.CellColoring.lineColoring(List.of(
+                        .cellColorings(List.of(
+                                new TechniqueAction.CandidatesColoring(List.of(peer.getPos()), Color.RED, List.of(num)),
+                                new TechniqueAction.CandidatesColoring(List.of(cell1.getPos()), Color.GREEN, List.of(num)),
+                                new TechniqueAction.CandidatesColoring(List.of(cell2.getPos()), Color.YELLOW, List.of(num)),
+                                new TechniqueAction.CandidatesColoring(affectedPeerSquareCells.stream().map(ICell::getPos).toList(), Color.ORANGE, List.of(num)),
+                                new TechniqueAction.LineColoring(List.of(
                                         Pair.create(cell1.getPos(), cell2.getPos()),
                                         Pair.create(cell1.getPos(), peer.getPos())
-                                ), Color.BLUE, num)
+                                ), Color.BLUE, num, false)
                         ))
                         .build());
             }
@@ -664,11 +664,11 @@ public class RectangleTechnique {
                             .description(MessageFormat.format("If neither cell {0} and {1} are not {2} then there is no way to disambiguate the values {3} for the cells {4}, {5}, {6}, {7}, {0} and {1}",
                                     cell5.getPos(), cell6.getX(), extraCandidate, candidates, cells.get(0).getPos(), cells.get(1).getPos(), cells.get(2).getPos(), cells.get(3).getPos()))
                             .removeCandidatesMap(affectedCells.stream().collect(Collectors.toMap(ICell::getPos, _ -> extraCandidates)))
-                            .colorings(List.of(
-                                    TechniqueAction.CellColoring.candidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, extraCandidates),
-                                    TechniqueAction.CellColoring.candidatesColoring(List.of(cell5.getPos(), cell6.getPos()), Color.ORANGE, extraCandidates),
-                                    TechniqueAction.CellColoring.candidatesColoring(List.of(cell5.getPos(), cell6.getPos()), Color.YELLOW, candidates),
-                                    TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.YELLOW, candidates)
+                            .cellColorings(List.of(
+                                    new TechniqueAction.CandidatesColoring(affectedCells.stream().map(ICell::getPos).toList(), Color.RED, extraCandidates),
+                                    new TechniqueAction.CandidatesColoring(List.of(cell5.getPos(), cell6.getPos()), Color.ORANGE, extraCandidates),
+                                    new TechniqueAction.CandidatesColoring(List.of(cell5.getPos(), cell6.getPos()), Color.YELLOW, candidates),
+                                    new TechniqueAction.CandidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.YELLOW, candidates)
                             )).build());
                 }
             }
@@ -692,11 +692,11 @@ public class RectangleTechnique {
                 .description(MessageFormat.format("If cell {0} is not {1} then there is no way to disambiguate the values {2} for the cells {3}, {4}, {5}, {6} and {7}",
                         extraCell.getPos(), extraCandidates, candidates, cells.get(0).getPos(), cells.get(1).getPos(), cells.get(2).getPos(), cells.get(3).getPos(), additionalCell.getPos()))
                 .removeCandidatesMap(Map.of(extraCell.getPos(), candidatesToBeRemoved))
-                .colorings(List.of(
-                        TechniqueAction.CellColoring.candidatesColoring(List.of(extraCell.getPos()), Color.RED, candidatesToBeRemoved),
-                        TechniqueAction.CellColoring.candidatesColoring(List.of(extraCell.getPos()), Color.YELLOW, extraCandidates),
-                        TechniqueAction.CellColoring.candidatesColoring(List.of(additionalCell.getPos()), Color.YELLOW, candidates),
-                        TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.YELLOW, candidates)
+                .cellColorings(List.of(
+                        new TechniqueAction.CandidatesColoring(List.of(extraCell.getPos()), Color.RED, candidatesToBeRemoved),
+                        new TechniqueAction.CandidatesColoring(List.of(extraCell.getPos()), Color.YELLOW, extraCandidates),
+                        new TechniqueAction.CandidatesColoring(List.of(additionalCell.getPos()), Color.YELLOW, candidates),
+                        new TechniqueAction.CandidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.YELLOW, candidates)
                 )).build());
     }
 
@@ -786,13 +786,13 @@ public class RectangleTechnique {
                 .description(MessageFormat.format("If cell {0} is {1} then cells {2} and {3} are {4} and cell {5} is {1}. And this will form a deadly rectangle in the cells {0} {2} {3} {5} since by swapping the values {1} and {6} will result in a second solution",
                         cell4.getPos(), otherCandidate, cell2.getPos(), cell3.getPos(), digit, mainCell.getPos(), otherCandidate))
                 .removeCandidatesMap(Map.of(cell4.getPos(), Set.of(otherCandidate)))
-                .colorings(List.of(
-                        TechniqueAction.CellColoring.candidatesColoring(List.of(cell4.getPos()), Color.RED, Set.of(otherCandidate)),
-                        TechniqueAction.CellColoring.groupColoring(List.of(
+                .cellColorings(List.of(
+                        new TechniqueAction.CandidatesColoring(List.of(cell4.getPos()), Color.RED, Set.of(otherCandidate)),
+                        new TechniqueAction.GroupColoring(List.of(
                                 Pair.create(cell2.getPos(), cell2.getPos()),
                                 Pair.create(cell3.getPos(), cell3.getPos())
                         ), Color.ORANGE),
-                        TechniqueAction.CellColoring.groupColoring(List.of(Pair.create(mainCell.getPos(), mainCell.getPos())), Color.YELLOW)
+                        new TechniqueAction.GroupColoring(List.of(Pair.create(mainCell.getPos(), mainCell.getPos())), Color.YELLOW)
                 )).build());
     }
 }

@@ -49,9 +49,9 @@ public class HiddenTechnique {
                 return TechniqueAction.builder()
                         .name("Hidden Single")
                         .setValueMap(Map.of(cell.getPos(), digit))
-                        .colorings(List.of(
-                                TechniqueAction.CellColoring.candidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(digit)),
-                                TechniqueAction.CellColoring.groupColoring(List.of(
+                        .cellColorings(List.of(
+                                new TechniqueAction.CandidatesColoring(List.of(cell.getPos()), Color.GREEN, List.of(digit)),
+                                new TechniqueAction.GroupColoring(List.of(
                                         switch (groupType) {
                                             case ROW -> Pair.create(new Pos(0, i), new Pos(8, i));
                                             case COLUMN -> Pair.create(new Pos(i, 0), new Pos(i, 8));
@@ -167,10 +167,10 @@ public class HiddenTechnique {
                             .name("Hidden " + type)
                             .description("Cells " + cells.stream().map(ICell::getPos).map(Pos::toString).collect(Collectors.joining(", ")) + " form a hidden " + type + " in" + groupType.name() + " for the candidates " + candidates.stream().map(String::valueOf).collect(Collectors.joining(", ")))
                             .removeCandidatesMap(cells.stream().collect(Collectors.toMap(ICell::getPos, _ -> candidatesToRemove)))
-                            .colorings(List.of(
-                                    TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.GREEN, combination),
-                                    TechniqueAction.CellColoring.candidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToRemove),
-                                    TechniqueAction.CellColoring.groupColoring(List.of(
+                            .cellColorings(List.of(
+                                    new TechniqueAction.CandidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.GREEN, combination),
+                                    new TechniqueAction.CandidatesColoring(cells.stream().map(ICell::getPos).toList(), Color.RED, candidatesToRemove),
+                                    new TechniqueAction.GroupColoring(List.of(
                                             switch (groupType) {
                                                 case ROW -> Pair.create(new Pos(0, i), new Pos(8, i));
                                                 case COLUMN -> Pair.create(new Pos(i, 0), new Pos(i, 8));
