@@ -84,7 +84,7 @@ public class LogicalSolver extends Task<Boolean> {
         solveSteps.add(SimpleAction.builder()
                 .name("Load candidates")
                 .description("Load candidates")
-                .function( (sud) -> {
+                .function( sud -> {
                     sud.loadCandidates();
                     sud.reRender();
                     return null;
@@ -104,8 +104,7 @@ public class LogicalSolver extends Task<Boolean> {
                     break;
                 }
             }
-        }
-        while (changed);
+        } while (changed);
         solveSteps.add(SimpleAction.builder()
                 .name("End")
                 .description("Finished solving")
