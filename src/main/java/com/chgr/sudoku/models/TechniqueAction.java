@@ -74,7 +74,7 @@ public class TechniqueAction extends BaseAction {
 
         @Override
         public void apply(ISudoku sudoku) {
-            linePos.forEach(poses -> sudoku.colorLine(poses.getFirst(), poses.getSecond(), color, false));
+            linePos.forEach(poses -> sudoku.colorLine(poses.getFirst(), poses.getSecond(), color, isDouble));
         }
 
         @Override

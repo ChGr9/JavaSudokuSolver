@@ -910,7 +910,8 @@ public class ChainTechnique {
                     return startPositions.stream()
                             .flatMap(startPos -> endPositions.stream()
                                     .map(endPos -> Pair.create(startPos, endPos)))
-                            .min(Comparator.comparingDouble(pair -> Math.sqrt(Math.pow(pair.getFirst().x() - pair.getSecond().x(), 2) + Math.pow(pair.getFirst().y() - pair.getSecond().y(), 2))))
+                            // switched from pythagorean distance to chebyshev distance so diagonal and orthogonal links are treated equally
+                            .min(Comparator.comparingDouble(pair -> Math.max((pair.getFirst().x() - pair.getSecond().x()), (pair.getFirst().y() - pair.getSecond().y()))))
                             .orElse(null);
                 })
                 .filter(Objects::nonNull)
@@ -923,7 +924,8 @@ public class ChainTechnique {
                     return startPositions.stream()
                             .flatMap(startPos -> endPositions.stream()
                                     .map(endPos -> Pair.create(startPos, endPos)))
-                            .min(Comparator.comparingDouble(pair -> Math.sqrt(Math.pow(pair.getFirst().x() - pair.getSecond().x(), 2) + Math.pow(pair.getFirst().y() - pair.getSecond().y(), 2))))
+                            // switched from pythagorean distance to chebyshev distance so diagonal and orthogonal links are treated equally
+                            .min(Comparator.comparingDouble(pair -> Math.max((pair.getFirst().x() - pair.getSecond().x()), (pair.getFirst().y() - pair.getSecond().y()))))
                             .orElse(null);
                 })
                 .filter(Objects::nonNull)
